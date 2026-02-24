@@ -9,6 +9,7 @@ import {
     Calendar,
     CheckCircle2,
     Clock,
+    Percent,
     User,
     Home,
     ChevronRight,

@@ -27,8 +27,10 @@ export default function CustomersPage() {
     const { t } = useLanguage();
     const { data: customers, loading, upsert } = useERPData<any>('customers');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { data: units } = useERPData<any>('units');
+    const { data: installments } = useERPData<any>('installments');
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -54,6 +56,9 @@ export default function CustomersPage() {
             setIsSubmitting(false);
         }
     };
+
+    const activeOwners = Array.from(new Set(units.filter((u: any) => u.status === 'Sold' || u.status === 'Installments').map((u: any) => u.consumer_name))).length;
+    const payingInstallments = installments.filter((i: any) => i.status === 'Pending').length;
 
     return (
         <div className="flex min-h-screen bg-background text-foreground">
@@ -92,14 +97,14 @@ export default function CustomersPage() {
                             <Home size={18} />
                             <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Active Owners</span>
                         </div>
-                        <div className="text-3xl font-bold">12 Owners</div>
+                        <div className="text-3xl font-bold">{activeOwners} Owners</div>
                     </div>
                     <div className="glass p-6 border-amber-500/20 bg-amber-500/5">
                         <div className="flex items-center gap-3 text-amber-400 mb-2">
                             <Calendar size={18} />
                             <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Paying Installments</span>
                         </div>
-                        <div className="text-3xl font-bold">8 Payers</div>
+                        <div className="text-3xl font-bold">{payingInstallments} Payers</div>
                     </div>
                 </div>
 

@@ -117,6 +117,11 @@ export default function InvoicesPage() {
         }
     };
 
+    const totalInvoiced = invoices.reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0);
+    const totalPaid = invoices.filter((inv: any) => inv.status === 'Paid').reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0);
+    const totalPending = invoices.filter((inv: any) => inv.status === 'Pending').reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0);
+    const draftCount = invoices.filter((inv: any) => inv.status === 'Draft').length;
+
     return (
         <div className="flex min-h-screen bg-background text-foreground">
             <main className="flex-1 p-8 overflow-y-auto">
@@ -139,6 +144,45 @@ export default function InvoicesPage() {
                         <span>{t('create_invoice')}</span>
                     </button>
                 </header>
+
+                {/* Invoice KPIs */}
+                <div className="grid grid-cols-4 gap-6 mb-10">
+                    <div className="glass p-6 border-accent/20 bg-accent/5">
+                        <div className="flex items-center gap-3 text-accent mb-4">
+                            <FileText size={20} />
+                            <span className="text-[10px] font-bold uppercase tracking-widest">Total Invoiced</span>
+                        </div>
+                        <div className="text-3xl font-bold">{totalInvoiced.toLocaleString()} EGP</div>
+                        <div className="text-[10px] text-gray-500 mt-2">All-time sales volume</div>
+                    </div>
+
+                    <div className="glass p-6 border-emerald-500/20 bg-emerald-500/5">
+                        <div className="flex items-center gap-3 text-emerald-400 mb-4">
+                            <CheckCircle2 size={20} />
+                            <span className="text-[10px] font-bold uppercase tracking-widest">Total Collected</span>
+                        </div>
+                        <div className="text-3xl font-bold">{totalPaid.toLocaleString()} EGP</div>
+                        <div className="text-[10px] text-gray-500 mt-2">Paid & cleared invoices</div>
+                    </div>
+
+                    <div className="glass p-6 border-blue-500/20 bg-blue-500/5">
+                        <div className="flex items-center gap-3 text-blue-400 mb-4">
+                            <Clock size={20} />
+                            <span className="text-[10px] font-bold uppercase tracking-widest">Pending Amount</span>
+                        </div>
+                        <div className="text-3xl font-bold">{totalPending.toLocaleString()} EGP</div>
+                        <div className="text-[10px] text-gray-500 mt-2">Awaiting customer payment</div>
+                    </div>
+
+                    <div className="glass p-6 border-gray-500/20 bg-gray-500/5">
+                        <div className="flex items-center gap-3 text-gray-400 mb-4">
+                            <AlertCircle size={20} />
+                            <span className="text-[10px] font-bold uppercase tracking-widest">Drafts</span>
+                        </div>
+                        <div className="text-3xl font-bold">{draftCount} Invoices</div>
+                        <div className="text-[10px] text-gray-500 mt-2">Work in progress</div>
+                    </div>
+                </div>
 
                 <div className="glass p-8 mb-8">
                     <div className="flex justify-between items-center mb-6">

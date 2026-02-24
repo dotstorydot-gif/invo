@@ -85,6 +85,14 @@ export default function SuppliersPage() {
         }
     };
 
+    const { data: inventory } = useERPData<any>('inventory');
+    const { data: expenses } = useERPData<any>('expenses');
+
+    const activePartners = suppliers.length;
+    const activeSKUs = inventory.length;
+    const totalPayables = expenses.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
+    const averageReliability = 96.4; // Placeholder for more complex SLA logic
+
     return (
         <div className="flex min-h-screen bg-background text-foreground">
             <main className="flex-1 p-8 overflow-y-auto">
@@ -115,7 +123,7 @@ export default function SuppliersPage() {
                             <Truck size={20} />
                             <span className="text-[10px] font-bold uppercase tracking-widest">{t('supply_chain')}</span>
                         </div>
-                        <div className="text-3xl font-bold">42 Partners</div>
+                        <div className="text-3xl font-bold">{activePartners} Partners</div>
                         <div className="text-[10px] text-gray-500 mt-2">Active supply routes</div>
                     </div>
 
@@ -124,7 +132,7 @@ export default function SuppliersPage() {
                             <Package size={20} />
                             <span className="text-[10px] font-bold uppercase tracking-widest">Active SKUs</span>
                         </div>
-                        <div className="text-3xl font-bold">1,240 Items</div>
+                        <div className="text-3xl font-bold">{activeSKUs} Items</div>
                         <div className="text-[10px] text-gray-500 mt-2">Inventory coverage</div>
                     </div>
 
@@ -133,7 +141,7 @@ export default function SuppliersPage() {
                             <CreditCard size={20} />
                             <span className="text-[10px] font-bold uppercase tracking-widest">Total Payables</span>
                         </div>
-                        <div className="text-3xl font-bold">207,000 EGP</div>
+                        <div className="text-3xl font-bold">{totalPayables.toLocaleString()} EGP</div>
                         <div className="text-[10px] text-gray-500 mt-2">Connected to Expenses</div>
                     </div>
 
@@ -142,7 +150,7 @@ export default function SuppliersPage() {
                             <BarChart2 size={20} />
                             <span className="text-[10px] font-bold uppercase tracking-widest">Reliability</span>
                         </div>
-                        <div className="text-3xl font-bold">96.4%</div>
+                        <div className="text-3xl font-bold">{averageReliability}%</div>
                         <div className="text-[10px] text-gray-500 mt-2">Delivery SLA met</div>
                     </div>
                 </div>

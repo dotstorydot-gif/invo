@@ -37,11 +37,13 @@ export default function PurchasesPage() {
     const { t } = useLanguage();
     const { data: purchaseData, loading, upsert } = useERPData<any>('purchases');
     const { data: suppliers } = useERPData<any>('suppliers');
+    const { data: units } = useERPData<any>('units');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [formData, setFormData] = useState({
         supplier_id: '',
+        unit_id: '',
         type: 'Request',
         total_amount: 0,
         status: 'Pending'
@@ -52,6 +54,7 @@ export default function PurchasesPage() {
             setIsSubmitting(true);
             await upsert({
                 supplier_id: formData.supplier_id || null,
+                unit_id: formData.unit_id || null,
                 type: formData.type,
                 total_amount: Number(formData.total_amount),
                 status: formData.status
@@ -59,6 +62,7 @@ export default function PurchasesPage() {
             setIsModalOpen(false);
             setFormData({
                 supplier_id: '',
+                unit_id: '',
                 type: 'Request',
                 total_amount: 0,
                 status: 'Pending'
@@ -72,10 +76,10 @@ export default function PurchasesPage() {
     };
 
     const purchaseFlow = [
-        { label: t('purchase_requests'), icon: FileText, count: 5, color: "text-blue-400" },
-        { label: t('rfqs'), icon: ClipboardList, count: 3, color: "text-indigo-400" },
-        { label: t('purchase_orders'), icon: ShoppingCart, count: 8, color: "text-emerald-400" },
-        { label: t('purchase_invoices'), icon: CreditCard, count: 12, color: "text-amber-400" }
+        { label: t('purchase_requests'), icon: FileText, count: purchaseData.filter((p: any) => p.type === 'Request').length, color: "text-blue-400" },
+        { label: t('rfqs'), icon: ClipboardList, count: purchaseData.filter((p: any) => p.type === 'RFQ').length, color: "text-indigo-400" },
+        { label: t('purchase_orders'), icon: ShoppingCart, count: purchaseData.filter((p: any) => p.type === 'Order').length, color: "text-emerald-400" },
+        { label: t('purchase_invoices'), icon: CreditCard, count: purchaseData.filter((p: any) => p.type === 'Invoice').length, color: "text-amber-400" }
     ];
 
     return (
@@ -164,7 +168,7 @@ export default function PurchasesPage() {
                                     {loading ? (
                                         <div className="text-center py-10 text-gray-500 italic">Syncing procurement data...</div>
                                     ) : (
-                                        purchaseData.map((po, i) => (
+                                        purchaseData.map((po: any, i: number) => (
                                             <div key={i} className="flex justify-between items-center p-4 border border-border-custom rounded-xl hover:bg-white/5 transition-all">
                                                 <div className="flex gap-4">
                                                     <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400">
@@ -172,7 +176,12 @@ export default function PurchasesPage() {
                                                     </div>
                                                     <div>
                                                         <div className="font-bold text-sm">{po.id?.slice(0, 8) || `PO-${1000 + i}`}</div>
-                                                        <div className="text-[10px] text-gray-500 font-bold uppercase">{po.type || t('purchase_orders')}</div>
+                                                        <div className="text-[10px] text-gray-500 font-bold uppercase">
+                                                            {po.type || t('purchase_orders')}
+                                                            {po.unit_id && units.find((u: any) => u.id === po.unit_id) && (
+                                                                <span className="ml-2 text-accent">| Unit: {units.find((u: any) => u.id === po.unit_id)?.name}</span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
@@ -206,6 +215,19 @@ export default function PurchasesPage() {
                                 <option value="">Select Supplier</option>
                                 {suppliers.map((s: any) => (
                                     <option key={s.id} value={s.id}>{s.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Project/Unit</label>
+                            <select
+                                value={formData.unit_id}
+                                onChange={(e) => setFormData({ ...formData, unit_id: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            >
+                                <option value="">None / Global</option>
+                                {units.map((u: any) => (
+                                    <option key={u.id} value={u.id}>{u.name}</option>
                                 ))}
                             </select>
                         </div>

@@ -14,6 +14,7 @@ import {
 import { motion } from "framer-motion";
 import { useLanguage } from "@/context/LanguageContext";
 import { SmartActionCenter } from "@/components/SmartActionCenter";
+import { useERPData } from "@/hooks/useERPData";
 import { LucideIcon } from "lucide-react";
 
 const KPICard = ({ title, value, change, icon: Icon, color }: { title: string, value: string, change: string, icon: LucideIcon, color: string }) => (
@@ -38,6 +39,25 @@ const KPICard = ({ title, value, change, icon: Icon, color }: { title: string, v
 
 export default function Dashboard() {
   const { t, toggleLanguage, language } = useLanguage();
+  const { data: expenses } = useERPData<any>('expenses');
+  const { data: units } = useERPData<any>('units');
+  const { data: customers } = useERPData<any>('customers');
+  const { data: salesInvoices } = useERPData<any>('sales_invoices');
+  const { data: stashTransactions } = useERPData<any>('stash_transactions');
+
+  // Aggregations
+  const totalRevenue = salesInvoices.reduce((sum: number, inv: any) => sum + (Number(inv.amount) || 0), 0) +
+    stashTransactions.filter((tx: any) => tx.type === 'In').reduce((sum: number, tx: any) => sum + (Number(tx.amount) || 0), 0);
+
+  const activeUnits = units.filter((u: any) => u.status === 'Available').length;
+  const customerCount = customers.length;
+  const occupancyRate = units.length > 0 ? (units.filter((u: any) => u.status !== 'Available').length / units.length) * 100 : 0;
+
+  const recentActivity = [
+    ...salesInvoices.map((inv: any) => ({ label: "Invoice created", client: `Amount: ${inv.amount}`, time: new Date(inv.created_at).toLocaleDateString() })),
+    ...stashTransactions.map((tx: any) => ({ label: `Cash Stash ${tx.type}`, client: tx.source, time: new Date(tx.created_at).toLocaleDateString() })),
+    ...expenses.slice(0, 2).map((exp: any) => ({ label: "Expense recorded", client: exp.category, time: new Date(exp.date).toLocaleDateString() }))
+  ].sort((a: any, b: any) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 4);
 
   return (
     <main className="flex-1 p-8 overflow-y-auto w-full">
@@ -75,10 +95,10 @@ export default function Dashboard() {
 
       {/* KPI Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-        <KPICard title={t('total_revenue')} value="45.8M" change="+12.5%" icon={TrendingUp} color="text-emerald-400" />
-        <KPICard title={t('active_units')} value="842" change="+3.2%" icon={Building2} color="text-accent" />
-        <KPICard title="Customers" value="1,248" change="+5.4%" icon={Users2} color="text-blue-400" />
-        <KPICard title="Occupancy" value="94.2%" change="+1.8%" icon={BarChart3} color="text-purple-400" />
+        <KPICard title={t('total_revenue')} value={`${(totalRevenue / 1000000).toFixed(1)}M`} change="+0%" icon={TrendingUp} color="text-emerald-400" />
+        <KPICard title={t('active_units')} value={activeUnits.toString()} change="+0%" icon={Building2} color="text-accent" />
+        <KPICard title="Customers" value={customerCount.toString()} change="+0%" icon={Users2} color="text-blue-400" />
+        <KPICard title="Occupancy" value={`${occupancyRate.toFixed(1)}%`} change="+0%" icon={BarChart3} color="text-purple-400" />
       </div>
 
       {/* Charts & Activity Section */}
@@ -118,12 +138,7 @@ export default function Dashboard() {
           </div>
 
           <div className="flex flex-col gap-6">
-            {[
-              { label: "New Invoice created", client: "Client A", time: "10:25 ago" },
-              { label: "Payment received", client: "Client B", time: "11:25 ago" },
-              { label: "New Rental Contract", client: "Unit 304", time: "12:33 ago" },
-              { label: "Maintenance alert", client: "System", time: "13:33 ago" }
-            ].map((activity, i) => (
+            {recentActivity.map((activity, i) => (
               <div key={i} className="flex gap-4 border-l-2 border-accent/20 pl-4 py-1 hover:border-accent transition-colors">
                 <div>
                   <div className="text-sm font-bold">{activity.label}</div>
@@ -132,6 +147,9 @@ export default function Dashboard() {
                 </div>
               </div>
             ))}
+            {recentActivity.length === 0 && (
+              <div className="text-center py-10 text-gray-500 italic">No recent activity detected.</div>
+            )}
           </div>
         </div>
       </div>

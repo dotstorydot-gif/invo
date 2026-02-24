@@ -26,6 +26,13 @@ export default function PayrollPage() {
     const { t } = useLanguage();
     const { data: salaryData, loading } = useERPData<any>('salary_registers');
 
+    const { data: staff } = useERPData<any>('staff');
+
+    const activeStaffCount = staff.length;
+    const totalMonthlyPayroll = staff.reduce((sum, s) => sum + (Number(s.base_salary) || 0), 0);
+    const pendingAdvances = 18500; // Placeholder until advances table is available
+    const complianceRate = 100;
+
     return (
         <div className="flex min-h-screen bg-background text-foreground">
             <main className="flex-1 p-8 overflow-y-auto">
@@ -59,7 +66,7 @@ export default function PayrollPage() {
                             <Users size={20} />
                             <span className="text-[10px] font-bold uppercase tracking-widest">Active Staff</span>
                         </div>
-                        <div className="text-3xl font-bold">128 Employees</div>
+                        <div className="text-3xl font-bold">{activeStaffCount} Employees</div>
                         <div className="text-[10px] text-gray-500 mt-2">All sectors (Sales/Const)</div>
                     </div>
 
@@ -68,8 +75,8 @@ export default function PayrollPage() {
                             <BadgeDollarSign size={20} />
                             <span className="text-[10px] font-bold uppercase tracking-widest">Total Monthly Payroll</span>
                         </div>
-                        <div className="text-3xl font-bold">1.45M EGP</div>
-                        <div className="text-[10px] text-gray-500 mt-2">Projected for Feb 2026</div>
+                        <div className="text-3xl font-bold">{(totalMonthlyPayroll / 1000).toFixed(1)}K EGP</div>
+                        <div className="text-[10px] text-gray-500 mt-2">Current projected monthly</div>
                     </div>
 
                     <div className="glass p-6 border-amber-500/20 bg-amber-500/5">
@@ -77,7 +84,7 @@ export default function PayrollPage() {
                             <History size={20} />
                             <span className="text-[10px] font-bold uppercase tracking-widest">Pending Advances</span>
                         </div>
-                        <div className="text-3xl font-bold">18,500 EGP</div>
+                        <div className="text-3xl font-bold">{pendingAdvances.toLocaleString()} EGP</div>
                         <div className="text-[10px] text-gray-500 mt-2">Deductions scheduled</div>
                     </div>
 
@@ -86,7 +93,7 @@ export default function PayrollPage() {
                             <ShieldCheck size={20} />
                             <span className="text-[10px] font-bold uppercase tracking-widest">Compliance</span>
                         </div>
-                        <div className="text-3xl font-bold">100%</div>
+                        <div className="text-3xl font-bold">{complianceRate}%</div>
                         <div className="text-[10px] text-gray-500 mt-2">Regulatory standards met</div>
                     </div>
                 </div>

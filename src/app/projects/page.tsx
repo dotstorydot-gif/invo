@@ -15,6 +15,7 @@ import {
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
+import { useERPData } from "@/hooks/useERPData";
 
 interface Project {
     id: string;
@@ -27,11 +28,8 @@ interface Project {
 
 export default function ProjectsPage() {
     const { t } = useLanguage();
-    const [projects] = useState<Project[]>([
-        { id: "PRJ-01", name: "Sunrise Heights", location: "New Cairo", totalUnits: 150, soldUnits: 120, revenue: 185000000 },
-        { id: "PRJ-02", name: "The Crystal Plaza", location: "Zayed City", totalUnits: 80, soldUnits: 45, revenue: 120000000 },
-        { id: "PRJ-03", name: "Marina Sands", location: "North Coast", totalUnits: 200, soldUnits: 180, revenue: 450000000 }
-    ]);
+    const { data: projects, loading } = useERPData<any>('projects');
+    const { data: units } = useERPData<any>('units');
 
     return (
         <div className="flex min-h-screen bg-background text-foreground">
@@ -60,24 +58,28 @@ export default function ProjectsPage() {
                             <Building size={20} />
                             <span className="text-sm font-bold uppercase tracking-widest">{t('total_units')}</span>
                         </div>
-                        <div className="text-3xl font-bold">430</div>
-                        <div className="text-xs text-gray-500 mt-1">Across 3 Construction Projects</div>
+                        <div className="text-3xl font-bold">{units.length}</div>
+                        <div className="text-xs text-gray-500 mt-1">Across {projects.length} Construction Projects</div>
                     </div>
                     <div className="glass p-6">
                         <div className="flex items-center gap-3 mb-4 text-blue-400">
                             <PieChart size={20} />
                             <span className="text-sm font-bold uppercase tracking-widest">Occupancy Rate</span>
                         </div>
-                        <div className="text-3xl font-bold">78%</div>
-                        <div className="text-xs text-gray-500 mt-1">+5.2% from last construction phase</div>
+                        <div className="text-3xl font-bold">
+                            {units.length > 0 ? Math.round((units.filter((u: any) => u.status === 'Occupied' || u.status === 'Sold').length / units.length) * 100) : 0}%
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">Based on sold/occupied units</div>
                     </div>
                     <div className="glass p-6">
                         <div className="flex items-center gap-3 mb-4 text-amber-400">
                             <BarChart3 size={20} />
                             <span className="text-sm font-bold uppercase tracking-widest">Est. Project Revenue</span>
                         </div>
-                        <div className="text-3xl font-bold">755M EGP</div>
-                        <div className="text-xs text-gray-500 mt-1">Total projected value</div>
+                        <div className="text-3xl font-bold">
+                            {(units.reduce((sum: number, u: any) => sum + (Number(u.price) || 0), 0) / 1000000).toFixed(1)}M EGP
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">Total unit asset value</div>
                     </div>
                 </div>
 
@@ -106,56 +108,65 @@ export default function ProjectsPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {projects.map((prj) => (
-                                        <tr key={prj.id} className="border-b border-border-custom hover:bg-white/5 transition-colors group">
+                                    {projects.map((prj: any) => {
+                                        const projectUnits = units.filter((u: any) => u.project_id === prj.id);
+                                        const totalUnits = projectUnits.length;
+                                        const soldUnits = projectUnits.filter((u: any) => u.status === 'Sold' || u.status === 'Installments').length;
+                                        const progress = totalUnits > 0 ? Math.round((soldUnits / totalUnits) * 100) : 0;
+
+                                        return (
+                                            <tr key={prj.id} className="border-b border-border-custom hover:bg-white/5 transition-colors group">
+                                                <td className="p-6">
+                                                    <div className="font-bold text-white text-lg">{prj.name}</div>
+                                                    <div className="text-[10px] text-accent font-mono">{prj.id?.slice(0, 8)}</div>
+                                                </td>
+                                                <td className="p-6 text-sm text-gray-400">{prj.location || 'N/A'}</td>
+                                                <td className="p-6">
+                                                    <div className="flex items-center gap-2 font-bold">
+                                                        <Home size={16} className="text-gray-500" />
+                                                        {totalUnits}
+                                                    </div>
+                                                </td>
+                                                <td className="p-6 min-w-[200px]">
+                                                    <div className="space-y-2">
+                                                        <div className="flex justify-between text-[10px] font-bold">
+                                                            <span className="text-gray-400">{soldUnits} Sold</span>
+                                                            <span className="text-accent">{progress}%</span>
+                                                        </div>
+                                                        <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                                            <div
+                                                                className="h-full bg-accent"
+                                                                style={{ width: `${progress}%` }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="p-6">
+                                                    <Link href={`/units?project=${prj.name}`} className="flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-accent transition-all group/btn">
+                                                        {t('view_details')}
+                                                        <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                                                    </Link>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                    {/* Unassigned Project Row */}
+                                    {units.filter((u: any) => !u.project_id).length > 0 && (
+                                        <tr className="bg-red-500/5 hover:bg-red-500/10 transition-colors">
                                             <td className="p-6">
-                                                <div className="font-bold text-white text-lg">{prj.name}</div>
-                                                <div className="text-[10px] text-accent font-mono">{prj.id}</div>
-                                            </td>
-                                            <td className="p-6 text-sm text-gray-400">{prj.location}</td>
-                                            <td className="p-6">
-                                                <div className="flex items-center gap-2 font-bold">
-                                                    <Home size={16} className="text-gray-500" />
-                                                    {prj.totalUnits}
+                                                <div className="font-bold text-red-400 flex items-center gap-2">
+                                                    {t('unassigned')}
+                                                    <span className="px-2 py-0.5 rounded text-[10px] bg-red-500/10 border border-red-500/20">Action Required</span>
                                                 </div>
                                             </td>
-                                            <td className="p-6 min-w-[200px]">
-                                                <div className="space-y-2">
-                                                    <div className="flex justify-between text-[10px] font-bold">
-                                                        <span className="text-gray-400">{prj.soldUnits} Sold</span>
-                                                        <span className="text-accent">{Math.round((prj.soldUnits / prj.totalUnits) * 100)}%</span>
-                                                    </div>
-                                                    <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                                                        <div
-                                                            className="h-full bg-accent"
-                                                            style={{ width: `${(prj.soldUnits / prj.totalUnits) * 100}%` }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </td>
+                                            <td className="p-6 text-sm text-gray-500">Multiple Locations</td>
+                                            <td className="p-6 font-bold text-red-400">{units.filter((u: any) => !u.project_id).length}</td>
+                                            <td className="p-6 text-xs text-gray-500 italic">Units not linked to any project phase</td>
                                             <td className="p-6">
-                                                <button className="flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-accent transition-all group/btn">
-                                                    {t('view_details')}
-                                                    <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
-                                                </button>
+                                                <Link href="/units?project=unassigned" className="text-xs font-bold text-accent hover:underline">Link Units</Link>
                                             </td>
                                         </tr>
-                                    ))}
-                                    {/* Unassigned Project Row */}
-                                    <tr className="bg-red-500/5 hover:bg-red-500/10 transition-colors">
-                                        <td className="p-6">
-                                            <div className="font-bold text-red-400 flex items-center gap-2">
-                                                {t('unassigned')}
-                                                <span className="px-2 py-0.5 rounded text-[10px] bg-red-500/10 border border-red-500/20">Action Required</span>
-                                            </div>
-                                        </td>
-                                        <td className="p-6 text-sm text-gray-500">Multiple Locations</td>
-                                        <td className="p-6 font-bold text-red-400">12</td>
-                                        <td className="p-6 text-xs text-gray-500 italic">Units not linked to any project phase</td>
-                                        <td className="p-6">
-                                            <button className="text-xs font-bold text-accent hover:underline">Link Units</button>
-                                        </td>
-                                    </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>

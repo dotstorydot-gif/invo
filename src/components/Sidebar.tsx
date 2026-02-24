@@ -8,7 +8,6 @@ import {
     BarChart3,
     LayoutDashboard,
     Settings,
-    ChevronUp,
     Package,
     CreditCard,
     Wallet,
@@ -55,6 +54,7 @@ export default function Sidebar() {
                 <SidebarItem href="/installments" icon={CreditCard} label={t('installments')} active={pathname === '/installments'} />
                 <SidebarItem href="/cheques" icon={Wallet} label={t('cheques')} active={pathname === '/cheques'} />
                 <SidebarItem href="/invoices" icon={CircleDollarSign} label={t('sales')} active={pathname === '/invoices'} />
+                <SidebarItem href="/stash" icon={Wallet} label={t('stash')} active={pathname === '/stash'} />
                 <SidebarItem href="/units" icon={Building2} label={t('rentals')} active={pathname === '/units'} />
                 <SidebarItem href="/inventory" icon={Package} label={t('inventory')} active={pathname === '/inventory'} />
                 <SidebarItem href="/purchases" icon={ShoppingCart} label={t('purchases')} active={pathname === '/purchases'} />

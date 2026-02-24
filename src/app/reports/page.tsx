@@ -21,14 +21,36 @@ import {
     Clock,
     History,
     FileText,
-    UserCheck,
-    Truck
+    UserCheck
 } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
+import { useERPData } from "@/hooks/useERPData";
 
 export default function ReportsPage() {
     const { t } = useLanguage();
+
+    const { data: invoices } = useERPData<any>('sales_invoices');
+    const { data: expenses } = useERPData<any>('expenses');
+    const { data: staff } = useERPData<any>('staff');
+    const { data: inventory } = useERPData<any>('inventory');
+    const { data: cheques } = useERPData<any>('cheques');
+    const { data: installments } = useERPData<any>('installments');
+
+    // Financial calculations
+    const totalSales = invoices.reduce((sum, inv) => sum + (Number(inv.total_amount) || 0), 0);
+    const totalInstallments = installments.reduce((sum, rec) => sum + (Number(rec.paid_amount) || 0), 0);
+    const totalCollections = cheques.filter((c: any) => c.direction === 'Incoming' && c.status === 'Cleared')
+        .reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
+
+    const totalRevenue = totalSales + totalInstallments + totalCollections;
+
+    const baseExpenses = expenses.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
+    const payrollExpenses = staff.reduce((sum, s) => sum + (Number(s.base_salary) || 0), 0);
+    const materialValue = inventory.reduce((sum, item) => sum + (Number(item.cost_price) * Number(item.quantity) || 0), 0);
+
+    const totalExpenses = baseExpenses + payrollExpenses; // Material value is asset, not necessarily immediate expense
+    const netProfit = totalRevenue - totalExpenses;
 
     const reportCategories = [
         { id: 'financial', title: t('total_revenue'), icon: TrendingUp, color: "text-emerald-400" },
@@ -84,10 +106,10 @@ export default function ReportsPage() {
                             <div className="p-3 rounded-xl bg-accent/10 text-accent">
                                 <TrendingUp size={24} />
                             </div>
-                            <div className="px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-500 text-[10px] font-bold">+18.5%</div>
+                            <div className="px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-500 text-[10px] font-bold">+0%</div>
                         </div>
                         <div className="text-gray-400 text-sm font-bold uppercase tracking-widest mb-1">{t('total_revenue')}</div>
-                        <div className="text-4xl font-bold">45,850,000 EGP</div>
+                        <div className="text-4xl font-bold">{totalRevenue.toLocaleString()} EGP</div>
                         <div className="mt-4 flex items-center gap-2 text-[10px] text-gray-500">
                             <ArrowUpRight size={12} className="text-emerald-500" />
                             Includes Sales, Installments, & Cleared Cheques
@@ -99,10 +121,10 @@ export default function ReportsPage() {
                             <div className="p-3 rounded-xl bg-red-500/10 text-red-500">
                                 <ArrowUpRight size={24} />
                             </div>
-                            <div className="px-2 py-1 rounded-lg bg-red-500/10 text-red-500 text-[10px] font-bold">+5.2%</div>
+                            <div className="px-2 py-1 rounded-lg bg-red-500/10 text-red-500 text-[10px] font-bold">+0%</div>
                         </div>
                         <div className="text-gray-400 text-sm font-bold uppercase tracking-widest mb-1">{t('total_expenses')}</div>
-                        <div className="text-4xl font-bold text-red-400">12,120,500 EGP</div>
+                        <div className="text-4xl font-bold text-red-400">{totalExpenses.toLocaleString()} EGP</div>
                         <div className="mt-4 flex items-center gap-2 text-[10px] text-gray-500">
                             <ArrowUpRight size={12} className="text-red-500" />
                             Includes Staff, Materials, Fixed Costs, & Assets
@@ -114,13 +136,13 @@ export default function ReportsPage() {
                             <div className="p-3 rounded-xl bg-blue-500/10 text-blue-400">
                                 <Activity size={24} />
                             </div>
-                            <div className="px-2 py-1 rounded-lg bg-blue-500/10 text-blue-400 text-[10px] font-bold">Health: 92%</div>
+                            <div className="px-2 py-1 rounded-lg bg-blue-500/10 text-blue-400 text-[10px] font-bold">Health: {totalRevenue > totalExpenses ? 'Good' : 'Critical'}</div>
                         </div>
                         <div className="text-gray-400 text-sm font-bold uppercase tracking-widest mb-1">{t('net_profit')}</div>
-                        <div className="text-4xl font-bold text-blue-400">33,729,500 EGP</div>
+                        <div className="text-4xl font-bold text-blue-400">{netProfit.toLocaleString()} EGP</div>
                         <div className="mt-4 flex items-center gap-2 text-[10px] text-gray-500">
                             <BarChart3 size={12} className="text-blue-400" />
-                            Net Margin: 73.5%
+                            Net Margin: {totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 100) : 0}%
                         </div>
                     </div>
                 </div>
@@ -133,9 +155,9 @@ export default function ReportsPage() {
                         </h3>
                         <div className="space-y-6">
                             {[
-                                { label: "Unit Installations", value: 28400000, icon: Building2, color: "text-emerald-400", link: "/installments" },
-                                { label: "Cash Sales", value: 12500000, icon: DollarSign, color: "text-blue-400", link: "/invoices" },
-                                { label: "Cheque Collections", value: 4950000, icon: Wallet, color: "text-amber-400", link: "/cheques" }
+                                { label: "Unit Installations", value: totalInstallments, icon: Building2, color: "text-emerald-400", link: "/installments" },
+                                { label: "Cash Sales", value: totalSales, icon: DollarSign, color: "text-blue-400", link: "/invoices" },
+                                { label: "Cheque Collections", value: totalCollections, icon: Wallet, color: "text-amber-400", link: "/cheques" }
                             ].map((item, i) => (
                                 <Link href={item.link} key={i} className="flex justify-between items-center group hover:bg-white/5 p-3 rounded-xl transition-all">
                                     <div className="flex items-center gap-4">
@@ -147,7 +169,7 @@ export default function ReportsPage() {
                                     <div className="text-right">
                                         <div className="font-bold text-lg">{item.value.toLocaleString()} EGP</div>
                                         <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest text-right">
-                                            {Math.round(item.value / 45850000 * 100)}% of total
+                                            {totalRevenue > 0 ? Math.round(item.value / totalRevenue * 100) : 0}% of total
                                         </div>
                                     </div>
                                 </Link>
@@ -162,10 +184,9 @@ export default function ReportsPage() {
                         </h3>
                         <div className="space-y-6">
                             {[
-                                { label: "Staff Payroll", value: 4500000, icon: Users2, color: "text-purple-400", link: "/staff" },
-                                { label: "Inventory & Materials", value: 5800000, icon: Package, color: "text-red-400", link: "/inventory" },
-                                { label: "Sales Commissions", value: 82500, icon: TrendingUp, color: "text-emerald-400", link: "/payroll" },
-                                { label: "Supplier Payments", value: 1820500, icon: Truck, color: "text-amber-400", link: "/suppliers" }
+                                { label: "Staff Payroll", value: payrollExpenses, icon: Users2, color: "text-purple-400", link: "/staff" },
+                                { label: "Direct Expenses", value: baseExpenses, icon: Package, color: "text-red-400", link: "/expenses" },
+                                { label: "Inventory Value", value: materialValue, icon: TrendingUp, color: "text-emerald-400", link: "/inventory" },
                             ].map((item, i) => (
                                 <Link href={item.link} key={i} className="flex justify-between items-center group hover:bg-white/5 p-3 rounded-xl transition-all">
                                     <div className="flex items-center gap-4">
@@ -177,7 +198,7 @@ export default function ReportsPage() {
                                     <div className="text-right">
                                         <div className="font-bold text-lg">{item.value.toLocaleString()} EGP</div>
                                         <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest text-right">
-                                            {Math.round(item.value / 12120500 * 100)}% of cost
+                                            {totalExpenses > 0 ? Math.round(item.value / totalExpenses * 100) : 0}% contribution
                                         </div>
                                     </div>
                                 </Link>

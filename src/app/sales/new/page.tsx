@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
     Users,
     Home,
@@ -18,7 +18,6 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useLanguage } from "@/context/LanguageContext";
 import { useERPData } from "@/hooks/useERPData";
 
 const STEPS = [
@@ -28,27 +27,37 @@ const STEPS = [
     { id: 4, title: "Final Review", icon: CheckCircle2 }
 ];
 
+interface Customer { id: string; name: string; phone: string; email: string; }
+interface Unit {
+    id: string;
+    name: string;
+    price: number;
+    status: string;
+    project?: string;
+    consumer_name?: string;
+    paid_amount?: number;
+}
+interface Plan { id: string; name: string; installments_count: number; interest_rate: number; down_payment_percentage: number; }
+
 export default function NewSalePage() {
-    const { t } = useLanguage();
     const router = useRouter();
     const [currentStep, setCurrentStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Data Hooks
-    const { data: customers } = useERPData<any>('customers');
-    const { data: units } = useERPData<any>('units');
-    const { data: plans } = useERPData<any>('payment_plans');
-    const { upsert: upsertCustomer } = useERPData<any>('customers');
+    const { data: customers } = useERPData<Customer>('customers');
+    const { data: units } = useERPData<Unit>('units');
+    const { data: plans } = useERPData<Plan>('payment_plans');
+    const { upsert: upsertCustomer } = useERPData<Customer>('customers');
     const { upsert: upsertInvoice } = useERPData<any>('sales_invoices');
     const { upsert: upsertInstallment } = useERPData<any>('installments');
-    const { upsert: updateUnit } = useERPData<any>('units');
+    const { upsert: updateUnit } = useERPData<Unit>('units');
 
     // Form State
-    const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', email: '' });
-    const [selectedUnit, setSelectedUnit] = useState<any>(null);
-    const [selectedPlan, setSelectedPlan] = useState<any>(null);
-    const [downPayment, setDownPayment] = useState(0);
+    const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
+    const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
 
     const availableUnits = units.filter((u: any) => u.status === 'Available');
 
@@ -65,15 +74,19 @@ export default function NewSalePage() {
                     phone: newCustomer.phone,
                     email: newCustomer.email
                 });
-                // Note: useERPData upsert doesn't return the record in current implementation easily, 
-                // but in real use it should. Assuming it worked and we might need to find it or refresh.
-                // For this MVP flow, we'll assume selectedCustomer is picked or just created.
-                // Re-fetch or find by phone if needed.
-                customerId = res?.[0]?.id;
+
+                if (res && res.length > 0) {
+                    customerId = res[0].id;
+                }
             }
 
             if (!customerId && !selectedCustomer) {
                 alert("Please select or create a customer first.");
+                return;
+            }
+
+            if (!selectedUnit) {
+                alert("Please select a unit first.");
                 return;
             }
 
@@ -91,18 +104,16 @@ export default function NewSalePage() {
                 id: selectedUnit.id,
                 status: selectedPlan ? 'Installments' : 'Sold',
                 consumer_name: selectedCustomer?.name || newCustomer.name,
-                paid_amount: downPayment
+                paid_amount: 0 // Default for now
             });
 
             // 4. Create Installment Schedule if plan selected
-            if (selectedPlan) {
-                // Simplified: Create 1 entry for the plan tracking. 
-                // A fuller system would create N installment records.
+            if (selectedPlan && customerId) {
                 await upsertInstallment({
                     unit_id: selectedUnit.id,
                     customer_id: customerId,
                     plan_id: selectedPlan.id,
-                    total_amount: selectedUnit.price - downPayment,
+                    total_amount: selectedUnit.price,
                     paid_amount: 0,
                     status: 'Pending',
                     next_due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
@@ -150,8 +161,8 @@ export default function NewSalePage() {
                         return (
                             <div key={step.id} className="relative z-10 flex flex-col items-center gap-2">
                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 border-2 ${isCompleted ? 'bg-accent border-accent text-white shadow-[0_0_20px_rgba(16,185,129,0.4)]' :
-                                        isActive ? 'bg-background border-accent text-accent' :
-                                            'bg-background border-border-custom text-gray-500'
+                                    isActive ? 'bg-background border-accent text-accent' :
+                                        'bg-background border-border-custom text-gray-500'
                                     }`}>
                                     <Icon size={20} />
                                 </div>
@@ -322,22 +333,22 @@ export default function NewSalePage() {
                                         <div className="space-y-4">
                                             <div className="flex justify-between text-sm">
                                                 <span className="text-gray-400">Unit Price</span>
-                                                <span className="font-bold">${selectedUnit?.price?.toLocaleString()}</span>
+                                                <span className="font-bold">${selectedUnit?.price?.toLocaleString() || '0'}</span>
                                             </div>
-                                            {selectedPlan && (
+                                            {selectedPlan && selectedUnit && (
                                                 <>
                                                     <div className="flex justify-between text-sm">
                                                         <span className="text-gray-400">Down Payment ({selectedPlan.down_payment_percentage}%)</span>
-                                                        <span className="font-bold text-accent">${(selectedUnit?.price * selectedPlan.down_payment_percentage / 100).toLocaleString()}</span>
+                                                        <span className="font-bold text-accent">${(selectedUnit.price * selectedPlan.down_payment_percentage / 100).toLocaleString()}</span>
                                                     </div>
                                                     <div className="flex justify-between text-sm">
                                                         <span className="text-gray-400">Interest ({selectedPlan.interest_rate}%)</span>
-                                                        <span className="font-bold text-blue-400">+${(selectedUnit?.price * selectedPlan.interest_rate / 100).toLocaleString()}</span>
+                                                        <span className="font-bold text-blue-400">+${(selectedUnit.price * selectedPlan.interest_rate / 100).toLocaleString()}</span>
                                                     </div>
                                                     <div className="pt-4 border-t border-border-custom flex justify-between items-center">
                                                         <span className="text-sm font-bold uppercase">Monthly Installment</span>
                                                         <span className="text-xl font-bold gradient-text">
-                                                            ${((selectedUnit?.price * (1 + selectedPlan.interest_rate / 100) - (selectedUnit?.price * selectedPlan.down_payment_percentage / 100)) / selectedPlan.installments_count).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                                            ${((selectedUnit.price * (1 + selectedPlan.interest_rate / 100) - (selectedUnit.price * selectedPlan.down_payment_percentage / 100)) / selectedPlan.installments_count).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                                         </span>
                                                     </div>
                                                 </>

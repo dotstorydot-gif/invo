@@ -28,15 +28,18 @@ export function useERPData<T>(table: string) {
 
     const upsert = async (payload: Partial<T>) => {
         try {
-            const { error: upsertError } = await supabase
+            const { data: result, error: upsertError } = await supabase
                 .from(table)
-                .upsert(payload);
+                .upsert(payload)
+                .select();
 
             if (upsertError) throw upsertError;
             await fetchData();
+            return result;
         } catch (err: unknown) {
             if (err instanceof Error) setError(err.message);
             else if ((err as PostgrestError).message) setError((err as PostgrestError).message);
+            return null;
         }
     };
 

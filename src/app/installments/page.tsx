@@ -9,9 +9,6 @@ import {
     Calendar,
     CheckCircle2,
     Clock,
-    AlertCircle,
-    TrendingUp,
-    Percent,
     User,
     Home,
     ChevronRight,
@@ -45,8 +42,8 @@ export default function InstallmentsPage() {
     const { t } = useLanguage();
     const { data: plans, loading: plansLoading, upsert: upsertPlan } = useERPData<PaymentPlan>('payment_plans');
     const { data: records, loading: recordsLoading, upsert: upsertRecord } = useERPData<InstallmentRecord>('installments');
-    const { data: customers } = useERPData<any>('customers');
-    const { data: units } = useERPData<any>('units');
+    const { data: customers } = useERPData<any[]>('customers');
+    const { data: units } = useERPData<any[]>('units');
     const { upsert: upsertInvoice } = useERPData<any>('sales_invoices');
 
     const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
@@ -99,9 +96,9 @@ export default function InstallmentsPage() {
     const handleAddRecord = async () => {
         try {
             setIsSubmitting(true);
-            const { error, data } = await upsertRecord({
-                unit_id: recordFormData.unit_id || null,
-                customer_id: recordFormData.customer_id || null,
+            await upsertRecord({
+                unit_id: recordFormData.unit_id || undefined,
+                customer_id: recordFormData.customer_id || undefined,
                 total_amount: Number(recordFormData.total_amount),
                 paid_amount: Number(recordFormData.paid_amount),
                 next_due_date: recordFormData.next_due_date,

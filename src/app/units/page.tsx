@@ -19,6 +19,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { useERPData } from "@/hooks/useERPData";
+import ERPFormModal from "@/components/ERPFormModal";
 
 interface Unit {
     id: string;
@@ -40,7 +41,54 @@ interface Unit {
 
 export default function UnitsPage() {
     const { t } = useLanguage();
-    const { data: units, loading } = useERPData<Unit>('units');
+    const { data: units, loading, upsert } = useERPData<Unit>('units');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const [formData, setFormData] = useState({
+        name: '',
+        type: 'Residential',
+        price: 0,
+        price_per_meter: 0,
+        rooms: 0,
+        is_finished: false,
+        status: 'Available',
+        project: ''
+    });
+
+    const handleAddUnit = async () => {
+        try {
+            setIsSubmitting(true);
+            await upsert({
+                name: formData.name,
+                type: formData.type,
+                price: Number(formData.price),
+                pricePerMeter: Number(formData.price_per_meter),
+                rooms: Number(formData.rooms),
+                isFinished: formData.is_finished,
+                status: formData.status as 'Available' | 'Sold' | 'Installments',
+                project: formData.project,
+                facilities: [],
+                photos: []
+            });
+            setIsModalOpen(false);
+            setFormData({
+                name: '',
+                type: 'Residential',
+                price: 0,
+                price_per_meter: 0,
+                rooms: 0,
+                is_finished: false,
+                status: 'Available',
+                project: ''
+            });
+        } catch (error) {
+            console.error("Error adding unit:", error);
+            alert("Failed to add unit. Check console for details.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
         <div className="flex min-h-screen bg-background text-foreground">
@@ -56,7 +104,10 @@ export default function UnitsPage() {
                         </div>
                     </div>
 
-                    <button className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all">
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
+                    >
                         <Plus size={20} />
                         <span>{t('add_unit')}</span>
                     </button>
@@ -202,6 +253,85 @@ export default function UnitsPage() {
                         ))}
                     </div>
                 )}
+
+                <ERPFormModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    title={t('add_unit')}
+                    onSubmit={handleAddUnit}
+                    loading={isSubmitting}
+                >
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Unit Name</label>
+                            <input
+                                type="text"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                                placeholder="e.g. Apartment 4B"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Type</label>
+                            <select
+                                value={formData.type}
+                                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            >
+                                <option value="Residential">Residential</option>
+                                <option value="Commercial">Commercial</option>
+                                <option value="Industrial">Industrial</option>
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Price (EGP)</label>
+                            <input
+                                type="number"
+                                value={formData.price}
+                                onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Price Per Meter</label>
+                            <input
+                                type="number"
+                                value={formData.price_per_meter}
+                                onChange={(e) => setFormData({ ...formData, price_per_meter: Number(e.target.value) })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Rooms</label>
+                            <input
+                                type="number"
+                                value={formData.rooms}
+                                onChange={(e) => setFormData({ ...formData, rooms: Number(e.target.value) })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Project Name</label>
+                            <input
+                                type="text"
+                                value={formData.project}
+                                onChange={(e) => setFormData({ ...formData, project: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                                placeholder="e.g. Sunrise Heights"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2 pt-4">
+                            <input
+                                type="checkbox"
+                                checked={formData.is_finished}
+                                onChange={(e) => setFormData({ ...formData, is_finished: e.target.checked })}
+                                className="w-4 h-4 rounded border-border-custom bg-white/5 accent-accent"
+                            />
+                            <label className="text-xs font-bold text-gray-300 uppercase">Finished Unit</label>
+                        </div>
+                    </div>
+                </ERPFormModal>
             </main>
         </div>
     );

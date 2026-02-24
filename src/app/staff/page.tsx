@@ -18,6 +18,8 @@ import {
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
+import { useERPData } from "@/hooks/useERPData";
+import ERPFormModal from "@/components/ERPFormModal";
 
 interface Employee {
     id: string;
@@ -30,13 +32,45 @@ interface Employee {
 
 export default function StaffPage() {
     const { t } = useLanguage();
-    const [employees, setEmployees] = useState<Employee[]>([
-        { id: "1", name: "Sameh Kamel", role: "Manager", baseSalary: 25000, penalties: 0, vacations: 2 },
-        { id: "2", name: "Ahmed Ali", role: "Accountant", baseSalary: 12000, penalties: 500, vacations: 5 },
-        { id: "3", name: "Sara Hassan", role: "Support", baseSalary: 8500, penalties: 0, vacations: 0 }
-    ]);
+    const { data: employees, loading, upsert } = useERPData<any>('staff');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const calculateNet = (emp: Employee) => emp.baseSalary - emp.penalties;
+    const [formData, setFormData] = useState({
+        full_name: '',
+        role: 'Consultant',
+        base_salary: 0,
+        email: '',
+        status: 'Active'
+    });
+
+    const handleAddStaff = async () => {
+        try {
+            setIsSubmitting(true);
+            await upsert({
+                full_name: formData.full_name,
+                role: formData.role,
+                base_salary: Number(formData.base_salary),
+                email: formData.email,
+                status: formData.status
+            });
+            setIsModalOpen(false);
+            setFormData({
+                full_name: '',
+                role: 'Consultant',
+                base_salary: 0,
+                email: '',
+                status: 'Active'
+            });
+        } catch (error) {
+            console.error("Error adding staff:", error);
+            alert("Failed to add staff member.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const calculateNet = (emp: any) => (emp.base_salary || emp.baseSalary || 0) - (emp.penalties || 0);
 
     return (
         <div className="flex min-h-screen bg-background text-foreground">
@@ -52,7 +86,10 @@ export default function StaffPage() {
                         </div>
                     </div>
 
-                    <button className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all">
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
+                    >
                         <Plus size={20} />
                         <span>{t('add_employee')}</span>
                     </button>
@@ -91,12 +128,12 @@ export default function StaffPage() {
                                                     <UserCircle size={24} />
                                                 </div>
                                                 <div>
-                                                    <div className="font-bold text-white">{emp.name}</div>
+                                                    <div className="font-bold text-white">{emp.full_name || emp.name}</div>
                                                     <div className="text-[10px] text-gray-500 uppercase tracking-tighter">{emp.role}</div>
                                                 </div>
                                             </td>
-                                            <td className="p-6 text-sm font-medium">{emp.baseSalary.toLocaleString()} EGP</td>
-                                            <td className="p-6 text-sm text-red-400">-{emp.penalties.toLocaleString()} EGP</td>
+                                            <td className="p-6 text-sm font-medium">{(emp.base_salary || emp.baseSalary || 0).toLocaleString()} EGP</td>
+                                            <td className="p-6 text-sm text-red-400">-{(emp.penalties || 0).toLocaleString()} EGP</td>
                                             <td className="p-6">
                                                 <div className="flex items-center gap-2 text-xs font-bold bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full w-fit">
                                                     <Umbrella size={12} />
@@ -126,6 +163,56 @@ export default function StaffPage() {
                         </div>
                     </div>
                 </div>
+
+                <ERPFormModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    title={t('add_employee')}
+                    onSubmit={handleAddStaff}
+                    loading={isSubmitting}
+                >
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Full Name</label>
+                            <input
+                                type="text"
+                                value={formData.full_name}
+                                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                                placeholder="Employee Name"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Email</label>
+                            <input
+                                type="email"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                                placeholder="email@company.com"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Role</label>
+                            <input
+                                type="text"
+                                value={formData.role}
+                                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                                placeholder="e.g. Sales Manager"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Base Salary (EGP)</label>
+                            <input
+                                type="number"
+                                value={formData.base_salary}
+                                onChange={(e) => setFormData({ ...formData, base_salary: Number(e.target.value) })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            />
+                        </div>
+                    </div>
+                </ERPFormModal>
             </main>
         </div>
     );

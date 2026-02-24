@@ -5,6 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 import { LanguageProvider } from "@/context/LanguageContext";
+import Sidebar from "@/components/Sidebar";
 
 export const metadata: Metadata = {
   title: "Invoica | Modern ERP & Invoicing",
@@ -20,7 +21,12 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={inter.className}>
         <LanguageProvider>
-          {children}
+          <div className="flex bg-background min-h-screen">
+            <Sidebar />
+            <div className="flex-1 flex flex-col h-screen overflow-hidden">
+              {children}
+            </div>
+          </div>
         </LanguageProvider>
       </body>
     </html>

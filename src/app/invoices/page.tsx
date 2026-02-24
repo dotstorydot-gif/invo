@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import {
     FileText,
     Plus,
@@ -15,6 +15,8 @@ import {
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
+import { useERPData } from "@/hooks/useERPData";
+import ERPFormModal from "@/components/ERPFormModal";
 import { uploadFile } from "@/lib/storage";
 
 const InvoiceRow = ({ id, client, date, amount, status }: { id: string, client: string, date: string, amount: string, status: 'Paid' | 'Pending' | 'Draft' }) => {
@@ -75,6 +77,45 @@ const InvoiceRow = ({ id, client, date, amount, status }: { id: string, client: 
 
 export default function InvoicesPage() {
     const { t } = useLanguage();
+    const { data: invoices, loading, upsert } = useERPData<any>('sales_invoices');
+    const { data: customers } = useERPData<any>('customers');
+    const { data: units } = useERPData<any>('units');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const [formData, setFormData] = useState({
+        customer_id: '',
+        unit_id: '',
+        amount: 0,
+        status: 'Draft',
+        due_date: new Date().toISOString().split('T')[0]
+    });
+
+    const handleCreateInvoice = async () => {
+        try {
+            setIsSubmitting(true);
+            await upsert({
+                customer_id: formData.customer_id || null,
+                unit_id: formData.unit_id || null,
+                amount: Number(formData.amount),
+                status: formData.status,
+                due_date: formData.due_date
+            });
+            setIsModalOpen(false);
+            setFormData({
+                customer_id: '',
+                unit_id: '',
+                amount: 0,
+                status: 'Draft',
+                due_date: new Date().toISOString().split('T')[0]
+            });
+        } catch (error) {
+            console.error("Error creating invoice:", error);
+            alert("Failed to create invoice.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
         <div className="flex min-h-screen bg-background text-foreground">
@@ -90,7 +131,10 @@ export default function InvoicesPage() {
                         </div>
                     </div>
 
-                    <button className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all">
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
+                    >
                         <Plus size={20} />
                         <span>{t('create_invoice')}</span>
                     </button>
@@ -106,11 +150,89 @@ export default function InvoicesPage() {
                     </div>
 
                     <div className="flex flex-col">
-                        <InvoiceRow id="#DRAFT-1" client="عميل #1 (Audit Placeholder)" date="19 Oct 2025" amount="1,150,000 EGP" status="Draft" />
-                        <InvoiceRow id="#INV-882" client="Main Branch Office" date="24 Feb 2026" amount="15,000 EGP" status="Paid" />
-                        <InvoiceRow id="#INV-881" client="POS Client" date="22 Feb 2026" amount="2,500 EGP" status="Pending" />
+                        {loading ? (
+                            <div className="text-center py-10 text-gray-500 italic">Syncing invoices...</div>
+                        ) : (
+                            invoices.map((inv: any, i: number) => (
+                                <InvoiceRow
+                                    key={inv.id || i}
+                                    id={inv.id?.slice(0, 8) || `#INV-${100 + i}`}
+                                    client={inv.customer?.name || "Regular Client"}
+                                    date={inv.created_at ? new Date(inv.created_at).toLocaleDateString() : "Today"}
+                                    amount={`${(inv.amount || 0).toLocaleString()} EGP`}
+                                    status={inv.status as any || 'Pending'}
+                                />
+                            ))
+                        )}
                     </div>
                 </div>
+
+                <ERPFormModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    title={t('create_invoice')}
+                    onSubmit={handleCreateInvoice}
+                    loading={isSubmitting}
+                >
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Customer</label>
+                            <select
+                                value={formData.customer_id}
+                                onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            >
+                                <option value="">Select Customer</option>
+                                {customers.map((c: any) => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Linked Unit</label>
+                            <select
+                                value={formData.unit_id}
+                                onChange={(e) => setFormData({ ...formData, unit_id: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            >
+                                <option value="">None / Service Only</option>
+                                {units.map((u: any) => (
+                                    <option key={u.id} value={u.id}>{u.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Amount (EGP)</label>
+                            <input
+                                type="number"
+                                value={formData.amount}
+                                onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Due Date</label>
+                            <input
+                                type="date"
+                                value={formData.due_date}
+                                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Status</label>
+                            <select
+                                value={formData.status}
+                                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            >
+                                <option value="Draft">Draft</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Paid">Paid</option>
+                            </select>
+                        </div>
+                    </div>
+                </ERPFormModal>
             </main>
         </div>
     );

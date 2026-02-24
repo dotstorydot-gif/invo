@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
     ShoppingCart,
     Plus,
@@ -20,6 +20,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { useERPData } from "@/hooks/useERPData";
+import ERPFormModal from "@/components/ERPFormModal";
 
 interface PurchaseStage {
     id: string;
@@ -34,7 +35,41 @@ interface PurchaseStage {
 
 export default function PurchasesPage() {
     const { t } = useLanguage();
-    const { data: purchaseData, loading } = useERPData<any>('purchases');
+    const { data: purchaseData, loading, upsert } = useERPData<any>('purchases');
+    const { data: suppliers } = useERPData<any>('suppliers');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const [formData, setFormData] = useState({
+        supplier_id: '',
+        type: 'Request',
+        total_amount: 0,
+        status: 'Pending'
+    });
+
+    const handleCreatePurchase = async () => {
+        try {
+            setIsSubmitting(true);
+            await upsert({
+                supplier_id: formData.supplier_id || null,
+                type: formData.type,
+                total_amount: Number(formData.total_amount),
+                status: formData.status
+            });
+            setIsModalOpen(false);
+            setFormData({
+                supplier_id: '',
+                type: 'Request',
+                total_amount: 0,
+                status: 'Pending'
+            });
+        } catch (error) {
+            console.error("Error creating purchase:", error);
+            alert("Failed to create purchase record.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     const purchaseFlow = [
         { label: t('purchase_requests'), icon: FileText, count: 5, color: "text-blue-400" },
@@ -57,7 +92,10 @@ export default function PurchasesPage() {
                         </div>
                     </div>
 
-                    <button className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all">
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
+                    >
                         <Plus size={20} />
                         <span>Create New</span>
                     </button>
@@ -149,6 +187,64 @@ export default function PurchasesPage() {
                         </div>
                     </div>
                 </div>
+
+                <ERPFormModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    title="Create Procurement Record"
+                    onSubmit={handleCreatePurchase}
+                    loading={isSubmitting}
+                >
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Supplier</label>
+                            <select
+                                value={formData.supplier_id}
+                                onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            >
+                                <option value="">Select Supplier</option>
+                                {suppliers.map((s: any) => (
+                                    <option key={s.id} value={s.id}>{s.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Type</label>
+                            <select
+                                value={formData.type}
+                                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            >
+                                <option value="Request">Purchase Request</option>
+                                <option value="RFQ">RFQ</option>
+                                <option value="Order">Purchase Order</option>
+                                <option value="Invoice">Purchase Invoice</option>
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Total Amount (EGP)</label>
+                            <input
+                                type="number"
+                                value={formData.total_amount}
+                                onChange={(e) => setFormData({ ...formData, total_amount: Number(e.target.value) })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Initial Status</label>
+                            <select
+                                value={formData.status}
+                                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            >
+                                <option value="Pending">Pending</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                        </div>
+                    </div>
+                </ERPFormModal>
             </main>
         </div>
     );

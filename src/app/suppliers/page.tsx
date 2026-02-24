@@ -22,6 +22,8 @@ import {
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
+import { useERPData } from "@/hooks/useERPData";
+import ERPFormModal from "@/components/ERPFormModal";
 
 interface Supplier {
     id: string;
@@ -40,38 +42,48 @@ interface Supplier {
 
 export default function SuppliersPage() {
     const { t } = useLanguage();
-    const [suppliers] = useState<Supplier[]>([
-        {
-            id: "SUP-001",
-            name: "Steel Core Industries",
-            category: "Construction Materials",
-            products: ["Reinforcement Bars", "Structure Steel", "Wire Mesh"],
-            contact: { phone: "+20 100 234 5678", email: "sales@steelcore.com", address: "6th October City, Egypt" },
-            performance: 4.8,
-            balance: 150000,
-            status: 'Active'
-        },
-        {
-            id: "SUP-002",
-            name: "Global Finishing Co.",
-            category: "Finishing & Decor",
-            products: ["Ceramics", "Marble", "Paints"],
-            contact: { phone: "+20 111 987 6543", email: "info@globalfinish.com", address: "New Cairo, Egypt" },
-            performance: 4.2,
-            balance: 45000,
-            status: 'Active'
-        },
-        {
-            id: "SUP-003",
-            name: "Electric Link Ltd",
-            category: "Electrical Components",
-            products: ["Cables", "Switchboards", "Lighting"],
-            contact: { phone: "+20 122 345 6789", email: "support@elink.eg", address: "Alexandria, Egypt" },
-            performance: 3.5,
-            balance: 12000,
-            status: 'On Hold'
+    const { data: suppliers, loading, upsert } = useERPData<any>('suppliers');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const [formData, setFormData] = useState({
+        name: '',
+        category: 'Construction Materials',
+        email: '',
+        phone: '',
+        address: '',
+        rating: 5,
+        status: 'Active'
+    });
+
+    const handleAddSupplier = async () => {
+        try {
+            setIsSubmitting(true);
+            await upsert({
+                name: formData.name,
+                category: formData.category,
+                email: formData.email,
+                phone: formData.phone,
+                rating: formData.rating,
+                status: formData.status as any
+            });
+            setIsModalOpen(false);
+            setFormData({
+                name: '',
+                category: 'Construction Materials',
+                email: '',
+                phone: '',
+                address: '',
+                rating: 5,
+                status: 'Active'
+            });
+        } catch (error) {
+            console.error("Error adding supplier:", error);
+            alert("Failed to add supplier.");
+        } finally {
+            setIsSubmitting(false);
         }
-    ]);
+    };
 
     return (
         <div className="flex min-h-screen bg-background text-foreground">
@@ -87,7 +99,10 @@ export default function SuppliersPage() {
                         </div>
                     </div>
 
-                    <button className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all">
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
+                    >
                         <Plus size={20} />
                         <span>Add Supplier</span>
                     </button>
@@ -156,9 +171,9 @@ export default function SuppliersPage() {
                                         <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-4">{sup.category}</p>
 
                                         <div className="flex gap-4 text-xs text-gray-400">
-                                            <span className="flex items-center gap-1"><Phone size={12} /> {sup.contact.phone}</span>
-                                            <span className="flex items-center gap-1"><Mail size={12} /> {sup.contact.email}</span>
-                                            <span className="flex items-center gap-1"><MapPin size={12} /> {sup.contact.address}</span>
+                                            <span className="flex items-center gap-1"><Phone size={12} /> {sup.phone || sup.contact?.phone}</span>
+                                            <span className="flex items-center gap-1"><Mail size={12} /> {sup.email || sup.contact?.email}</span>
+                                            <span className="flex items-center gap-1"><MapPin size={12} /> {sup.address || sup.contact?.address || 'N/A'}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -166,7 +181,7 @@ export default function SuppliersPage() {
                                 <div className="text-right">
                                     <div className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-1">{t('rating')}</div>
                                     <div className="flex items-center justify-end gap-1 text-yellow-400 font-bold text-lg mb-4">
-                                        <Star size={16} fill="currentColor" /> {sup.performance}
+                                        <Star size={16} fill="currentColor" /> {sup.rating || sup.performance || 0}
                                     </div>
                                     <div className="flex flex-col items-end">
                                         <span className="text-[9px] text-gray-500 uppercase font-bold">Outstanding Balance</span>
@@ -177,7 +192,7 @@ export default function SuppliersPage() {
 
                             <div className="mt-6 pt-6 border-t border-border-custom flex items-center justify-between">
                                 <div className="flex gap-2">
-                                    {sup.products.map((p, i) => (
+                                    {(sup.products || []).map((p: string, i: number) => (
                                         <span key={i} className="px-3 py-1 rounded-lg bg-white/5 border border-white/5 text-[10px] font-bold text-gray-400">
                                             {p}
                                         </span>
@@ -198,6 +213,66 @@ export default function SuppliersPage() {
                         </motion.div>
                     ))}
                 </div>
+
+                <ERPFormModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    title="Add New Supplier"
+                    onSubmit={handleAddSupplier}
+                    loading={isSubmitting}
+                >
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Supplier Name</label>
+                            <input
+                                type="text"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                                placeholder="e.g. Steel Core Ltd"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Category</label>
+                            <input
+                                type="text"
+                                value={formData.category}
+                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                                placeholder="e.g. Construction"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Phone</label>
+                            <input
+                                type="text"
+                                value={formData.phone}
+                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Email</label>
+                            <input
+                                type="email"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Initial Rating (1-5)</label>
+                            <input
+                                type="number"
+                                min="1"
+                                max="5"
+                                value={formData.rating}
+                                onChange={(e) => setFormData({ ...formData, rating: Number(e.target.value) })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            />
+                        </div>
+                    </div>
+                </ERPFormModal>
             </main>
         </div>
     );

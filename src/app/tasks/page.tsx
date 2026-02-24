@@ -45,7 +45,7 @@ interface Employee {
 
 export default function TasksBoardPage() {
     const { t } = useLanguage();
-    const { data: tasks, loading, upsert, mutate } = useERPData<Task>('tasks');
+    const { data: tasks, loading, upsert, refresh } = useERPData<Task>('tasks');
     const { data: staff } = useERPData<Employee>('staff');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -117,7 +117,7 @@ export default function TasksBoardPage() {
 
         // DB update
         await supabase.from('tasks').update({ status }).eq('id', selectedTask.id);
-        mutate();
+        refresh();
     };
 
     const handleAddTask = async () => {
@@ -173,7 +173,7 @@ export default function TasksBoardPage() {
         const updatedTasks = tasks.map(t =>
             t.id === draggedTaskId ? { ...t, status } : t
         );
-        mutate();
+        refresh();
 
         // Persist to DB
         const { error } = await supabase
@@ -183,7 +183,7 @@ export default function TasksBoardPage() {
 
         if (error) {
             console.error('Failed to move task:', error);
-            mutate(); // Revert
+            refresh(); // Revert
         }
     };
 

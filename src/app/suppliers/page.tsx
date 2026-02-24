@@ -1,287 +1,52 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
+import React from 'react';
+import Link from 'next/link';
 import {
-    Users,
-    Plus,
-    Search,
-    ArrowLeft,
-    Truck,
-    Phone,
-    Mail,
-    MapPin,
-    Star,
-    Package,
-    CreditCard,
-    ExternalLink,
-    ChevronRight,
-    Filter,
-    BarChart2,
-    AlertCircle
-} from "lucide-react";
-import { motion } from "framer-motion";
-import Link from "next/link";
-import { useLanguage } from "@/context/LanguageContext";
-import { useERPData } from "@/hooks/useERPData";
-import ERPFormModal from "@/components/ERPFormModal";
+    Truck, CreditCard, FileMinus, ChevronRight
+} from 'lucide-react';
+import { motion } from 'framer-motion';
 
-interface Supplier {
-    id: string;
-    name: string;
-    category: string;
-    products: string[];
-    contact: {
-        phone: string;
-        email: string;
-        address: string;
-    };
-    performance: number; // 1-5 rating
-    balance: number; // Amount we owe them
-    status: 'Active' | 'On Hold' | 'Blacklisted';
-}
-
-export default function SuppliersPage() {
-    const { t } = useLanguage();
-    const { data: suppliers, loading, upsert } = useERPData<any>('suppliers');
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const [formData, setFormData] = useState({
-        name: '',
-        category: 'Construction Materials',
-        email: '',
-        phone: '',
-        address: '',
-        rating: 5,
-        status: 'Active'
-    });
-
-    const handleAddSupplier = async () => {
-        try {
-            setIsSubmitting(true);
-            await upsert({
-                name: formData.name,
-                category: formData.category,
-                email: formData.email,
-                phone: formData.phone,
-                rating: formData.rating,
-                status: formData.status as any
-            });
-            setIsModalOpen(false);
-            setFormData({
-                name: '',
-                category: 'Construction Materials',
-                email: '',
-                phone: '',
-                address: '',
-                rating: 5,
-                status: 'Active'
-            });
-        } catch (error) {
-            console.error("Error adding supplier:", error);
-            alert("Failed to add supplier.");
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const { data: inventory } = useERPData<any>('inventory');
-    const { data: expenses } = useERPData<any>('expenses');
-
-    const activePartners = suppliers.length;
-    const activeSKUs = inventory.length;
-    const totalPayables = expenses.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
-    const averageReliability = 96.4; // Placeholder for more complex SLA logic
+export default function SuppliersDashboard() {
+    const tabs = [
+        { name: 'Supplier Directory & Logistics', icon: Truck, href: '/suppliers/directory' },
+        { name: 'Supplier Payments', icon: CreditCard, href: '/suppliers/payments' },
+        { name: 'Debit Notes', icon: FileMinus, href: '/suppliers/debit-notes' },
+    ];
 
     return (
-        <div className="flex min-h-screen bg-background text-foreground">
-            <main className="flex-1 p-8 overflow-y-auto">
-                <header className="flex justify-between items-center mb-10">
-                    <div className="flex items-center gap-4">
-                        <Link href="/" className="p-2 rounded-xl border border-border-custom hover:border-accent hover:text-accent transition-all">
-                            <ArrowLeft size={20} />
-                        </Link>
-                        <div>
-                            <h2 className="text-3xl font-bold gradient-text">{t('suppliers')}</h2>
-                            <p className="text-gray-400 text-sm mt-1">{t('supplier_management')}</p>
-                        </div>
-                    </div>
+        <div className="p-4 md:p-8 overflow-y-auto w-full h-full bg-[#0a0a0a]">
+            <div className="max-w-3xl mx-auto space-y-6">
 
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
-                    >
-                        <Plus size={20} />
-                        <span>Add Supplier</span>
-                    </button>
-                </header>
-
-                {/* Global Supplier Metrics */}
-                <div className="grid grid-cols-4 gap-6 mb-10">
-                    <div className="glass p-6 border-accent/20 bg-accent/5">
-                        <div className="flex items-center gap-3 text-accent mb-4">
-                            <Truck size={20} />
-                            <span className="text-[10px] font-bold uppercase tracking-widest">{t('supply_chain')}</span>
-                        </div>
-                        <div className="text-3xl font-bold">{activePartners} Partners</div>
-                        <div className="text-[10px] text-gray-500 mt-2">Active supply routes</div>
-                    </div>
-
-                    <div className="glass p-6 border-emerald-500/20 bg-emerald-500/5">
-                        <div className="flex items-center gap-3 text-emerald-400 mb-4">
-                            <Package size={20} />
-                            <span className="text-[10px] font-bold uppercase tracking-widest">Active SKUs</span>
-                        </div>
-                        <div className="text-3xl font-bold">{activeSKUs} Items</div>
-                        <div className="text-[10px] text-gray-500 mt-2">Inventory coverage</div>
-                    </div>
-
-                    <div className="glass p-6 border-red-500/20 bg-red-500/5">
-                        <div className="flex items-center gap-3 text-red-400 mb-4">
-                            <CreditCard size={20} />
-                            <span className="text-[10px] font-bold uppercase tracking-widest">Total Payables</span>
-                        </div>
-                        <div className="text-3xl font-bold">{totalPayables.toLocaleString()} EGP</div>
-                        <div className="text-[10px] text-gray-500 mt-2">Connected to Expenses</div>
-                    </div>
-
-                    <div className="glass p-6 border-blue-500/20 bg-blue-500/5">
-                        <div className="flex items-center gap-3 text-blue-400 mb-4">
-                            <BarChart2 size={20} />
-                            <span className="text-[10px] font-bold uppercase tracking-widest">Reliability</span>
-                        </div>
-                        <div className="text-3xl font-bold">{averageReliability}%</div>
-                        <div className="text-[10px] text-gray-500 mt-2">Delivery SLA met</div>
-                    </div>
+                {/* Header */}
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Suppliers & Logistics</h1>
+                    <p className="text-gray-400">Manage vendor relationships, payments, and directories.</p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-6">
-                    {suppliers.map((sup) => (
+                {/* Tab List */}
+                <div className="flex flex-col gap-3">
+                    {tabs.map((tab, i) => (
                         <motion.div
-                            key={sup.id}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className="glass p-6 border-border-custom hover:border-accent group transition-all"
+                            key={tab.name}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.05 }}
                         >
-                            <div className="flex justify-between items-start">
-                                <div className="flex gap-6">
-                                    <div className="w-16 h-16 rounded-xl bg-white/5 flex items-center justify-center text-accent group-hover:scale-110 transition-transform">
-                                        <Truck size={32} />
+                            <Link href={tab.href}>
+                                <div className="flex items-center justify-between p-5 rounded-2xl bg-[#111111] border border-white/5 hover:border-white/10 hover:bg-[#161616] transition-all group">
+                                    <div className="flex items-center gap-4">
+                                        <tab.icon className="w-6 h-6 text-gray-400 group-hover:text-accent transition-colors" />
+                                        <span className="text-lg font-bold text-white tracking-tight">{tab.name}</span>
                                     </div>
-                                    <div>
-                                        <div className="flex items-center gap-3">
-                                            <h3 className="text-xl font-bold">{sup.name}</h3>
-                                            <span className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase ${sup.status === 'Active' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'
-                                                }`}>
-                                                {sup.status}
-                                            </span>
-                                        </div>
-                                        <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-4">{sup.category}</p>
-
-                                        <div className="flex gap-4 text-xs text-gray-400">
-                                            <span className="flex items-center gap-1"><Phone size={12} /> {sup.phone || sup.contact?.phone}</span>
-                                            <span className="flex items-center gap-1"><Mail size={12} /> {sup.email || sup.contact?.email}</span>
-                                            <span className="flex items-center gap-1"><MapPin size={12} /> {sup.address || sup.contact?.address || 'N/A'}</span>
-                                        </div>
-                                    </div>
+                                    <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-white transition-colors" />
                                 </div>
-
-                                <div className="text-right">
-                                    <div className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-1">{t('rating')}</div>
-                                    <div className="flex items-center justify-end gap-1 text-yellow-400 font-bold text-lg mb-4">
-                                        <Star size={16} fill="currentColor" /> {sup.rating || sup.performance || 0}
-                                    </div>
-                                    <div className="flex flex-col items-end">
-                                        <span className="text-[9px] text-gray-500 uppercase font-bold">Outstanding Balance</span>
-                                        <span className="text-lg font-bold text-red-400">{sup.balance.toLocaleString()} EGP</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="mt-6 pt-6 border-t border-border-custom flex items-center justify-between">
-                                <div className="flex gap-2">
-                                    {(sup.products || []).map((p: string, i: number) => (
-                                        <span key={i} className="px-3 py-1 rounded-lg bg-white/5 border border-white/5 text-[10px] font-bold text-gray-400">
-                                            {p}
-                                        </span>
-                                    ))}
-                                </div>
-                                <div className="flex gap-3">
-                                    <Link href={`/cheques?entity=${sup.name}`} className="p-2 rounded-lg border border-border-custom text-gray-500 hover:text-accent hover:border-accent transition-all">
-                                        <CreditCard size={18} />
-                                    </Link>
-                                    <Link href={`/inventory?supplier=${sup.name}`} className="p-2 rounded-lg border border-border-custom text-gray-500 hover:text-accent hover:border-accent transition-all">
-                                        <Package size={18} />
-                                    </Link>
-                                    <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent/20 text-accent text-xs font-bold hover:bg-accent hover:text-white transition-all">
-                                        <ExternalLink size={14} /> Full Details
-                                    </button>
-                                </div>
-                            </div>
+                            </Link>
                         </motion.div>
                     ))}
                 </div>
 
-                <ERPFormModal
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    title="Add New Supplier"
-                    onSubmit={handleAddSupplier}
-                    loading={isSubmitting}
-                >
-                    <div className="grid grid-cols-2 gap-6">
-                        <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Supplier Name</label>
-                            <input
-                                type="text"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                                placeholder="e.g. Steel Core Ltd"
-                            />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Category</label>
-                            <input
-                                type="text"
-                                value={formData.category}
-                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                                placeholder="e.g. Construction"
-                            />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Phone</label>
-                            <input
-                                type="text"
-                                value={formData.phone}
-                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                            />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Email</label>
-                            <input
-                                type="email"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                            />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Initial Rating (1-5)</label>
-                            <input
-                                type="number"
-                                min="1"
-                                max="5"
-                                value={formData.rating}
-                                onChange={(e) => setFormData({ ...formData, rating: Number(e.target.value) })}
-                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                            />
-                        </div>
-                    </div>
-                </ERPFormModal>
-            </main>
+            </div>
         </div>
     );
 }

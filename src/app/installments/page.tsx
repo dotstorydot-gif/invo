@@ -33,12 +33,11 @@ interface PaymentPlan {
 
 interface InstallmentRecord {
     id: string;
-    unit_name: string;
-    customer_name: string;
-    plan_name: string;
+    unit_id: string;
+    customer_id: string;
     total_amount: number;
     paid_amount: number;
-    next_due_at: string;
+    next_due_date: string;
     status: 'Collected' | 'Pending' | 'Overdue';
 }
 
@@ -46,10 +45,21 @@ export default function InstallmentsPage() {
     const { t } = useLanguage();
     const { data: plans, loading: plansLoading, upsert: upsertPlan } = useERPData<PaymentPlan>('payment_plans');
     const { data: records, loading: recordsLoading, upsert: upsertRecord } = useERPData<InstallmentRecord>('installments');
+    const { data: customers } = useERPData<any>('customers');
+    const { data: units } = useERPData<any>('units');
+    const { upsert: upsertInvoice } = useERPData<any>('sales_invoices');
 
     const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
     const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Collection Modal State
+    const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
+    const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
+    const [collectionData, setCollectionData] = useState({
+        payment_method: 'Cash',
+        amount_to_pay: 0
+    });
 
     const [planFormData, setPlanFormData] = useState({
         name: '',
@@ -59,12 +69,11 @@ export default function InstallmentsPage() {
     });
 
     const [recordFormData, setRecordFormData] = useState({
-        unit_name: '',
-        customer_name: '',
-        plan_name: '',
+        unit_id: '',
+        customer_id: '',
         total_amount: 0,
         paid_amount: 0,
-        next_due_at: '',
+        next_due_date: new Date().toISOString().split('T')[0],
         status: 'Pending'
     });
 
@@ -90,28 +99,67 @@ export default function InstallmentsPage() {
     const handleAddRecord = async () => {
         try {
             setIsSubmitting(true);
-            await upsertRecord({
-                unit_name: recordFormData.unit_name,
-                customer_name: recordFormData.customer_name,
-                plan_name: recordFormData.plan_name,
+            const { error, data } = await upsertRecord({
+                unit_id: recordFormData.unit_id || null,
+                customer_id: recordFormData.customer_id || null,
                 total_amount: Number(recordFormData.total_amount),
                 paid_amount: Number(recordFormData.paid_amount),
-                next_due_at: recordFormData.next_due_at,
+                next_due_date: recordFormData.next_due_date,
                 status: recordFormData.status as any
             });
             setIsRecordModalOpen(false);
             setRecordFormData({
-                unit_name: '',
-                customer_name: '',
-                plan_name: '',
+                unit_id: '',
+                customer_id: '',
                 total_amount: 0,
                 paid_amount: 0,
-                next_due_at: '',
+                next_due_date: new Date().toISOString().split('T')[0],
                 status: 'Pending'
             });
         } catch (error) {
             console.error("Error adding record:", error);
             alert("Failed to add installment record.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleCollectPayment = async () => {
+        if (!selectedRecordId) return;
+        try {
+            setIsSubmitting(true);
+            const record = records.find(r => r.id === selectedRecordId);
+            if (!record) return;
+
+            // 1. Update Installment
+            await upsertRecord({
+                id: record.id,
+                paid_amount: Number(record.paid_amount) + Number(collectionData.amount_to_pay),
+                status: (Number(record.paid_amount) + Number(collectionData.amount_to_pay)) >= record.total_amount ? 'Collected' : 'Pending'
+            });
+
+            // 2. Generate Sales Invoice linked to customer and installment
+            await upsertInvoice({
+                installment_id: record.id,
+                customer_id: record.customer_id,
+                unit_id: record.unit_id,
+                amount: Number(collectionData.amount_to_pay),
+                status: 'Paid',
+                payment_method: collectionData.payment_method,
+                due_date: new Date().toISOString().split('T')[0]
+            });
+
+            setIsCollectionModalOpen(false);
+            setSelectedRecordId(null);
+            alert("Payment Collected & Invoice Auto-Generated!");
+
+            // If cheque, prompt user gracefully
+            if (collectionData.payment_method === 'Cheque') {
+                alert("Please remember to go to the Cheques module to register this cheque's full details and clear date.");
+            }
+        } catch (error) {
+            console.error("Error collecting payment:", error);
+            alert("Failed to process payment.");
         } finally {
             setIsSubmitting(false);
         }
@@ -242,46 +290,58 @@ export default function InstallmentsPage() {
                                     {recordsLoading ? (
                                         <tr><td colSpan={4} className="p-10 text-center italic text-gray-500 text-xs">Syncing artifacts...</td></tr>
                                     ) : (
-                                        records.map((rec) => (
-                                            <tr key={rec.id} className="border-b border-border-custom hover:bg-white/5 transition-colors group">
-                                                <td className="p-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-400 group-hover:text-accent transition-colors">
-                                                            <Home size={16} />
-                                                        </div>
-                                                        <div>
-                                                            <div className="font-bold text-white text-sm">{rec.unit_name}</div>
-                                                            <div className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5">
-                                                                <User size={10} /> {rec.customer_name}
+                                        records.map((rec) => {
+                                            const cust = customers.find((c: any) => c.id === rec.customer_id);
+                                            const unit = units.find((u: any) => u.id === rec.unit_id);
+                                            return (
+                                                <tr key={rec.id} className="border-b border-border-custom hover:bg-white/5 transition-colors group">
+                                                    <td className="p-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-400 group-hover:text-accent transition-colors">
+                                                                <Home size={16} />
+                                                            </div>
+                                                            <div>
+                                                                <div className="font-bold text-white text-sm">{unit?.name || 'Unassigned Unit'}</div>
+                                                                <div className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5">
+                                                                    <User size={10} /> {cust?.name || 'Walk-in Customer'}
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                </td>
-                                                <td className="p-4">
-                                                    <div className="text-xs font-bold text-gray-300">{rec.plan_name}</div>
-                                                    <div className="text-[10px] text-gray-500 mt-1">Bal: {(rec.total_amount - rec.paid_amount).toLocaleString()} EGP</div>
-                                                </td>
-                                                <td className="p-4">
-                                                    <div className="flex items-center gap-1.5 text-xs font-bold">
-                                                        <Calendar size={14} className="text-gray-500" />
-                                                        {rec.next_due_at}
-                                                    </div>
-                                                </td>
-                                                <td className="p-4">
-                                                    <div className="flex items-center justify-between">
-                                                        <span className={`px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider ${rec.status === 'Collected' ? 'bg-emerald-500/10 text-emerald-500' :
-                                                            rec.status === 'Overdue' ? 'bg-red-500/10 text-red-500' :
-                                                                'bg-amber-500/10 text-amber-500'
-                                                            }`}>
-                                                            {rec.status}
-                                                        </span>
-                                                        <button className="p-1 text-gray-500 hover:text-white transition-colors">
-                                                            <ChevronRight size={16} />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <div className="text-xs font-bold text-gray-300">Installment Period</div>
+                                                        <div className="text-[10px] text-gray-500 mt-1">Bal: {(rec.total_amount - rec.paid_amount).toLocaleString()} EGP</div>
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <div className="flex items-center gap-1.5 text-xs font-bold">
+                                                            <Calendar size={14} className="text-gray-500" />
+                                                            {rec.next_due_date}
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className={`px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider ${rec.status === 'Collected' ? 'bg-emerald-500/10 text-emerald-500' :
+                                                                rec.status === 'Overdue' ? 'bg-red-500/10 text-red-500' :
+                                                                    'bg-amber-500/10 text-amber-500'
+                                                                }`}>
+                                                                {rec.status}
+                                                            </span>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setSelectedRecordId(rec.id);
+                                                                    setCollectionData({ ...collectionData, amount_to_pay: (rec.total_amount - rec.paid_amount) || 0 });
+                                                                    setIsCollectionModalOpen(true);
+                                                                }}
+                                                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/5 border border-border-custom text-xs font-bold text-gray-300 hover:text-white hover:border-accent hover:bg-accent/10 transition-all title='Process Payment'"
+                                                            >
+                                                                Collect
+                                                                <ChevronRight size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
                                     )}
                                 </tbody>
                             </table>
@@ -348,31 +408,30 @@ export default function InstallmentsPage() {
                 >
                     <div className="grid grid-cols-2 gap-6">
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Unit Name</label>
-                            <input
-                                type="text"
-                                value={recordFormData.unit_name}
-                                onChange={(e) => setRecordFormData({ ...recordFormData, unit_name: e.target.value })}
+                            <label className="text-xs font-bold text-gray-500 uppercase">Linked Unit</label>
+                            <select
+                                value={recordFormData.unit_id}
+                                onChange={(e) => setRecordFormData({ ...recordFormData, unit_id: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                            />
+                            >
+                                <option value="">Select Unit</option>
+                                {units.map((u: any) => (
+                                    <option key={u.id} value={u.id}>{u.name}</option>
+                                ))}
+                            </select>
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Customer Name</label>
-                            <input
-                                type="text"
-                                value={recordFormData.customer_name}
-                                onChange={(e) => setRecordFormData({ ...recordFormData, customer_name: e.target.value })}
+                            <label className="text-xs font-bold text-gray-500 uppercase">Customer</label>
+                            <select
+                                value={recordFormData.customer_id}
+                                onChange={(e) => setRecordFormData({ ...recordFormData, customer_id: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                            />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Plan Name</label>
-                            <input
-                                type="text"
-                                value={recordFormData.plan_name}
-                                onChange={(e) => setRecordFormData({ ...recordFormData, plan_name: e.target.value })}
-                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                            />
+                            >
+                                <option value="">Select Customer</option>
+                                {customers.map((c: any) => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
                         </div>
                         <div className="flex flex-col gap-2">
                             <label className="text-xs font-bold text-gray-500 uppercase">Total Amount</label>
@@ -396,9 +455,58 @@ export default function InstallmentsPage() {
                             <label className="text-xs font-bold text-gray-500 uppercase">Next Due Date</label>
                             <input
                                 type="date"
-                                value={recordFormData.next_due_at}
-                                onChange={(e) => setRecordFormData({ ...recordFormData, next_due_at: e.target.value })}
+                                value={recordFormData.next_due_date}
+                                onChange={(e) => setRecordFormData({ ...recordFormData, next_due_date: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Status</label>
+                            <select
+                                value={recordFormData.status}
+                                onChange={(e) => setRecordFormData({ ...recordFormData, status: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            >
+                                <option value="Pending">Pending</option>
+                                <option value="Collected">Collected</option>
+                                <option value="Overdue">Overdue</option>
+                            </select>
+                        </div>
+                    </div>
+                </ERPFormModal>
+
+                {/* Collection Modal */}
+                <ERPFormModal
+                    isOpen={isCollectionModalOpen}
+                    onClose={() => setIsCollectionModalOpen(false)}
+                    title="Process Installment Payment"
+                    onSubmit={handleCollectPayment}
+                    loading={isSubmitting}
+                >
+                    <div className="flex flex-col gap-6">
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Payment Method</label>
+                            <div className="grid grid-cols-3 gap-4">
+                                {['Cash', 'Visa', 'Cheque'].map(method => (
+                                    <div
+                                        key={method}
+                                        onClick={() => setCollectionData({ ...collectionData, payment_method: method })}
+                                        className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${collectionData.payment_method === method ? 'border-accent bg-accent/10 text-white shadow-inner' : 'border-border-custom bg-white/5 text-gray-400 hover:border-white/20'}`}
+                                    >
+                                        <CreditCard size={24} className={collectionData.payment_method === method ? 'text-accent' : ''} />
+                                        <span className="text-sm font-bold">{method}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Amount Receiving (EGP)</label>
+                            <input
+                                type="number"
+                                value={collectionData.amount_to_pay}
+                                onChange={(e) => setCollectionData({ ...collectionData, amount_to_pay: Number(e.target.value) })}
+                                className="glass bg-white/5 border-border-custom p-4 rounded-xl outline-none focus:border-accent transition-all text-2xl font-bold font-mono text-white text-center shadow-inner"
                             />
                         </div>
                     </div>

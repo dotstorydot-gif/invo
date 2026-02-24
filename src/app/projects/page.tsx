@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import {
     Building,
     Plus,
@@ -12,7 +12,6 @@ import {
     LayoutGrid,
     ChevronRight
 } from "lucide-react";
-import { motion } from "framer-motion";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { useERPData } from "@/hooks/useERPData";
@@ -26,10 +25,18 @@ interface Project {
     revenue: number;
 }
 
+interface Unit {
+    id: string;
+    name: string;
+    status: string;
+    price: number;
+    project_id: string;
+}
+
 export default function ProjectsPage() {
     const { t } = useLanguage();
-    const { data: projects, loading } = useERPData<any>('projects');
-    const { data: units } = useERPData<any>('units');
+    const { data: projects } = useERPData<Project>('projects');
+    const { data: units } = useERPData<Unit>('units');
 
     return (
         <div className="flex min-h-screen bg-background text-foreground">
@@ -67,7 +74,7 @@ export default function ProjectsPage() {
                             <span className="text-sm font-bold uppercase tracking-widest">Occupancy Rate</span>
                         </div>
                         <div className="text-3xl font-bold">
-                            {units.length > 0 ? Math.round((units.filter((u: any) => u.status === 'Occupied' || u.status === 'Sold').length / units.length) * 100) : 0}%
+                            {units.length > 0 ? Math.round((units.filter((u: Unit) => u.status === 'Occupied' || u.status === 'Sold').length / units.length) * 100) : 0}%
                         </div>
                         <div className="text-xs text-gray-500 mt-1">Based on sold/occupied units</div>
                     </div>
@@ -77,7 +84,7 @@ export default function ProjectsPage() {
                             <span className="text-sm font-bold uppercase tracking-widest">Est. Project Revenue</span>
                         </div>
                         <div className="text-3xl font-bold">
-                            {(units.reduce((sum: number, u: any) => sum + (Number(u.price) || 0), 0) / 1000000).toFixed(1)}M EGP
+                            {(units.reduce((sum: number, u: Unit) => sum + (Number(u.price) || 0), 0) / 1000000).toFixed(1)}M EGP
                         </div>
                         <div className="text-xs text-gray-500 mt-1">Total unit asset value</div>
                     </div>

@@ -24,41 +24,96 @@ interface ExpenseItem {
     amount: number;
     date: string;
     description: string;
-    type: 'Fixed' | 'Variable' | 'Asset';
+    type: 'Fixed' | 'Variable' | 'Asset' | 'General';
+    attachment_url?: string;
+    project_id?: string;
+    unit_id?: string;
+    branch_id?: string;
+}
+
+interface Branch {
+    id: string;
+    name: string;
+    address: string;
+}
+
+interface Project {
+    id: string;
+    name: string;
+}
+
+interface Unit {
+    id: string;
+    name: string;
 }
 
 export default function ExpensesPage() {
     const { t } = useLanguage();
     const { data: expenses, loading, upsert } = useERPData<ExpenseItem>('expenses');
+    const { data: projects } = useERPData<Project>('projects');
+    const { data: units } = useERPData<Unit>('units');
+    const { data: branches } = useERPData<Branch>('branches'); // Added branches fetch
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [customCategory, setCustomCategory] = useState('');
 
     const [formData, setFormData] = useState({
-        category: '',
         amount: 0,
-        date: new Date().toISOString().split('T')[0],
+        category: '',
+        type: 'General' as 'Fixed' | 'Variable' | 'Asset' | 'General', // Changed default type and added 'General'
         description: '',
-        type: 'Variable' as 'Fixed' | 'Variable' | 'Asset'
+        date: new Date().toISOString().split('T')[0],
+        project_id: '',
+        unit_id: '',
+        branch_id: '', // Added branch_id
+        attachment_url: '', // Kept attachment_url for file upload
+        provider: '' // Kept provider for internet invoice
     });
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData({ ...formData, attachment_url: reader.result as string });
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     const handleAddExpense = async () => {
         try {
             setIsSubmitting(true);
+            const finalCategory = formData.category === 'Other' ? (customCategory || 'Other Expense') : formData.category;
+            const finalDescription = formData.category === 'Internet Invoice' && formData.provider
+                ? `Provider: ${formData.provider}${formData.description ? ' - ' + formData.description : ''}`
+                : formData.description;
+
             await upsert({
-                category: formData.category,
+                category: finalCategory,
                 amount: Number(formData.amount),
                 date: formData.date,
-                description: formData.description,
-                type: formData.type
+                description: finalDescription,
+                type: formData.type,
+                attachment_url: formData.attachment_url || undefined,
+                project_id: formData.project_id || undefined,
+                unit_id: formData.unit_id || undefined,
+                branch_id: formData.branch_id || undefined // Added branch_id
             });
             setIsModalOpen(false);
             setFormData({
-                category: '',
                 amount: 0,
-                date: new Date().toISOString().split('T')[0],
+                category: '',
+                type: 'General', // Reset to 'General'
                 description: '',
-                type: 'Variable'
+                date: new Date().toISOString().split('T')[0],
+                project_id: '',
+                unit_id: '',
+                branch_id: '', // Reset branch_id
+                attachment_url: '',
+                provider: ''
             });
+            setCustomCategory('');
         } catch (error) {
             console.error("Error adding expense:", error);
             alert("Failed to add expense.");
@@ -98,7 +153,7 @@ export default function ExpensesPage() {
                         className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
                     >
                         <Plus size={20} />
-                        <span>Add Expense</span>
+                        <span>{t('add_expense')}</span>
                     </button>
                 </header>
 
@@ -111,7 +166,7 @@ export default function ExpensesPage() {
                             <span className="text-sm font-bold text-gray-400">{t('utilities')}</span>
                         </div>
                         <div className="text-2xl font-bold">{totalUtilities.toLocaleString()} EGP</div>
-                        <div className="text-xs text-gray-500 mt-1">Sum of utility bills</div>
+                        <div className="text-xs text-gray-500 mt-1">{t('sum_utilities')}</div>
                     </div>
 
                     <div className="glass p-6 border-blue-500/20 bg-blue-500/5">
@@ -122,7 +177,7 @@ export default function ExpensesPage() {
                             <span className="text-sm font-bold text-gray-400">{t('assets')}</span>
                         </div>
                         <div className="text-2xl font-bold">{totalAssets.toLocaleString()} EGP</div>
-                        <div className="text-xs text-gray-500 mt-1">Total Asset Investments</div>
+                        <div className="text-xs text-gray-500 mt-1">{t('total_assets')}</div>
                     </div>
 
                     <div className="glass p-6 border-emerald-500/20 bg-emerald-500/5">
@@ -130,10 +185,10 @@ export default function ExpensesPage() {
                             <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500">
                                 <TrendingDown size={20} />
                             </div>
-                            <span className="text-sm font-bold text-gray-400">Variable Costs</span>
+                            <span className="text-sm font-bold text-gray-400">{t('variable_costs')}</span>
                         </div>
                         <div className="text-2xl font-bold">{totalVariable.toLocaleString()} EGP</div>
-                        <div className="text-xs text-gray-500 mt-1">Operating Expenses</div>
+                        <div className="text-xs text-gray-500 mt-1">{t('operating_expenses')}</div>
                     </div>
                 </div>
 
@@ -150,11 +205,11 @@ export default function ExpensesPage() {
 
                     <div className="flex flex-col min-h-[400px]">
                         {loading ? (
-                            <div className="flex-1 flex items-center justify-center p-10 italic text-gray-500">Syncing with ledger...</div>
+                            <div className="flex-1 flex items-center justify-center p-10 italic text-gray-500">{t('syncing_ledger')}</div>
                         ) : expenses.length === 0 ? (
                             <div className="flex-1 flex flex-col items-center justify-center p-20 text-gray-500 gap-4 opacity-50">
                                 <DollarSign size={40} />
-                                <p>No expenses recorded yet.</p>
+                                <p>{t('no_expenses')}</p>
                             </div>
                         ) : (
                             expenses.map((expense) => (
@@ -169,7 +224,24 @@ export default function ExpensesPage() {
                                             <DollarSign size={20} />
                                         </div>
                                         <div>
-                                            <div className="font-bold group-hover:text-accent transition-colors">{expense.category}</div>
+                                            <div className="font-bold group-hover:text-accent transition-colors">
+                                                {expense.category}
+                                                {expense.project_id && projects.find((p) => p.id === expense.project_id) && (
+                                                    <span className="ml-2 text-xs text-blue-400 font-normal py-0.5 px-2 bg-blue-500/10 rounded">
+                                                        {projects.find((p) => p.id === expense.project_id)?.name}
+                                                    </span>
+                                                )}
+                                                {expense.unit_id && units.find((u) => u.id === expense.unit_id) && (
+                                                    <span className="ml-2 text-xs text-amber-400 font-normal py-0.5 px-2 bg-amber-500/10 rounded">
+                                                        {units.find((u) => u.id === expense.unit_id)?.name}
+                                                    </span>
+                                                )}
+                                                {expense.branch_id && branches.find((b) => b.id === expense.branch_id) && (
+                                                    <span className="ml-2 text-xs text-purple-400 font-normal py-0.5 px-2 bg-purple-500/10 rounded">
+                                                        {branches.find((b) => b.id === expense.branch_id)?.name}
+                                                    </span>
+                                                )}
+                                            </div>
                                             <div className="text-xs text-gray-500">{expense.description}</div>
                                         </div>
                                     </div>
@@ -199,13 +271,13 @@ export default function ExpensesPage() {
                 <ERPFormModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
-                    title="Add Expense"
+                    title={t('add_expense')}
                     onSubmit={handleAddExpense}
                     loading={isSubmitting}
                 >
                     <div className="grid grid-cols-2 gap-6">
                         <div className="flex flex-col gap-2 col-span-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Amount (EGP)</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('amount_egp')}</label>
                             <input
                                 type="number"
                                 value={formData.amount}
@@ -215,39 +287,122 @@ export default function ExpensesPage() {
                             />
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Category</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('expense_category')}</label>
                             <select
                                 value={formData.category}
                                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm mb-2"
                             >
-                                <option value="">Select Category</option>
-                                <option value="Electricity">Electricity</option>
-                                <option value="Water">Water</option>
-                                <option value="Internet">Internet</option>
-                                <option value="Maintenance">Maintenance</option>
+                                <option value="">{t('select_category')}</option>
+                                <option value="Rent Invoice">Rent Invoice</option>
+                                <option value="Maintenance Invoice">Maintenance Invoice</option>
+                                <option value="Internet Invoice">Internet Invoice</option>
+                                <option value="Electricity Invoice">Electricity Invoice</option>
+                                <option value="Water Invoice">Water Invoice</option>
+                                <option value="Phone / Mobile Invoice">Phone / Mobile Invoice</option>
+                                <option value="Tax">Tax</option>
+                                <option value="Insurance">Insurance</option>
+                                <option value="Government utilities (الحي)">Government utilities (الحي)</option>
                                 <option value="Asset">Asset Purchase</option>
                                 <option value="Marketing">Marketing</option>
                                 <option value="Office Supplies">Office Supplies</option>
-                                <option value="Travel">Travel</option>
-                                <option value="Taxes">Taxes</option>
-                                <option value="Other">Other</option>
+                                <option value="Transportation">{t('transportation')}</option>
+                                <option value="Parking">{t('parking')}</option>
+                                <option value="Meeting">{t('meeting')}</option>
+                                <option value="Coffee">{t('coffee')}</option>
+                                <option value="Lunch">{t('lunch')}</option>
+                                <option value="Travel">{t('travel')}</option>
+                                <option value="Other">{t('other')}</option>
+                            </select>
+
+                            {formData.category === 'Other' && (
+                                <input
+                                    type="text"
+                                    value={customCategory}
+                                    onChange={(e) => setCustomCategory(e.target.value)}
+                                    placeholder="Enter custom expense category..."
+                                    className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                                />
+                            )}
+                        </div>
+
+                        {formData.category === 'Internet Invoice' && (
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase">Internet Provider</label>
+                                <select
+                                    value={formData.provider}
+                                    onChange={(e) => setFormData({ ...formData, provider: e.target.value })}
+                                    className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                                >
+                                    <option value="">Select Provider</option>
+                                    <option value="WE (Telecom Egypt)">WE (Telecom Egypt)</option>
+                                    <option value="Vodafone Egypt">Vodafone Egypt</option>
+                                    <option value="Orange Egypt">Orange Egypt</option>
+                                    <option value="Etisalat Misr">Etisalat Misr</option>
+                                    <option value="">{t('select_provider')}</option>
+                                    <option value="WE (Telecom Egypt)">{t('we_telecom_egypt')}</option>
+                                    <option value="Vodafone Egypt">{t('vodafone_egypt')}</option>
+                                    <option value="Orange Egypt">{t('orange_egypt')}</option>
+                                    <option value="Etisalat Misr">{t('etisalat_misr')}</option>
+                                    <option value="Nour ADSL">{t('nour_adsl')}</option>
+                                </select>
+                            </div>
+                        )}
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('assigned_project')}</label>
+                            <select
+                                value={formData.project_id}
+                                onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm font-semibold"
+                            >
+                                <option value="">{t('none_general')}</option>
+                                {projects.map((p) => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
                             </select>
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Type</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('assigned_unit')}</label>
+                            <select
+                                value={formData.unit_id}
+                                onChange={(e) => setFormData({ ...formData, unit_id: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm font-semibold"
+                            >
+                                <option value="">{t('none_service')}</option>
+                                {units.map((u) => (
+                                    <option key={u.id} value={u.id}>{u.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('assigned_branch')}</label>
+                            <select
+                                value={formData.branch_id}
+                                onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm border-l-4 border-l-purple-500 font-semibold"
+                            >
+                                <option value="">{t('hq_unassigned')}</option>
+                                {branches.map((b) => (
+                                    <option key={b.id} value={b.id}>{b.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('expense_type')}</label>
                             <select
                                 value={formData.type}
-                                onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+                                onChange={(e) => setFormData({ ...formData, type: e.target.value as 'Fixed' | 'Variable' | 'Asset' | 'General' })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                             >
-                                <option value="Variable">Variable</option>
-                                <option value="Fixed">Fixed</option>
-                                <option value="Asset">Asset</option>
+                                <option value="General">{t('general')}</option> {/* Changed from Variable */}
+                                <option value="Variable">{t('variable')}</option>
+                                <option value="Fixed">{t('fixed')}</option>
+                                <option value="Asset">{t('asset')}</option>
                             </select>
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Date</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('expense_date')}</label>
                             <input
                                 type="date"
                                 value={formData.date}
@@ -256,13 +411,23 @@ export default function ExpensesPage() {
                             />
                         </div>
                         <div className="flex flex-col gap-2 col-span-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Description</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('expense_description')}</label>
                             <textarea
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm h-24 resize-none"
-                                placeholder="Details about this expense..."
+                                placeholder={t('expense_description_placeholder')}
                             />
+                        </div>
+                        <div className="flex flex-col gap-2 col-span-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('receipt_photo_optional')}</label>
+                            <div className="flex items-center gap-4">
+                                <label className="cursor-pointer bg-white/5 border border-white/10 hover:bg-white/10 px-4 py-3 rounded-xl transition-all text-sm font-semibold flex items-center gap-2">
+                                    <Plus size={16} /> {t('upload_receipt')}
+                                    <input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileUpload} />
+                                </label>
+                                {formData.attachment_url && <span className="text-xs text-accent font-bold">{t('file_attached')}</span>}
+                            </div>
                         </div>
                     </div>
                 </ERPFormModal>

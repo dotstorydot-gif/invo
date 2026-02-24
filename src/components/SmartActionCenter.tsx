@@ -4,19 +4,18 @@ import React from "react";
 import {
     Download,
     Zap,
-    Search,
-    ArrowUpRight,
     FileText,
     Image as ImageIcon,
     UserPlus,
     PlusCircle
 } from "lucide-react";
-import { motion } from "framer-motion";
 import { useLanguage } from "@/context/LanguageContext";
 import { exportToCSV } from "@/lib/storage";
+import { useRouter } from "next/navigation";
 
 export const SmartActionCenter = () => {
     const { t } = useLanguage();
+    const router = useRouter();
 
     const handleExport = () => {
         const dummyData = [
@@ -26,38 +25,44 @@ export const SmartActionCenter = () => {
         exportToCSV(dummyData, "Invoica_Dashboard_Export");
     };
 
+    const actions = [
+        { icon: PlusCircle, label: "Create Invoice", color: "text-accent", onClick: () => router.push('/sales/new') },
+        { icon: UserPlus, label: "Add Employee", color: "text-blue-500", onClick: () => router.push('/staff') },
+        { icon: FileText, label: "Upload Doc", color: "text-amber-500", onClick: () => router.push('/expenses') },
+        { icon: ImageIcon, label: "Add Photo", color: "text-purple-500", onClick: () => router.push('/expenses') }
+    ];
+
     return (
-        <div className="glass p-6 border-accent/20 bg-accent/5 mb-8">
+        <div className="mb-8 p-4">
             <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-accent text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]">
-                        <Zap size={20} />
+                <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center text-[#050505] shadow-[0_0_15px_rgba(20,255,140,0.3)]">
+                        <Zap size={20} className="fill-current" />
                     </div>
                     <div>
-                        <h3 className="text-xl font-bold">{t('analysis')} & {t('quick_actions')}</h3>
-                        <p className="text-gray-400 text-xs mt-1">Cross-module insights and production tools</p>
+                        <h3 className="text-xl font-bold text-white tracking-tight">Analysis & Quick Actions</h3>
+                        <p className="text-gray-400 text-sm mt-0.5">Cross-module insights and production tools</p>
                     </div>
                 </div>
 
                 <button
                     onClick={handleExport}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-border-custom hover:border-accent hover:text-accent transition-all text-sm font-bold"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/10 transition-all text-sm font-semibold text-white"
                 >
-                    <Download size={18} />
-                    <span>{t('export_csv')}</span>
+                    <Download size={16} />
+                    <span>Export to CSV</span>
                 </button>
             </div>
 
-            <div className="grid grid-cols-4 gap-4">
-                {[
-                    { icon: PlusCircle, label: t('create_invoice'), color: "text-emerald-400" },
-                    { icon: UserPlus, label: t('add_employee'), color: "text-blue-400" },
-                    { icon: FileText, label: t('upload_doc'), color: "text-amber-400" },
-                    { icon: ImageIcon, label: t('add_photo'), color: "text-purple-400" }
-                ].map((action, i) => (
-                    <button key={i} className="glass p-4 flex flex-col items-center gap-3 glass-hover border-border-custom transition-all">
-                        <action.icon size={24} className={action.color} />
-                        <span className="text-xs font-bold text-gray-300">{action.label}</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {actions.map((action, i) => (
+                    <button
+                        key={i}
+                        onClick={action.onClick}
+                        className="p-5 rounded-2xl bg-[#111111] border border-white/5 hover:border-white/10 hover:bg-[#161616] flex flex-col items-center justify-center gap-3 transition-all group"
+                    >
+                        <action.icon size={26} className={`${action.color} group-hover:scale-110 transition-transform`} />
+                        <span className="text-sm font-bold text-white tracking-tight">{action.label}</span>
                     </button>
                 ))}
             </div>

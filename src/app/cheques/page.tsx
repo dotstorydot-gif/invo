@@ -19,7 +19,8 @@ import {
     Trash2,
     Edit,
     ExternalLink,
-    Truck
+    Truck,
+    Landmark
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -30,8 +31,26 @@ import ERPFormModal from "@/components/ERPFormModal";
 export default function ChequesPage() {
     const { t } = useLanguage();
     const { data: cheques, loading, upsert } = useERPData<any>('cheques');
+    const { data: customers } = useERPData<any>('customers');
+    const { data: invoices } = useERPData<any>('sales_invoices');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isBankDropdownOpen, setIsBankDropdownOpen] = useState(false);
+
+    const EGYPT_BANKS = [
+        "National Bank of Egypt", "Banque Misr", "Commercial International Bank",
+        "QNB Alahli", "Banque du Caire", "Arab African International Bank",
+        "First Abu Dhabi Bank Egypt", "HSBC Bank Egypt", "Abu Dhabi Islamic Bank – Egypt",
+        "Faisal Islamic Bank of Egypt", "Bank of Alexandria", "Suez Canal Bank",
+        "The United Bank", "Egyptian Gulf Bank", "Crédit Agricole Egypt",
+        "National Bank of Kuwait – Egypt", "Abu Dhabi Commercial Bank – Egypt",
+        "Emirates NBD Egypt", "Export Development Bank of Egypt", "Housing and Development Bank",
+        "Arab Bank PLC", "Al Ahli Bank of Kuwait – Egypt", "MIDBank",
+        "Arab International Bank", "Al Baraka Bank Egypt", "Bank NXT",
+        "Attijariwafa Bank Egypt", "Arab Banking Corporation – Egypt",
+        "Mashreq Bank Egypt", "Societe Arabe Internationale de Banque",
+        "Agricultural Bank of Egypt"
+    ];
 
     const [formData, setFormData] = useState({
         cheque_number: '',
@@ -40,7 +59,9 @@ export default function ChequesPage() {
         due_date: '',
         direction: 'Incoming',
         entity_name: '',
-        status: 'Pending'
+        status: 'Pending',
+        customer_id: '',
+        sales_invoice_id: ''
     });
 
     const handleAddCheque = async () => {
@@ -53,7 +74,9 @@ export default function ChequesPage() {
                 due_date: formData.due_date,
                 direction: formData.direction,
                 entity_name: formData.entity_name,
-                status: formData.status
+                status: formData.status,
+                customer_id: formData.customer_id || null,
+                sales_invoice_id: formData.sales_invoice_id || null
             });
             setIsModalOpen(false);
             setFormData({
@@ -63,7 +86,9 @@ export default function ChequesPage() {
                 due_date: '',
                 direction: 'Incoming',
                 entity_name: '',
-                status: 'Pending'
+                status: 'Pending',
+                customer_id: '',
+                sales_invoice_id: ''
             });
         } catch (error) {
             console.error("Error adding cheque:", error);
@@ -138,7 +163,14 @@ export default function ChequesPage() {
                                 cheques.map((chq: any) => (
                                     <tr key={chq.id} className="border-b border-border-custom hover:bg-white/5 transition-colors">
                                         <td className="p-6 font-bold">#{chq.cheque_number}</td>
-                                        <td className="p-6 text-sm">{chq.entity_name}</td>
+                                        <td className="p-6 text-sm">
+                                            <div className="font-bold">{chq.entity_name}</div>
+                                            {(chq.customer_id && customers?.find((c: any) => c.id === chq.customer_id)) && (
+                                                <div className="text-[10px] text-gray-500 mt-1 flex items-center gap-1">
+                                                    <User size={10} /> {customers.find((c: any) => c.id === chq.customer_id)?.name}
+                                                </div>
+                                            )}
+                                        </td>
                                         <td className="p-6 text-sm text-gray-400">{chq.due_date}</td>
                                         <td className="p-6 font-bold text-accent">{chq.amount.toLocaleString()} EGP</td>
                                         <td className="p-6 text-right">
@@ -170,14 +202,42 @@ export default function ChequesPage() {
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                             />
                         </div>
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-2 relative">
                             <label className="text-xs font-bold text-gray-500 uppercase">Bank Name</label>
-                            <input
-                                type="text"
-                                value={formData.bank_name}
-                                onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
-                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                            />
+
+                            <div
+                                onClick={() => setIsBankDropdownOpen(!isBankDropdownOpen)}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm flex justify-between items-center cursor-pointer"
+                            >
+                                {formData.bank_name ? (
+                                    <div className="flex items-center gap-2">
+                                        <Landmark size={16} className="text-accent" />
+                                        <span>{formData.bank_name}</span>
+                                    </div>
+                                ) : (
+                                    <span className="text-gray-400">Select Bank</span>
+                                )}
+                                <ChevronRight size={16} className={`text-gray-500 transition-transform ${isBankDropdownOpen ? 'rotate-90' : ''}`} />
+                            </div>
+
+                            {isBankDropdownOpen && (
+                                <div className="absolute top-[100%] left-0 w-full mt-2 max-h-60 overflow-y-auto z-50 glass bg-[#1a1a1a] shadow-2xl rounded-xl border border-border-custom p-2">
+                                    {EGYPT_BANKS.map((bank, i) => (
+                                        <button
+                                            key={i}
+                                            type="button"
+                                            onClick={() => {
+                                                setFormData({ ...formData, bank_name: bank });
+                                                setIsBankDropdownOpen(false);
+                                            }}
+                                            className="w-full text-left p-3 hover:bg-white/5 rounded-lg flex items-center gap-3 transition-colors group"
+                                        >
+                                            <Landmark size={18} className="text-gray-500 group-hover:text-amber-500 transition-colors" />
+                                            <span className="text-sm">{bank}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                         <div className="flex flex-col gap-2">
                             <label className="text-xs font-bold text-gray-500 uppercase">Amount</label>
@@ -204,18 +264,40 @@ export default function ChequesPage() {
                                 onChange={(e) => setFormData({ ...formData, direction: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                             >
-                                <option value="Incoming">Incoming</option>
-                                <option value="Outgoing">Outgoing</option>
+                                <option value="Incoming">Incoming (Receivable)</option>
+                                <option value="Outgoing">Outgoing (Payable)</option>
                             </select>
                         </div>
-                        <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Entity Name</label>
-                            <input
-                                type="text"
-                                value={formData.entity_name}
-                                onChange={(e) => setFormData({ ...formData, entity_name: e.target.value })}
-                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                            />
+                        <div className="col-span-2 pt-4 border-t border-border-custom mt-2">
+                            <h4 className="text-sm font-bold text-accent mb-4">Link Cheque to Profile</h4>
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase">Customer Profile</label>
+                                    <select
+                                        value={formData.customer_id}
+                                        onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
+                                        className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                                    >
+                                        <option value="">No Customer Link</option>
+                                        {customers?.map((c: any) => (
+                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase">Related Invoice</label>
+                                    <select
+                                        value={formData.sales_invoice_id}
+                                        onChange={(e) => setFormData({ ...formData, sales_invoice_id: e.target.value })}
+                                        className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                                    >
+                                        <option value="">No Invoice Link</option>
+                                        {invoices?.map((inv: any) => (
+                                            <option key={inv.id} value={inv.id}>INV-{inv.id.slice(0, 4)} ({(inv.amount || 0).toLocaleString()} EGP)</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </ERPFormModal>

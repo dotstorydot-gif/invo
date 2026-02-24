@@ -1,116 +1,51 @@
-"use client";
+'use client';
 
-import React from "react";
+import React from 'react';
+import Link from 'next/link';
 import {
-    Users,
-    Plus,
-    ArrowLeft,
-    FileText,
-    BadgeDollarSign,
-    Briefcase,
-    History,
-    CreditCard,
-    ChevronRight,
-    Filter,
-    ShieldCheck,
-    Calculator,
-    AlertCircle,
-    Activity,
-    Search
-} from "lucide-react";
-import Link from "next/link";
+    Briefcase, FileText, CreditCard, BadgeDollarSign,
+    Activity, ShieldCheck, Filter, ChevronRight
+} from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useLanguage } from "@/context/LanguageContext";
-import { useERPData } from "@/hooks/useERPData";
 
-export default function PayrollPage() {
+export default function PayrollDashboard() {
     const { t } = useLanguage();
-    const { data: salaryData, loading } = useERPData<any>('salary_registers');
-
-    const { data: staff } = useERPData<any>('staff');
-
-    const activeStaffCount = staff.length;
-    const totalMonthlyPayroll = staff.reduce((sum, s) => sum + (Number(s.base_salary) || 0), 0);
-    const pendingAdvances = 18500; // Placeholder until advances table is available
-    const complianceRate = 100;
+    const tabs = [
+        { name: 'Contracts', icon: Briefcase, href: '/payroll/contracts' },
+        { name: 'Salary Register', icon: FileText, href: '/payroll/register' },
+        { name: 'Salary Slips', icon: CreditCard, href: '/payroll/slips' },
+        { name: 'Salary Advances', icon: BadgeDollarSign, href: '/payroll/advances' },
+        { name: 'Salary Items', icon: Activity, href: '/payroll/items' },
+        { name: 'Salary Templates', icon: ShieldCheck, href: '/payroll/templates' },
+        { name: 'Settings', icon: Filter, href: '/settings' },
+    ];
 
     return (
-        <div className="flex min-h-screen bg-background text-foreground">
-            <main className="flex-1 p-8 overflow-y-auto">
-                <header className="flex justify-between items-center mb-10">
-                    <div className="flex items-center gap-4">
-                        <Link href="/" className="p-2 rounded-xl border border-border-custom hover:border-accent hover:text-accent transition-all">
-                            <ArrowLeft size={20} />
-                        </Link>
-                        <div>
-                            <h2 className="text-3xl font-bold gradient-text">{t('payroll')}</h2>
-                            <p className="text-gray-400 text-sm mt-1">Employee Compensation & Contract Management</p>
-                        </div>
-                    </div>
+        <div className="p-4 md:p-8 overflow-y-auto w-full h-full bg-[#0a0a0a]">
+            <div className="max-w-3xl mx-auto space-y-6">
 
-                    <div className="flex gap-4">
-                        <button className="glass flex items-center gap-2 px-4 py-2 border-border-custom text-gray-400 hover:text-accent transition-all">
-                            <Calculator size={18} />
-                            <span className="text-sm font-bold">Calculate Month</span>
-                        </button>
-                        <button className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all">
-                            <Plus size={20} />
-                            <span>New Contract</span>
-                        </button>
-                    </div>
-                </header>
-
-                {/* Payroll KPIs */}
-                <div className="grid grid-cols-4 gap-6 mb-10">
-                    <div className="glass p-6 border-accent/20 bg-accent/5">
-                        <div className="flex items-center gap-3 text-accent mb-4">
-                            <Users size={20} />
-                            <span className="text-[10px] font-bold uppercase tracking-widest">Active Staff</span>
-                        </div>
-                        <div className="text-3xl font-bold">{activeStaffCount} Employees</div>
-                        <div className="text-[10px] text-gray-500 mt-2">All sectors (Sales/Const)</div>
-                    </div>
-
-                    <div className="glass p-6 border-emerald-500/20 bg-emerald-500/5">
-                        <div className="flex items-center gap-3 text-emerald-400 mb-4">
-                            <BadgeDollarSign size={20} />
-                            <span className="text-[10px] font-bold uppercase tracking-widest">Total Monthly Payroll</span>
-                        </div>
-                        <div className="text-3xl font-bold">{(totalMonthlyPayroll / 1000).toFixed(1)}K EGP</div>
-                        <div className="text-[10px] text-gray-500 mt-2">Current projected monthly</div>
-                    </div>
-
-                    <div className="glass p-6 border-amber-500/20 bg-amber-500/5">
-                        <div className="flex items-center gap-3 text-amber-400 mb-4">
-                            <History size={20} />
-                            <span className="text-[10px] font-bold uppercase tracking-widest">Pending Advances</span>
-                        </div>
-                        <div className="text-3xl font-bold">{pendingAdvances.toLocaleString()} EGP</div>
-                        <div className="text-[10px] text-gray-500 mt-2">Deductions scheduled</div>
-                    </div>
-
-                    <div className="glass p-6 border-blue-500/20 bg-blue-500/5">
-                        <div className="flex items-center gap-3 text-blue-400 mb-4">
-                            <ShieldCheck size={20} />
-                            <span className="text-[10px] font-bold uppercase tracking-widest">Compliance</span>
-                        </div>
-                        <div className="text-3xl font-bold">{complianceRate}%</div>
-                        <div className="text-[10px] text-gray-500 mt-2">Regulatory standards met</div>
-                    </div>
+                {/* Header */}
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Payroll Engine</h1>
+                    <p className="text-gray-400">Manage employee compensation, contracts, and registers.</p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                    {/* Payroll Categories - Matching User Reference (Image 1) */}
+                {/* Tab List */}
+                <div className="flex flex-col gap-3">
+                    {/* Payroll category links */}
                     <div className="lg:col-span-1 space-y-2">
                         {[
-                            { label: t('contracts'), icon: Briefcase },
-                            { label: t('salary_register'), icon: FileText },
-                            { label: t('salary_slips'), icon: CreditCard },
-                            { label: t('salary_advances'), icon: BadgeDollarSign },
-                            { label: t('salary_items'), icon: Activity },
-                            { label: t('salary_templates'), icon: ShieldCheck },
-                            { label: t('settings'), icon: Filter }
+                            { label: t('contracts'), icon: Briefcase, href: '/payroll/contracts' },
+                            { label: t('salary_register'), icon: FileText, href: '/payroll/register' },
+                            { label: t('salary_slips'), icon: CreditCard, href: '/payroll/slips' },
+                            { label: t('salary_advances'), icon: BadgeDollarSign, href: '/payroll/advances' },
+                            { label: t('salary_items'), icon: Activity, href: '/payroll/items' },
+                            { label: t('salary_templates'), icon: ShieldCheck, href: '/payroll/templates' },
+                            { label: t('settings'), icon: Filter, href: '/settings' }
                         ].map((link, i) => (
-                            <button
+                            <Link
+                                href={link.href}
                                 key={i}
                                 className="w-full flex items-center justify-between p-4 rounded-xl border border-border-custom hover:border-accent/40 bg-white/5 group transition-all"
                             >
@@ -119,64 +54,30 @@ export default function PayrollPage() {
                                     <span className="text-sm font-bold text-gray-300 group-hover:text-white">{link.label}</span>
                                 </div>
                                 <ChevronRight size={14} className="text-gray-700 group-hover:text-accent group-hover:translate-x-1 transition-all" />
-                            </button>
+                            </Link>
                         ))}
                     </div>
 
-                    {/* Payroll Main View */}
-                    <div className="lg:col-span-3 space-y-6">
-                        <div className="glass border-border-custom p-8 bg-white/5">
-                            <h3 className="text-xl font-bold mb-8">Monthly Salary Tracking</h3>
-                            <div className="space-y-6">
-                                {loading ? (
-                                    <div className="text-center py-10 text-gray-500 italic">Synchronizing live payroll data...</div>
-                                ) : (
-                                    salaryData.map((row, i) => (
-                                        <div key={i} className="flex justify-between items-center p-4 border border-border-custom rounded-xl hover:bg-white/5 transition-all">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center text-accent font-bold">
-                                                    {row.emp?.[0] || 'E'}
-                                                </div>
-                                                <div>
-                                                    <div className="font-bold text-sm">{row.emp || 'Employee'}</div>
-                                                    <div className="text-[10px] text-gray-500 font-bold uppercase">{row.role || 'Staff'}</div>
-                                                </div>
-                                            </div>
-                                            <div className="flex gap-8 items-center">
-                                                {(row.commissions || row.comm) > 0 && (
-                                                    <div className="text-right">
-                                                        <div className="text-[10px] text-emerald-500 font-bold uppercase">{t('commissions')}</div>
-                                                        <div className="text-sm font-bold">{(row.commissions || row.comm).toLocaleString()} EGP</div>
-                                                    </div>
-                                                )}
-                                                <div className="text-right">
-                                                    <div className="font-bold text-white">{(row.net_pay || (row.net + row.comm)).toLocaleString()} EGP</div>
-                                                    <span className={`text-[10px] font-bold uppercase ${row.status === 'Transferred' ? 'text-emerald-500' : 'text-amber-500'
-                                                        }`}>{row.status}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
+                    {/* Review Request button */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: tabs.length * 0.05 }} // Delay after other tabs
+                    >
+                        <Link
+                            href="/payroll/review"
+                            className="w-full flex items-center justify-between p-5 rounded-2xl bg-[#111111] border border-white/5 hover:border-white/10 hover:bg-[#161616] transition-all group"
+                        >
+                            <div className="flex items-center gap-4">
+                                <FileText className="w-6 h-6 text-gray-400 group-hover:text-accent transition-colors" />
+                                <span className="text-lg font-bold text-white tracking-tight">{t('review_requests')}</span>
                             </div>
-                        </div>
-
-                        {/* Loans / Advances Activity */}
-                        <div className="glass border-border-custom p-8 bg-white/5">
-                            <h3 className="text-xl font-bold mb-6">Recent Loans & Advances</h3>
-                            <div className="flex flex-col gap-4">
-                                <div className="flex justify-between p-4 bg-red-500/5 border border-red-500/20 rounded-xl">
-                                    <div className="flex items-center gap-3">
-                                        <AlertCircle size={18} className="text-red-400" />
-                                        <span className="text-sm font-bold">Ahmed Ali - Applied for 5,000 EGP advance</span>
-                                    </div>
-                                    <button className="text-accent text-xs font-bold hover:underline">Review Request</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                            <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-white transition-colors" />
+                        </Link>
+                    </motion.div>
                 </div>
-            </main>
+
+            </div>
         </div>
     );
 }

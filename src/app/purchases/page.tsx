@@ -128,19 +128,18 @@ export default function PurchasesPage() {
                     {/* Sidebar Links - Matching User's Image Categories */}
                     <div className="lg:col-span-1 space-y-2">
                         {[
-                            { label: t('purchase_requests'), icon: FileText },
-                            { label: t('rfqs'), icon: ClipboardList },
-                            { label: t('purchase_quotations'), icon: FileText },
-                            { label: t('purchase_orders'), icon: ShoppingCart },
-                            { label: t('purchase_invoices'), icon: CreditCard },
-                            { label: t('purchase_returns'), icon: ArrowRightLeft },
-                            { label: t('salary_items'), icon: Activity },
-                            { label: t('debit_notes'), icon: AlertCircle },
+                            { label: t('purchase_requests'), icon: FileText, link: '/purchasing/requests' },
+                            { label: t('rfqs'), icon: ClipboardList, link: '/purchasing/rfq' },
+                            { label: t('purchase_quotations'), icon: FileText, link: '/purchasing/quotations' },
+                            { label: t('purchase_orders'), icon: ShoppingCart, link: '/purchasing/orders' },
+                            { label: t('purchase_invoices'), icon: CreditCard, link: '/purchasing/invoices' },
+                            { label: t('purchase_returns'), icon: ArrowRightLeft, link: '/purchasing/returns' },
+                            { label: t('debit_notes'), icon: AlertCircle, link: '/suppliers/debit-notes' },
                             { label: t('supplier_management'), icon: Truck, link: '/suppliers' },
-                            { label: t('supplier_payments'), icon: DollarSign2 }
+                            { label: t('supplier_payments'), icon: DollarSign2, link: '/suppliers/payments' }
                         ].map((link, i) => (
                             <Link
-                                href={link.link || "#"}
+                                href={link.link}
                                 key={i}
                                 className="flex items-center justify-between p-4 rounded-xl border border-border-custom hover:border-accent/40 bg-white/5 group transition-all"
                             >

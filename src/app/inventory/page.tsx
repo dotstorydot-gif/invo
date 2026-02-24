@@ -30,11 +30,13 @@ interface InventoryItem {
     status: 'In Stock' | 'Low Stock' | 'Out of Stock';
     supplier?: string;
     last_restocked: string;
+    project_id?: string;
 }
 
 export default function InventoryPage() {
     const { t } = useLanguage();
     const { data: items, loading, upsert } = useERPData<InventoryItem>('inventory');
+    const { data: projects } = useERPData<any>('projects');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -45,7 +47,8 @@ export default function InventoryPage() {
         cost_price: 0,
         quantity: 0,
         stock_threshold: 10,
-        supplier: ''
+        supplier: '',
+        project_id: ''
     });
 
     const handleAddItem = async () => {
@@ -63,7 +66,8 @@ export default function InventoryPage() {
                 stock_threshold: Number(formData.stock_threshold),
                 status: status as any,
                 supplier: formData.supplier,
-                last_restocked: new Date().toISOString().split('T')[0]
+                last_restocked: new Date().toISOString().split('T')[0],
+                project_id: formData.project_id || null
             });
             setIsModalOpen(false);
             setFormData({
@@ -73,7 +77,8 @@ export default function InventoryPage() {
                 cost_price: 0,
                 quantity: 0,
                 stock_threshold: 10,
-                supplier: ''
+                supplier: '',
+                project_id: ''
             });
         } catch (error) {
             console.error("Error adding inventory item:", error);
@@ -164,7 +169,14 @@ export default function InventoryPage() {
                                                 className="border-b border-border-custom hover:bg-white/5 transition-colors group"
                                             >
                                                 <td className="p-4">
-                                                    <div className="font-bold text-white">{item.name}</div>
+                                                    <div className="font-bold text-white flex items-center gap-2">
+                                                        {item.name}
+                                                        {item.project_id && projects.find((p: any) => p.id === item.project_id) && (
+                                                            <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded">
+                                                                {projects.find((p: any) => p.id === item.project_id)?.name}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <div className="text-[10px] text-gray-500">{item.description}</div>
                                                 </td>
                                                 <td className="p-4 text-sm font-mono text-accent">{item.code}</td>
@@ -278,6 +290,19 @@ export default function InventoryPage() {
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                                 placeholder="Supplier name"
                             />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Linked Project</label>
+                            <select
+                                value={formData.project_id}
+                                onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            >
+                                <option value="">None / General Material</option>
+                                {projects.map((p: any) => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                            </select>
                         </div>
                     </div>
                 </ERPFormModal>

@@ -3,17 +3,13 @@
 import React, { useState } from "react";
 import {
     Plus,
-    Search,
-    Package,
     ArrowLeft,
     Monitor,
     User,
-    Tool,
-    Briefcase
+    Wrench
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { useLanguage } from "@/context/LanguageContext";
 import { useERPData } from "@/hooks/useERPData";
 import ERPFormModal from "@/components/ERPFormModal";
 
@@ -30,7 +26,6 @@ interface Asset {
 }
 
 export default function AssetsPage() {
-    const { t } = useLanguage();
     const { data: assets, loading, upsert } = useERPData<Asset>('assets');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,7 +35,7 @@ export default function AssetsPage() {
         serial_number: '',
         description: '',
         value: 0,
-        status: 'In Use',
+        status: 'In Use' as 'In Use' | 'Maintenance' | 'Retired',
         assigned_to_employee: null as string | null
     });
 
@@ -52,7 +47,7 @@ export default function AssetsPage() {
                 serial_number: formData.serial_number,
                 description: formData.description,
                 value: Number(formData.value),
-                status: formData.status as any,
+                status: formData.status,
                 assigned_to_employee: formData.assigned_to_employee
             });
             setIsModalOpen(false);
@@ -161,7 +156,7 @@ export default function AssetsPage() {
                                         </div>
                                     </div>
                                     <button className="glass-hover p-2 rounded-lg border border-border-custom text-gray-400 hover:text-accent transition-all">
-                                        <Tool size={16} />
+                                        <Wrench size={16} />
                                     </button>
                                 </div>
                             </motion.div>
@@ -211,7 +206,7 @@ export default function AssetsPage() {
                             <label className="text-xs font-bold text-gray-500 uppercase">Status</label>
                             <select
                                 value={formData.status}
-                                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                onChange={(e) => setFormData({ ...formData, status: e.target.value as 'In Use' | 'Maintenance' | 'Retired' })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                             >
                                 <option value="In Use">In Use (Active)</option>

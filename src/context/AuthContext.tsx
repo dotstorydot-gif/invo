@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface SessionData {
@@ -28,6 +28,10 @@ const AuthContext = createContext<AuthContextType>({ session: null, loading: tru
 export function AuthProvider({ children, initialSession }: { children: React.ReactNode, initialSession: SessionData | null }) {
     const [session, setSession] = useState<SessionData | null>(initialSession);
     const router = useRouter();
+
+    useEffect(() => {
+        setSession(initialSession);
+    }, [initialSession]);
 
     const logout = async () => {
         // Call server action or API

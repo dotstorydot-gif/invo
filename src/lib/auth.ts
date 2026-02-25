@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers';
 import { supabase } from './supabase';
 import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
 
 export async function loginWithOrg(formData: FormData) {
     const orgSubdomainOrName = formData.get('org') as string;
@@ -102,6 +103,9 @@ export async function loginWithOrg(formData: FormData) {
         maxAge: 60 * 60 * 24 * 7, // 1 week
         path: '/'
     });
+
+    // Invalidate the root layout cache to ensure immediate UI updates for moduleType
+    revalidatePath('/', 'layout');
 
     // Redirect based on role
     if (user.role === 'Superadmin') {

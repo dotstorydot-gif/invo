@@ -287,6 +287,17 @@ export default function OrganizationsPage() {
                             <option value="Yearly">Yearly</option>
                         </select>
                     </div>
+                    <div className="flex flex-col gap-2">
+                        <label className="text-xs font-bold text-gray-500 uppercase">Module Type</label>
+                        <select
+                            value={formData.module_type}
+                            onChange={(e) => setFormData({ ...formData, module_type: e.target.value })}
+                            className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                        >
+                            <option value="Real Estate">Real Estate</option>
+                            <option value="Service & Marketing">Service & Marketing</option>
+                        </select>
+                    </div>
                 </div>
             </ERPFormModal>
         </div>

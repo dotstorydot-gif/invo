@@ -16,7 +16,6 @@ import {
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
-import { useLanguage } from "@/context/LanguageContext";
 import { useERPData } from "@/hooks/useERPData";
 import ERPFormModal from "@/components/ERPFormModal";
 

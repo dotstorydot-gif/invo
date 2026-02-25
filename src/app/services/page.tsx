@@ -123,7 +123,7 @@ export default function ServicesPage() {
                 platforms: formData.platforms,
                 providers: formData.providers,
                 features: formData.features,
-                project_id: formData.project_id || null
+                project_id: formData.project_id || undefined
             });
             setIsModalOpen(false);
             setEditingId(null);

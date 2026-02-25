@@ -156,7 +156,7 @@ export default function ProjectsPage() {
                             <span className="text-sm font-bold uppercase tracking-widest">{isMarketing ? "Fulfillment Rate" : "Occupancy Rate"}</span>
                         </div>
                         <div className="text-3xl font-bold">
-                            {isMarketing ? "94%" : (units.length > 0 ? Math.round((units.filter((u: Unit) => u.status === 'Occupied' || u.status === 'Sold').length / units.length) * 100) : 0)}%
+                            {isMarketing ? "94%" : (units.length > 0 ? Math.round((units.filter((u) => u.status === 'Occupied' || u.status === 'Sold').length / units.length) * 100) : 0)}%
                         </div>
                         <div className="text-xs text-gray-500 mt-1">{isMarketing ? "Service delivery performance" : "Based on sold/occupied units"}</div>
                     </div>
@@ -166,7 +166,7 @@ export default function ProjectsPage() {
                             <span className="text-sm font-bold uppercase tracking-widest">{isMarketing ? "Contract Value" : "Est. Project Revenue"}</span>
                         </div>
                         <div className="text-3xl font-bold">
-                            {((isMarketing ? 2.4 : units.reduce((sum: number, u: Unit) => sum + (Number(u.price) || 0), 0) / 1000000)).toFixed(1)}M EGP
+                            {((isMarketing ? 2.4 : units.reduce((sum, u) => sum + (Number(u.price) || 0), 0) / 1000000)).toFixed(1)}M EGP
                         </div>
                         <div className="text-xs text-gray-500 mt-1">{isMarketing ? "Projected service revenue" : "Total unit asset value"}</div>
                     </div>
@@ -198,11 +198,11 @@ export default function ProjectsPage() {
                                 </thead>
                                 <tbody>
                                     {projects.map((prj: Project) => {
-                                        const projectItems = isMarketing ? services.filter((s: any) => s.project_id === prj.id) : units.filter((u: Unit) => u.project_id === prj.id);
+                                        const projectItems = isMarketing ? services.filter((s) => s.project_id === prj.id) : units.filter((u) => u.project_id === prj.id);
                                         const totalItems = projectItems.length;
                                         const completedItems = isMarketing
-                                            ? projectItems.filter((s: any) => s.status === 'Active' || s.status === 'Completed').length
-                                            : projectItems.filter((u: Unit) => u.status === 'Sold' || u.status === 'Installments').length;
+                                            ? projectItems.filter((s) => s.status === 'Active' || s.status === 'Completed').length
+                                            : projectItems.filter((u) => u.status === 'Sold' || u.status === 'Installments').length;
                                         const progress = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
                                         return (
@@ -250,7 +250,7 @@ export default function ProjectsPage() {
                                         );
                                     })}
                                     {/* Unassigned Project Row */}
-                                    {units.filter((u: Unit) => !u.project_id).length > 0 && (
+                                    {units.filter((u) => !u.project_id).length > 0 && (
                                         <tr className="bg-red-500/5 hover:bg-red-500/10 transition-colors">
                                             <td className="p-6">
                                                 <div className="font-bold text-red-400 flex items-center gap-2">
@@ -259,7 +259,7 @@ export default function ProjectsPage() {
                                                 </div>
                                             </td>
                                             <td className="p-6 text-sm text-gray-500">Multiple Locations</td>
-                                            <td className="p-6 font-bold text-red-400">{units.filter((u: Unit) => !u.project_id).length}</td>
+                                            <td className="p-6 font-bold text-red-400">{units.filter((u) => !u.project_id).length}</td>
                                             <td className="p-6 text-xs text-gray-500 italic">Units not linked to any project phase</td>
                                             <td className="p-6">
                                                 <Link href="/units?project=unassigned" className="text-xs font-bold text-accent hover:underline">Link Units</Link>

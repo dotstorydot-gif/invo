@@ -12,10 +12,15 @@ import {
 import { useLanguage } from "@/context/LanguageContext";
 import { exportToCSV } from "@/lib/storage";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { Briefcase } from "lucide-react";
 
 export const SmartActionCenter = () => {
     const { t } = useLanguage();
     const router = useRouter();
+    const { session } = useAuth();
+
+    const isMarketing = session?.moduleType === 'Service & Marketing';
 
     const handleExport = () => {
         const dummyData = [
@@ -26,10 +31,10 @@ export const SmartActionCenter = () => {
     };
 
     const actions = [
-        { icon: PlusCircle, label: "Create Invoice", color: "text-accent", onClick: () => router.push('/sales/new') },
+        { icon: PlusCircle, label: isMarketing ? "New Service" : "Create Invoice", color: "text-accent", onClick: () => router.push(isMarketing ? '/services' : '/sales/new') },
         { icon: UserPlus, label: "Add Employee", color: "text-blue-500", onClick: () => router.push('/staff') },
         { icon: FileText, label: "Upload Doc", color: "text-amber-500", onClick: () => router.push('/expenses') },
-        { icon: ImageIcon, label: "Add Photo", color: "text-purple-500", onClick: () => router.push('/expenses') }
+        { icon: isMarketing ? Briefcase : ImageIcon, label: isMarketing ? "Add Client Project" : "Add Photo", color: "text-purple-500", onClick: () => router.push(isMarketing ? '/projects' : '/expenses') }
     ];
 
     return (

@@ -17,6 +17,7 @@ import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { useERPData } from "@/hooks/useERPData";
 import ERPFormModal from "@/components/ERPFormModal";
+import { useAuth } from "@/context/AuthContext";
 
 interface ExpenseItem {
     id: string;
@@ -49,13 +50,17 @@ interface Unit {
 
 export default function ExpensesPage() {
     const { t } = useLanguage();
+    const { session } = useAuth();
     const { data: expenses, loading, upsert } = useERPData<ExpenseItem>('expenses');
     const { data: projects } = useERPData<Project>('projects');
     const { data: units } = useERPData<Unit>('units');
-    const { data: branches } = useERPData<Branch>('branches'); // Added branches fetch
+    const { data: services } = useERPData<any>('services');
+    const { data: branches } = useERPData<Branch>('branches');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [customCategory, setCustomCategory] = useState('');
+
+    const isMarketing = session?.moduleType === 'Service & Marketing';
 
     const [formData, setFormData] = useState({
         amount: 0,
@@ -231,9 +236,9 @@ export default function ExpensesPage() {
                                                         {projects.find((p) => p.id === expense.project_id)?.name}
                                                     </span>
                                                 )}
-                                                {expense.unit_id && units.find((u) => u.id === expense.unit_id) && (
-                                                    <span className="ml-2 text-xs text-amber-400 font-normal py-0.5 px-2 bg-amber-500/10 rounded">
-                                                        {units.find((u) => u.id === expense.unit_id)?.name}
+                                                {expense.unit_id && (isMarketing ? services : units).find((item: any) => item.id === expense.unit_id) && (
+                                                    <span className={`ml-2 text-xs font-normal py-0.5 px-2 rounded ${isMarketing ? 'text-purple-400 bg-purple-500/10' : 'text-amber-400 bg-amber-500/10'}`}>
+                                                        {(isMarketing ? services : units).find((item: any) => item.id === expense.unit_id)?.name}
                                                     </span>
                                                 )}
                                                 {expense.branch_id && branches.find((b) => b.id === expense.branch_id) && (
@@ -362,15 +367,15 @@ export default function ExpensesPage() {
                             </select>
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">{t('assigned_unit')}</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{isMarketing ? "Assigned Service / Item" : t('assigned_unit')}</label>
                             <select
                                 value={formData.unit_id}
                                 onChange={(e) => setFormData({ ...formData, unit_id: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm font-semibold"
                             >
-                                <option value="">{t('none_service')}</option>
-                                {units.map((u) => (
-                                    <option key={u.id} value={u.id}>{u.name}</option>
+                                <option value="">{isMarketing ? "General Service Cost" : t('none_service')}</option>
+                                {(isMarketing ? services : units).map((item: any) => (
+                                    <option key={item.id} value={item.id}>{item.name}</option>
                                 ))}
                             </select>
                         </div>

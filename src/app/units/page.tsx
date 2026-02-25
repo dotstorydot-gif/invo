@@ -20,6 +20,9 @@ import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { useERPData } from "@/hooks/useERPData";
 import ERPFormModal from "@/components/ERPFormModal";
+import { useAuth } from "@/context/AuthContext";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 interface Unit {
     id: string;
@@ -41,9 +44,17 @@ interface Unit {
 
 export default function UnitsPage() {
     const { t } = useLanguage();
+    const { session } = useAuth();
+    const router = useRouter();
     const { data: units, loading, upsert } = useERPData<Unit>('units');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (session?.moduleType === 'Service & Marketing') {
+            router.replace('/services');
+        }
+    }, [session, router]);
 
     const [formData, setFormData] = useState({
         name: '',

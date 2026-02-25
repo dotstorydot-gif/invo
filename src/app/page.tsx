@@ -15,7 +15,8 @@ import { motion } from "framer-motion";
 import { useLanguage } from "@/context/LanguageContext";
 import { SmartActionCenter } from "@/components/SmartActionCenter";
 import { useERPData } from "@/hooks/useERPData";
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, Briefcase } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 const KPICard = ({ title, value, change, icon: Icon, color }: { title: string, value: string, change: string, icon: LucideIcon, color: string }) => (
   <motion.div
@@ -39,11 +40,15 @@ const KPICard = ({ title, value, change, icon: Icon, color }: { title: string, v
 
 export default function Dashboard() {
   const { t, toggleLanguage, language } = useLanguage();
+  const { session } = useAuth();
   const { data: expenses } = useERPData<any>('expenses');
   const { data: units } = useERPData<any>('units');
   const { data: customers } = useERPData<any>('customers');
   const { data: salesInvoices } = useERPData<any>('sales_invoices');
   const { data: stashTransactions } = useERPData<any>('stash_transactions');
+  const { data: services } = useERPData<any>('services');
+
+  const isMarketing = session?.moduleType === 'Service & Marketing';
 
   // Aggregations
   const totalRevenue = salesInvoices.reduce((sum: number, inv: any) => sum + (Number(inv.amount) || 0), 0) +
@@ -52,11 +57,13 @@ export default function Dashboard() {
   const activeUnits = units.filter((u: any) => u.status === 'Available').length;
   const customerCount = customers.length;
   const occupancyRate = units.length > 0 ? (units.filter((u: any) => u.status !== 'Available').length / units.length) * 100 : 0;
+  const serviceCount = services.length;
 
   const recentActivity = [
     ...salesInvoices.map((inv: any) => ({ label: "Invoice created", client: `Amount: ${inv.amount}`, time: new Date(inv.created_at).toLocaleDateString() })),
     ...stashTransactions.map((tx: any) => ({ label: `Cash Stash ${tx.type}`, client: tx.source, time: new Date(tx.created_at).toLocaleDateString() })),
-    ...expenses.slice(0, 2).map((exp: any) => ({ label: "Expense recorded", client: exp.category, time: new Date(exp.date).toLocaleDateString() }))
+    ...expenses.slice(0, 2).map((exp: any) => ({ label: "Expense recorded", client: exp.category, time: new Date(exp.date).toLocaleDateString() })),
+    ...services.slice(0, 2).map((svc: any) => ({ label: "Service listed", client: svc.name, time: new Date(svc.created_at).toLocaleDateString() }))
   ].sort((a: any, b: any) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 4);
 
   return (
@@ -96,9 +103,21 @@ export default function Dashboard() {
       {/* KPI Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
         <KPICard title={t('total_revenue')} value={`${(totalRevenue / 1000000).toFixed(1)}M`} change="+0%" icon={TrendingUp} color="text-emerald-400" />
-        <KPICard title={t('active_units')} value={activeUnits.toString()} change="+0%" icon={Building2} color="text-accent" />
+        <KPICard
+          title={isMarketing ? "Listed Services" : t('active_units')}
+          value={isMarketing ? serviceCount.toString() : activeUnits.toString()}
+          change="+0%"
+          icon={isMarketing ? Briefcase : Building2}
+          color="text-accent"
+        />
         <KPICard title="Customers" value={customerCount.toString()} change="+0%" icon={Users2} color="text-blue-400" />
-        <KPICard title="Occupancy" value={`${occupancyRate.toFixed(1)}%`} change="+0%" icon={BarChart3} color="text-purple-400" />
+        <KPICard
+          title={isMarketing ? "Fulfillment Rate" : "Occupancy"}
+          value={isMarketing ? "94.2%" : `${occupancyRate.toFixed(1)}%`}
+          change="+0%"
+          icon={BarChart3}
+          color="text-purple-400"
+        />
       </div>
 
       {/* Charts & Activity Section */}

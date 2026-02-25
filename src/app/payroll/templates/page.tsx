@@ -9,7 +9,7 @@ import { useERPData } from "@/hooks/useERPData";
 export default function Page() {
     const { t } = useLanguage();
     const { data, loading } = useERPData<any>('salary_templates');
-    
+
     const filteredData = data.filter((item: any) => true);
 
     return (
@@ -22,7 +22,7 @@ export default function Page() {
                         </Link>
                         <div>
                             <h2 className="text-3xl font-bold gradient-text">Salary Templates</h2>
-                            <p className="text-gray-400 text-sm mt-1">Manage all your {title.lower()} here.</p>
+                            <p className="text-gray-400 text-sm mt-1">Manage all your templates here.</p>
                         </div>
                     </div>
                 </header>
@@ -36,7 +36,7 @@ export default function Page() {
                         The Salary Templates module is currently running. Full interactive features are rolling out shortly.
                         Found {filteredData.length} records in the database.
                     </p>
-                    
+
                     <div className="w-full max-w-4xl text-left glass bg-white/5 p-4 rounded-xl border border-border-custom">
                         <h4 className="font-bold text-sm text-gray-400 uppercase tracking-widest mb-4">Latest Records</h4>
                         {loading ? (
@@ -45,8 +45,8 @@ export default function Page() {
                             <div className="space-y-2">
                                 {filteredData.slice(0, 5).map((item: any, i: number) => (
                                     <div key={i} className="p-3 bg-white/5 rounded-lg text-sm border border-border-custom flex justify-between">
-                                        <span className="font-mono text-accent">{item.id?.substring(0,8) || `ID-${1000+i}`}</span>
-                                        <span className="text-gray-400">{new Date(item.created_at || Date.now()).toLocaleDateString()}</span>
+                                        <span className="font-mono text-accent">{item.id?.substring(0, 8) || `ID-${1000 + i}`}</span>
+                                        <span className="text-gray-400">{item.created_at ? new Date(item.created_at).toLocaleDateString() : 'Recently Added'}</span>
                                     </div>
                                 ))}
                             </div>

@@ -1,58 +1,178 @@
 "use client";
 
-import React from "react";
-import { ArrowLeft, Clock } from "lucide-react";
+import React, { useState } from "react";
+import {
+    ArrowLeft, Search, FileText, Printer,
+    Download, Table as TableIcon, Calendar,
+    User, DollarSign, PieChart, Activity
+} from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { useERPData } from "@/hooks/useERPData";
 
-export default function Page() {
+export default function SalaryTemplatesPage() {
     const { t } = useLanguage();
-    const { data, loading } = useERPData<any>('salary_templates');
+    const { data: slips, loading } = useERPData<any>('salary_slips');
+    const { data: staff } = useERPData<any>('staff');
 
-    const filteredData = data.filter((item: any) => true);
+    const [selectedMonth, setSelectedMonth] = useState(`${new Date().toLocaleString('default', { month: 'long' })} ${new Date().getFullYear()}`);
+    const [searchTerm, setSearchTerm] = useState("");
+
+    const monthlySlips = slips.filter((s: any) => s.month_year === selectedMonth);
+
+    const filteredSlips = monthlySlips.filter((s: any) => {
+        const emp = staff.find(st => st.id === s.staff_id);
+        return emp?.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    });
+
+    const totalNet = filteredSlips.reduce((sum: number, s: any) => sum + (s.net_salary || 0), 0);
+    const totalBase = filteredSlips.reduce((sum: number, s: any) => sum + (s.base_salary || 0), 0);
+    const totalDeductions = filteredSlips.reduce((sum: number, s: any) => sum + (s.vat_amount + s.insurance_amount + s.advances_deducted + s.penalties_deducted), 0);
+
+    const handlePrint = () => window.print();
 
     return (
-        <div className="flex min-h-screen bg-background text-foreground">
+        <div className="flex min-h-screen bg-[#0a0a0a] text-foreground">
             <main className="flex-1 p-8 overflow-y-auto">
-                <header className="flex justify-between items-center mb-10">
+                <header className="flex justify-between items-center mb-10 print:hidden">
                     <div className="flex items-center gap-4">
-                        <Link href="javascript:history.back()" className="p-2 rounded-xl border border-border-custom hover:border-accent hover:text-accent transition-all">
+                        <Link href="/payroll" className="p-2 rounded-xl border border-border-custom hover:border-accent hover:text-accent transition-all">
                             <ArrowLeft size={20} />
                         </Link>
                         <div>
-                            <h2 className="text-3xl font-bold gradient-text">Salary Templates</h2>
-                            <p className="text-gray-400 text-sm mt-1">Manage all your templates here.</p>
+                            <h2 className="text-3xl font-bold gradient-text">Payroll Templates</h2>
+                            <p className="text-gray-400 text-sm mt-1">Exportable monthly payroll sheets and reports</p>
                         </div>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <select
+                            value={selectedMonth}
+                            onChange={(e) => setSelectedMonth(e.target.value)}
+                            className="glass bg-background border-border-custom px-4 py-2 rounded-xl text-sm outline-none focus:border-accent"
+                        >
+                            {/* In a real app, this would be generated from available slips */}
+                            <option value={`${new Date().toLocaleString('default', { month: 'long' })} ${new Date().getFullYear()}`}>{new Date().toLocaleString('default', { month: 'long' })} {new Date().getFullYear()}</option>
+                            <option value="January 2024">January 2024</option>
+                            <option value="December 2023">December 2023</option>
+                        </select>
+                        <button
+                            onClick={handlePrint}
+                            className="bg-white/5 border border-white/10 p-2 rounded-xl hover:bg-white/10 transition-all text-gray-400 hover:text-white"
+                        >
+                            <Printer size={20} />
+                        </button>
                     </div>
                 </header>
 
-                <div className="glass p-8 flex flex-col items-center justify-center min-h-[400px] border-border-custom text-center">
-                    <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center text-accent mb-6">
-                        <Clock size={40} />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 print:hidden">
+                    <div className="glass p-6 border-border-custom flex items-center gap-4">
+                        <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-500">
+                            <DollarSign size={24} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Net Payable</p>
+                            <h3 className="text-2xl font-bold text-white">{totalNet.toLocaleString()} EGP</h3>
+                        </div>
                     </div>
-                    <h3 className="text-2xl font-bold mb-2">Module Active</h3>
-                    <p className="text-gray-400 max-w-md mb-8">
-                        The Salary Templates module is currently running. Full interactive features are rolling out shortly.
-                        Found {filteredData.length} records in the database.
-                    </p>
+                    <div className="glass p-6 border-border-custom flex items-center gap-4">
+                        <div className="p-3 rounded-2xl bg-blue-500/10 text-blue-500">
+                            <PieChart size={24} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Base Payroll</p>
+                            <h3 className="text-2xl font-bold text-white">{totalBase.toLocaleString()} EGP</h3>
+                        </div>
+                    </div>
+                    <div className="glass p-6 border-border-custom flex items-center gap-4">
+                        <div className="p-3 rounded-2xl bg-red-500/10 text-red-500">
+                            <Activity size={24} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Deductions</p>
+                            <h3 className="text-2xl font-bold text-white">{totalDeductions.toLocaleString()} EGP</h3>
+                        </div>
+                    </div>
+                </div>
 
-                    <div className="w-full max-w-4xl text-left glass bg-white/5 p-4 rounded-xl border border-border-custom">
-                        <h4 className="font-bold text-sm text-gray-400 uppercase tracking-widest mb-4">Latest Records</h4>
-                        {loading ? (
-                            <div className="text-gray-500 italic text-sm text-center py-4">Syncing with database...</div>
-                        ) : filteredData.length > 0 ? (
-                            <div className="space-y-2">
-                                {filteredData.slice(0, 5).map((item: any, i: number) => (
-                                    <div key={i} className="p-3 bg-white/5 rounded-lg text-sm border border-border-custom flex justify-between">
-                                        <span className="font-mono text-accent">{item.id?.substring(0, 8) || `ID-${1000 + i}`}</span>
-                                        <span className="text-gray-400">{item.created_at ? new Date(item.created_at).toLocaleDateString() : 'Recently Added'}</span>
-                                    </div>
-                                ))}
+                <div className="glass overflow-hidden border-border-custom print:border-none print:shadow-none">
+                    <div className="p-8 border-b border-border-custom flex justify-between items-center print:border-black/20">
+                        <div>
+                            <h3 className="text-xl font-bold text-white print:text-black">Monthly Payroll Sheet</h3>
+                            <p className="text-sm text-accent font-bold uppercase tracking-widest">{selectedMonth}</p>
+                        </div>
+                        <div className="text-right hidden print:block">
+                            <p className="text-xs text-gray-400 font-bold uppercase">Organization Payroll Report</p>
+                        </div>
+                        <div className="print:hidden">
+                            <div className="glass flex items-center px-4 py-2 gap-3 w-64 border-border-custom bg-background">
+                                <Search size={18} className="text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Filter by name..."
+                                    className="bg-transparent border-none outline-none text-sm w-full"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
                             </div>
-                        ) : (
-                            <div className="text-gray-500 italic text-sm text-center py-4">No records found for this module yet.</div>
-                        )}
+                        </div>
+                    </div>
+
+                    <table className="w-full text-left font-medium">
+                        <thead>
+                            <tr className="border-b border-border-custom bg-white/5 print:bg-gray-100 font-bold text-[10px] uppercase text-gray-500 tracking-widest print:text-black">
+                                <th className="p-6">Employee Name</th>
+                                <th className="p-6">Days</th>
+                                <th className="p-6 text-right">Base Salary</th>
+                                <th className="p-6 text-right">Allowances</th>
+                                <th className="p-6 text-right">Deductions</th>
+                                <th className="p-6 text-right">Net Payable</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {loading ? (
+                                <tr><td colSpan={6} className="p-10 text-center text-gray-500 animate-pulse">Generating report...</td></tr>
+                            ) : filteredSlips.length === 0 ? (
+                                <tr><td colSpan={6} className="p-10 text-center text-gray-500 italic">No payroll data for this month.</td></tr>
+                            ) : filteredSlips.map((slip: any) => {
+                                const emp = staff.find(st => st.id === slip.staff_id);
+                                const allowances = slip.transportation_amount || 0;
+                                const deductions = (slip.vat_amount || 0) + (slip.insurance_amount || 0) + (slip.advances_deducted || 0) + (slip.penalties_deducted || 0);
+                                return (
+                                    <tr key={slip.id} className="border-b border-border-custom hover:bg-white/5 transition-colors print:text-black">
+                                        <td className="p-6">
+                                            <div className="font-bold text-white print:text-black">{emp?.full_name || "Unknown"}</div>
+                                            <div className="text-[10px] text-gray-500 uppercase tracking-widest">{emp?.role || "Staff"}</div>
+                                        </td>
+                                        <td className="p-6 text-sm">{slip.days_served || 30}</td>
+                                        <td className="p-6 text-right font-mono text-sm">{slip.base_salary?.toLocaleString()}</td>
+                                        <td className="p-6 text-right font-mono text-sm text-emerald-500">+{allowances.toLocaleString()}</td>
+                                        <td className="p-6 text-right font-mono text-sm text-red-500">-{deductions.toLocaleString()}</td>
+                                        <td className="p-6 text-right font-mono font-bold text-white print:text-black">{slip.net_salary?.toLocaleString()} EGP</td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                        <tfoot className="print:text-black">
+                            <tr className="bg-white/5 font-bold">
+                                <td colSpan={2} className="p-6 text-lg">Totals</td>
+                                <td className="p-6 text-right font-mono">{totalBase.toLocaleString()}</td>
+                                <td className="p-6 text-right font-mono text-emerald-500">+{filteredSlips.reduce((sum: number, s: any) => sum + (s.transportation_amount || 0), 0).toLocaleString()}</td>
+                                <td className="p-6 text-right font-mono text-red-500">-{totalDeductions.toLocaleString()}</td>
+                                <td className="p-6 text-right font-mono text-xl text-accent">{totalNet.toLocaleString()} EGP</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <div className="hidden print:block mt-20 p-8 grid grid-cols-2 gap-20">
+                        <div className="text-center">
+                            <div className="border-b border-black w-full mb-2" />
+                            <p className="text-[10px] font-bold uppercase">Prepared By</p>
+                        </div>
+                        <div className="text-center">
+                            <div className="border-b border-black w-full mb-2" />
+                            <p className="text-[10px] font-bold uppercase">Approved By</p>
+                        </div>
                     </div>
                 </div>
             </main>

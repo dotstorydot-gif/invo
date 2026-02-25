@@ -23,14 +23,18 @@ import ERPFormModal from "@/components/ERPFormModal";
 
 interface Employee {
     id: string;
-    name: string;
+    organization_id: string;
+    full_name?: string;
+    name?: string;
     role: string;
     employment_type: string;
-    baseSalary: number;
+    base_salary?: number;
+    baseSalary?: number;
     daily_rate: number;
     penalties: number;
     vacations: number;
     project_id?: string;
+    hire_date?: string;
 }
 
 export default function StaffPage() {
@@ -54,7 +58,8 @@ export default function StaffPage() {
         daily_rate: 0,
         email: '',
         status: 'Active',
-        project_id: ''
+        project_id: '',
+        hire_date: new Date().toISOString().split('T')[0]
     });
 
     const handleAddStaff = async () => {
@@ -68,7 +73,8 @@ export default function StaffPage() {
                 daily_rate: Number(formData.daily_rate),
                 email: formData.email,
                 status: formData.status,
-                project_id: formData.project_id || null
+                project_id: formData.project_id || null,
+                hire_date: formData.hire_date
             });
             setIsModalOpen(false);
             setFormData({
@@ -79,7 +85,8 @@ export default function StaffPage() {
                 daily_rate: 0,
                 email: '',
                 status: 'Active',
-                project_id: ''
+                project_id: '',
+                hire_date: new Date().toISOString().split('T')[0]
             });
         } catch (error) {
             console.error("Error adding staff:", error);
@@ -328,6 +335,15 @@ export default function StaffPage() {
                                     <option key={p.id} value={p.id}>{p.name}</option>
                                 ))}
                             </select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Start Date / Hire Date</label>
+                            <input
+                                type="date"
+                                value={formData.hire_date}
+                                onChange={(e) => setFormData({ ...formData, hire_date: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm [color-scheme:dark]"
+                            />
                         </div>
                     </div>
                 </ERPFormModal>

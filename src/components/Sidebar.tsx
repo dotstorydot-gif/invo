@@ -136,8 +136,11 @@ export default function Sidebar() {
                             <SidebarItem href="/units" icon={Building2} label={t('rentals')} active={pathname === '/units'} />
                         )}
 
-                        <SidebarItem href="/invoices" icon={CircleDollarSign} label={t('sales')} active={pathname === '/invoices'} />
-                        <SidebarItem href="/customers" icon={Users} label="Customers" active={pathname === '/customers'} />
+                        <SidebarItem isLocked={isSilver} icon={BadgePercent} label={t('sales')} subItems={[
+                            { label: "Sales Invoices", href: "/invoices" },
+                            { label: "Client Quotations", href: "/quotations" },
+                        ]} />
+                        <SidebarItem href="/customers" icon={Users} label={isMarketingModule ? "Clients" : "Customers"} active={pathname === '/customers'} />
 
                         <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2 pl-4">Purchasing & Logistics</div>
                         <SidebarItem isLocked={isSilver} icon={ShoppingCart} label="Purchasing Cycle" subItems={[
@@ -165,6 +168,7 @@ export default function Sidebar() {
                         <SidebarItem href="/installments" icon={CreditCard} label={t('installments')} active={pathname === '/installments'} />
                         <SidebarItem href="/cheques" icon={Wallet} label={t('cheques')} active={pathname === '/cheques'} />
                         <SidebarItem href="/stash" icon={Wallet} label={t('stash')} active={pathname === '/stash'} />
+                        <SidebarItem href="/forecasting" icon={BarChart3} label="Revenue Forecast" active={pathname === '/forecasting'} />
                         <SidebarItem isLocked={isSilver} href="/reports" icon={BarChart3} label={t('reports')} active={pathname === '/reports'} />
 
                         <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2 pl-4">Human Resources</div>

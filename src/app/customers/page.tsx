@@ -21,34 +21,52 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { useERPData } from "@/hooks/useERPData";
+import { useAuth } from "@/context/AuthContext";
 import ERPFormModal from "@/components/ERPFormModal";
 
 export default function CustomersPage() {
     const { t } = useLanguage();
+    const { session } = useAuth();
+    const isMarketing = session?.moduleType === 'Service & Marketing';
+
     const { data: customers, loading, upsert } = useERPData<any>('customers');
+    const { data: projects } = useERPData<any>('projects');
+    const { data: clientProjects, upsert: upsertClientProject } = useERPData<any>('client_projects');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { data: units } = useERPData<any>('units');
     const { data: installments } = useERPData<any>('installments');
 
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<any>({
         name: '',
         email: '',
         phone: '',
-        address: ''
+        address: '',
+        selected_projects: []
     });
 
     const handleAddCustomer = async () => {
         try {
             setIsSubmitting(true);
-            await upsert({
+            const res = await upsert({
                 name: formData.name,
                 email: formData.email,
                 phone: formData.phone,
-                address: formData.address
+                address: isMarketing ? undefined : formData.address
             });
+
+            if (res && res[0] && formData.selected_projects?.length > 0) {
+                const clientId = res[0].id;
+                for (const projectId of formData.selected_projects) {
+                    await upsertClientProject({
+                        client_id: clientId,
+                        project_id: projectId
+                    });
+                }
+            }
+
             setIsModalOpen(false);
-            setFormData({ name: '', email: '', phone: '', address: '' });
+            setFormData({ name: '', email: '', phone: '', address: '', selected_projects: [] });
         } catch (error) {
             console.error("Error adding customer:", error);
             alert("Failed to add customer.");
@@ -69,8 +87,8 @@ export default function CustomersPage() {
                             <ArrowLeft size={20} />
                         </Link>
                         <div>
-                            <h2 className="text-3xl font-bold gradient-text">Customer Directory</h2>
-                            <p className="text-gray-400 text-sm mt-1">Manage unit owners, potential buyers, and installment payers</p>
+                            <h2 className="text-3xl font-bold gradient-text">{isMarketing ? "Client Directory" : "Customer Directory"}</h2>
+                            <p className="text-gray-400 text-sm mt-1">{isMarketing ? "Manage accounts, service clients and project associations" : "Manage unit owners, potential buyers, and installment payers"}</p>
                         </div>
                     </div>
 
@@ -79,7 +97,7 @@ export default function CustomersPage() {
                         className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
                     >
                         <Plus size={20} />
-                        <span>Add Customer</span>
+                        <span>{isMarketing ? "Add Client" : "Add Customer"}</span>
                     </button>
                 </header>
 
@@ -88,9 +106,9 @@ export default function CustomersPage() {
                     <div className="glass p-6 border-blue-500/20 bg-blue-500/5">
                         <div className="flex items-center gap-3 text-blue-400 mb-2">
                             <Users size={18} />
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Total Clients</span>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{isMarketing ? "Total Clients" : "Total Contacts"}</span>
                         </div>
-                        <div className="text-3xl font-bold">{customers.length} Clients</div>
+                        <div className="text-3xl font-bold">{customers.length} {isMarketing ? "Clients" : "Contacts"}</div>
                     </div>
                     <div className="glass p-6 border-emerald-500/20 bg-emerald-500/5">
                         <div className="flex items-center gap-3 text-emerald-400 mb-2">
@@ -113,7 +131,7 @@ export default function CustomersPage() {
                         <div className="p-6 border-b border-border-custom flex justify-between items-center bg-white/5">
                             <h3 className="font-bold flex items-center gap-2">
                                 <Users size={18} className="text-accent" />
-                                All Registered Customers
+                                {isMarketing ? "All Registered Clients" : "All Registered Customers"}
                             </h3>
                             <div className="glass flex items-center px-4 py-2 gap-3 w-64 border-border-custom bg-background">
                                 <Search size={16} className="text-gray-400" />
@@ -125,9 +143,9 @@ export default function CustomersPage() {
                             <table className="w-full text-left">
                                 <thead className="bg-white/5">
                                     <tr className="border-b border-border-custom">
-                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">Customer Info</th>
+                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">{isMarketing ? "Client Info" : "Customer Info"}</th>
                                         <th className="p-6 text-xs font-bold uppercase text-gray-500">Contact Details</th>
-                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">Status</th>
+                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">{isMarketing ? "Accounts / Projects" : "Status"}</th>
                                         <th className="p-6 text-xs font-bold uppercase text-gray-500 text-right">Actions</th>
                                     </tr>
                                 </thead>
@@ -159,9 +177,25 @@ export default function CustomersPage() {
                                                     </div>
                                                 </td>
                                                 <td className="p-6">
-                                                    <span className="px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                                                        Active
-                                                    </span>
+                                                    {isMarketing ? (
+                                                        <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                                            {clientProjects.filter((cp: any) => cp.client_id === customer.id).map((cp: any) => {
+                                                                const project = projects.find(p => p.id === cp.project_id);
+                                                                return (
+                                                                    <span key={cp.id} className="px-2 py-0.5 rounded bg-accent/10 border border-accent/20 text-accent text-[8px] font-bold uppercase tracking-tight">
+                                                                        {project?.name || "Project"}
+                                                                    </span>
+                                                                );
+                                                            })}
+                                                            {clientProjects.filter((cp: any) => cp.client_id === customer.id).length === 0 && (
+                                                                <span className="text-[10px] text-gray-600 italic">No project linked</span>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                                                            Active
+                                                        </span>
+                                                    )}
                                                 </td>
                                                 <td className="p-6 text-right">
                                                     <div className="flex justify-end gap-2 outline-none">
@@ -188,13 +222,13 @@ export default function CustomersPage() {
                 <ERPFormModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
-                    title="Add New Customer"
+                    title={isMarketing ? "Add New Client" : "Add New Customer"}
                     onSubmit={handleAddCustomer}
                     loading={isSubmitting}
                 >
                     <div className="grid grid-cols-2 gap-6">
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Customer Name</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{isMarketing ? "Client / Account Name" : "Customer Name"}</label>
                             <input
                                 type="text"
                                 value={formData.name}
@@ -213,7 +247,7 @@ export default function CustomersPage() {
                                 placeholder="+20 123..."
                             />
                         </div>
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col col-span-2 gap-2">
                             <label className="text-xs font-bold text-gray-500 uppercase">Email Address</label>
                             <input
                                 type="email"
@@ -223,15 +257,43 @@ export default function CustomersPage() {
                                 placeholder="customer@example.com"
                             />
                         </div>
-                        <div className="flex flex-col col-span-2 gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Home Address</label>
-                            <textarea
-                                value={formData.address}
-                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                                rows={3}
-                            />
-                        </div>
+
+                        {isMarketing ? (
+                            <div className="flex flex-col col-span-2 gap-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase">Related Projects / Accounts</label>
+                                <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto p-4 glass bg-white/5 border-border-custom rounded-xl">
+                                    {projects.map((p: any) => (
+                                        <label key={p.id} className="flex items-center gap-3 cursor-pointer group">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.selected_projects.includes(p.id)}
+                                                onChange={(e) => {
+                                                    const checked = e.target.checked;
+                                                    setFormData((prev: any) => ({
+                                                        ...prev,
+                                                        selected_projects: checked
+                                                            ? [...prev.selected_projects, p.id]
+                                                            : prev.selected_projects.filter((id: string) => id !== p.id)
+                                                    }));
+                                                }}
+                                                className="w-4 h-4 rounded border-border-custom bg-transparent checked:bg-accent focus:ring-accent transition-all"
+                                            />
+                                            <span className="text-[10px] font-bold text-gray-400 group-hover:text-white transition-colors">{p.name}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col col-span-2 gap-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase">Home Address</label>
+                                <textarea
+                                    value={formData.address}
+                                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                    className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                                    rows={3}
+                                />
+                            </div>
+                        )}
                     </div>
                 </ERPFormModal>
             </main>

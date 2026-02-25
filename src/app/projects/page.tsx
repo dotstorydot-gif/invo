@@ -22,12 +22,17 @@ import { useState } from "react";
 
 interface Project {
     id: string;
+    organization_id: string;
     name: string;
     location: string;
-    totalUnits: number;
-    soldUnits: number;
-    revenue: number;
+    totalUnits?: number;
+    soldUnits?: number;
+    revenue?: number;
     description?: string;
+    billing_cycle?: string;
+    payment_terms?: string;
+    start_date?: string;
+    end_date?: string;
 }
 
 interface Unit {
@@ -50,7 +55,11 @@ export default function ProjectsPage() {
     const [formData, setFormData] = useState({
         name: '',
         location: '',
-        description: ''
+        description: '',
+        billing_cycle: 'Monthly',
+        payment_terms: 'Net 30',
+        start_date: new Date().toISOString().split('T')[0],
+        end_date: ''
     });
 
     const isMarketing = session?.moduleType === 'Service & Marketing';
@@ -61,10 +70,22 @@ export default function ProjectsPage() {
             await upsertProject({
                 name: formData.name,
                 location: formData.location,
-                description: formData.description
+                description: formData.description,
+                billing_cycle: formData.billing_cycle,
+                payment_terms: formData.payment_terms,
+                start_date: formData.start_date,
+                end_date: formData.end_date || undefined
             });
             setIsModalOpen(false);
-            setFormData({ name: '', location: '', description: '' });
+            setFormData({
+                name: '',
+                location: '',
+                description: '',
+                billing_cycle: 'Monthly',
+                payment_terms: 'Net 30',
+                start_date: new Date().toISOString().split('T')[0],
+                end_date: ''
+            });
         } catch (error) {
             console.error("Error adding project:", error);
         } finally {
@@ -244,12 +265,58 @@ export default function ProjectsPage() {
                                 placeholder={isMarketing ? "e.g. John Doe" : "e.g. New Cairo"}
                             />
                         </div>
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase">Billing Cycle</label>
+                                <select
+                                    value={formData.billing_cycle}
+                                    onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value })}
+                                    className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                                >
+                                    <option value="Monthly">Monthly</option>
+                                    <option value="Yearly">Yearly</option>
+                                    <option value="One-time">One-time / Milestone</option>
+                                </select>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase">Payment Terms</label>
+                                <input
+                                    type="text"
+                                    value={formData.payment_terms}
+                                    onChange={(e) => setFormData({ ...formData, payment_terms: e.target.value })}
+                                    className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                                    placeholder="e.g. Net 30, COD"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase">Start Date</label>
+                                <input
+                                    type="date"
+                                    value={formData.start_date}
+                                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                                    className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm [color-scheme:dark]"
+                                />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase">End Date (Target)</label>
+                                <input
+                                    type="date"
+                                    value={formData.end_date}
+                                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                                    className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm [color-scheme:dark]"
+                                />
+                            </div>
+                        </div>
+
                         <div className="flex flex-col gap-2">
                             <label className="text-xs font-bold text-gray-500 uppercase">Brief Description</label>
                             <textarea
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm h-32"
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm h-24"
                                 placeholder="Details about the project or campaign..."
                             />
                         </div>

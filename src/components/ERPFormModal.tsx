@@ -12,6 +12,8 @@ interface ERPFormModalProps {
     onSubmit: () => void;
     submitLabel?: string;
     loading?: boolean;
+    hideSubmit?: boolean;
+    maxWidth?: string;
 }
 
 export default function ERPFormModal({
@@ -21,7 +23,9 @@ export default function ERPFormModal({
     children,
     onSubmit,
     submitLabel = "Save",
-    loading = false
+    loading = false,
+    hideSubmit = false,
+    maxWidth = "max-w-2xl"
 }: ERPFormModalProps) {
     return (
         <AnimatePresence>
@@ -41,7 +45,7 @@ export default function ERPFormModal({
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        className="relative w-full max-w-2xl glass border-border-custom bg-background/80 overflow-hidden"
+                        className={`relative w-full ${maxWidth} glass border-border-custom bg-background/80 overflow-hidden`}
                     >
                         <header className="p-6 border-b border-border-custom flex justify-between items-center">
                             <h3 className="text-xl font-bold gradient-text">{title}</h3>
@@ -62,16 +66,18 @@ export default function ERPFormModal({
                                 onClick={onClose}
                                 className="px-6 py-2 rounded-xl border border-border-custom hover:border-accent/40 text-gray-400 hover:text-white transition-all font-bold"
                             >
-                                Cancel
+                                {hideSubmit ? "Close" : "Cancel"}
                             </button>
-                            <button
-                                onClick={onSubmit}
-                                disabled={loading}
-                                className="gradient-accent px-8 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                            >
-                                {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                                {submitLabel}
-                            </button>
+                            {!hideSubmit && (
+                                <button
+                                    onClick={onSubmit}
+                                    disabled={loading}
+                                    className="gradient-accent px-8 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                >
+                                    {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                                    {submitLabel}
+                                </button>
+                            )}
                         </footer>
                     </motion.div>
                 </div>

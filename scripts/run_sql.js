@@ -7,7 +7,7 @@ async function run() {
 
     try {
         await client.connect();
-        const sql = fs.readFileSync('scripts/add_branches.sql', 'utf8');
+        const sql = fs.readFileSync('scripts/add_billing_cycle.sql', 'utf8');
         await client.query(sql);
         console.log('SQL executed successfully');
     } catch (err) {

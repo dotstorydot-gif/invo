@@ -16,6 +16,7 @@ import {
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useERPData } from "@/hooks/useERPData";
 import ERPFormModal from "@/components/ERPFormModal";
 
@@ -34,6 +35,7 @@ interface InventoryItem {
 }
 
 export default function InventoryPage() {
+    const { t } = useLanguage();
     const { data: items, loading, upsert } = useERPData<InventoryItem>('inventory');
     const { data: projects } = useERPData<any>('projects');
     const [isModalOpen, setIsModalOpen] = useState(false);

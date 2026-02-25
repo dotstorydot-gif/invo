@@ -118,6 +118,17 @@ export default function SettingsPage() {
         setIsBranchModalOpen(true);
     };
 
+    const handleDeleteBranch = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this branch?")) return;
+        try {
+            const success = await removeBranch(id);
+            if (!success) alert("Failed to delete branch.");
+        } catch (error) {
+            console.error("Error deleting branch:", error);
+            alert("An error occurred while deleting the branch.");
+        }
+    };
+
     return (
         <div className="flex min-h-screen bg-background text-foreground">
             <main className="flex-1 p-8 overflow-y-auto">
@@ -261,9 +272,14 @@ export default function SettingsPage() {
                                     <div key={b.id} className="p-5 rounded-2xl bg-[#111111] border border-white/10 hover:border-blue-500/30 transition-all group">
                                         <div className="flex justify-between items-start mb-2">
                                             <h4 className="font-bold text-white group-hover:text-blue-400 transition-colors">{b.name}</h4>
-                                            <button onClick={() => handleEditBranch(b)} className="p-1.5 text-gray-500 hover:text-blue-400 opacity-0 group-hover:opacity-100 transition-all rounded-lg hover:bg-blue-500/10">
-                                                <Edit2 size={14} />
-                                            </button>
+                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                                <button onClick={() => handleEditBranch(b)} className="p-1.5 text-gray-400 hover:text-blue-400 rounded-lg hover:bg-blue-500/10">
+                                                    <Edit2 size={14} />
+                                                </button>
+                                                <button onClick={() => handleDeleteBranch(b.id)} className="p-1.5 text-gray-400 hover:text-red-400 rounded-lg hover:bg-red-500/10">
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
                                         </div>
                                         <p className="text-sm text-gray-500 break-words line-clamp-2">{b.address || 'No address provided'}</p>
                                     </div>

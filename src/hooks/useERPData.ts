@@ -49,6 +49,25 @@ export function useERPData<T>(table: string) {
         }
     };
 
+    const remove = async (id: string) => {
+        if (!orgId) return false;
+        try {
+            const { error: removeError } = await supabase
+                .from(table)
+                .delete()
+                .eq('id', id)
+                .eq('organization_id', orgId);
+
+            if (removeError) throw removeError;
+            await fetchData();
+            return true;
+        } catch (err: unknown) {
+            if (err instanceof Error) setError(err.message);
+            else if ((err as PostgrestError).message) setError((err as PostgrestError).message);
+            return false;
+        }
+    };
+
     useEffect(() => {
         if (!orgId) return;
         fetchData();
@@ -66,5 +85,5 @@ export function useERPData<T>(table: string) {
         };
     }, [table, fetchData, orgId]);
 
-    return { data, loading, error, upsert, refresh: fetchData };
+    return { data, loading, error, upsert, remove, refresh: fetchData };
 }

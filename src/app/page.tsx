@@ -78,9 +78,7 @@ export default function Dashboard() {
   // Aggregations
   const totalRevenue = filteredSales.reduce((sum: number, inv) => sum + (Number(inv.amount) || 0), 0) +
     filteredStashIn.reduce((sum: number, tx) => sum + (Number(tx.amount) || 0), 0);
-  const totalExpensesValue = filteredExpenses.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
   const totalUnits = (units || []).length;
-  const totalCustomers = (customers || []).length;
   const totalActiveLoans = (loans || [])
     .filter(l => l.status === 'Active')
     .reduce((sum, l) => sum + (Math.max(0, (Number(l.principal_amount) || 0) - (Number(l.amount_paid) || 0))), 0);
@@ -88,11 +86,19 @@ export default function Dashboard() {
   const activeUnits = units.filter(u => u.status === 'Available').length;
   const customerCount = customers.length;
   const activeServicesCount = services.length;
-  const occupancyRate = totalUnits > 0 ? ((totalUnits - activeUnits) / totalUnits) * 100 : 0; // Corrected occupancy rate logic
   // const serviceCount = services.length; // Redundant, replaced by activeServicesCount
 
   const recentActivity = [
-    ...services.slice(0, 2).map((svc: any) => ({ label: "Service listed", client: svc.name, time: new Date(svc.created_at).toLocaleDateString() }))
+    ...services.slice(0, 2).map((svc: any) => ({
+      label: "Service listed",
+      client: svc.name,
+      time: new Date(svc.created_at).toLocaleDateString()
+    })),
+    ...(staff || []).slice(0, 2).map((s: any) => ({
+      label: "Team Member added",
+      client: s.full_name || s.name || 'New Staff',
+      time: s.created_at ? new Date(s.created_at).toLocaleDateString() : 'Recent'
+    }))
   ].sort((a: any, b: any) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 4);
 
   return (
@@ -169,7 +175,7 @@ export default function Dashboard() {
       <SmartActionCenter />
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
         <KPICard title={t('total_revenue')} value={`${(totalRevenue / 1000).toFixed(1)}k EGP`} change="+0%" icon={TrendingUp} color="text-emerald-400" />
         <KPICard
           title={isMarketing ? "Listed Services" : t('active_units')}
@@ -178,7 +184,8 @@ export default function Dashboard() {
           icon={isMarketing ? Briefcase : Building2}
           color="text-accent"
         />
-        <KPICard title="Customers" value={customerCount.toString()} change="+0%" icon={Users2} color="text-blue-400" />
+        <KPICard title="Team Members" value={(staff?.length || 0).toString()} change="+0%" icon={Users2} color="text-emerald-400" />
+        <KPICard title="Customers" value={customerCount.toString()} change="+0%" icon={Briefcase} color="text-blue-400" />
         <KPICard title="Active Loans Debt" value={`${totalActiveLoans.toLocaleString()} EGP`} change="+0%" icon={Target} color="text-red-400" />
       </div>
 

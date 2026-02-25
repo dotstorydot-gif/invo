@@ -42,6 +42,7 @@ export default function CustomersPage() {
         email: '',
         phone: '',
         address: '',
+        country: '',
         selected_projects: []
     });
 
@@ -52,6 +53,7 @@ export default function CustomersPage() {
                 name: formData.name,
                 email: formData.email,
                 phone: formData.phone,
+                country: formData.country,
                 address: isMarketing ? undefined : formData.address
             });
 
@@ -66,7 +68,7 @@ export default function CustomersPage() {
             }
 
             setIsModalOpen(false);
-            setFormData({ name: '', email: '', phone: '', address: '', selected_projects: [] });
+            setFormData({ name: '', email: '', phone: '', address: '', country: '', selected_projects: [] });
         } catch (error) {
             console.error("Error adding customer:", error);
             alert("Failed to add customer.");
@@ -245,6 +247,16 @@ export default function CustomersPage() {
                                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                                 placeholder="+20 123..."
+                            />
+                        </div>
+                        <div className="flex flex-col col-span-2 gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Country / Region</label>
+                            <input
+                                type="text"
+                                value={formData.country}
+                                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                                placeholder="Egypt, UAE, USA..."
                             />
                         </div>
                         <div className="flex flex-col col-span-2 gap-2">

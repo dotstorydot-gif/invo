@@ -11,7 +11,10 @@ export function useERPData<T>(table: string) {
     const orgId = session?.orgId;
 
     const fetchData = useCallback(async () => {
-        if (!orgId) return;
+        if (!orgId) {
+            setLoading(false);
+            return;
+        }
         try {
             setLoading(true);
             const { data: result, error: fetchError } = await supabase

@@ -33,7 +33,9 @@ export default function SettingsPage() {
     const [branchFormData, setBranchFormData] = useState({ id: '', name: '', address: '' });
     const [isSavingBranch, setIsSavingBranch] = useState(false);
 
+    const planRank: Record<string, number> = { 'silver': 1, 'gold': 2, 'platinum': 3 };
     const currentPlan = session?.subscriptionPlan?.toLowerCase() || 'platinum';
+    const currentRank = planRank[currentPlan] || 3;
 
     const handleSaveProfile = async () => {
         if (!session?.userId) return;
@@ -316,10 +318,10 @@ export default function SettingsPage() {
                                 </ul>
                                 <button
                                     onClick={() => handleUpgradePlan('Silver')}
-                                    disabled={isUpgrading || currentPlan === 'silver'}
-                                    className={`w-full py-2 rounded-lg font-bold text-sm transition-all ${currentPlan === 'silver' ? 'bg-white/10 text-gray-400 cursor-not-allowed' : 'bg-white/5 border border-white/10 text-white hover:bg-white/10'}`}
+                                    disabled={isUpgrading || currentRank >= 1}
+                                    className={`w-full py-2 rounded-lg font-bold text-sm transition-all ${currentPlan === 'silver' ? 'bg-white/10 text-gray-400 cursor-not-allowed' : 'bg-white/5 border border-white/10 text-white hover:bg-white/10 opacity-50'}`}
                                 >
-                                    {currentPlan === 'silver' ? 'Current Plan' : 'Select Silver'}
+                                    {currentPlan === 'silver' ? 'Current Plan' : currentRank > 1 ? 'Included' : 'Select Silver'}
                                 </button>
                             </div>
 
@@ -337,10 +339,10 @@ export default function SettingsPage() {
                                 </ul>
                                 <button
                                     onClick={() => handleUpgradePlan('Gold')}
-                                    disabled={isUpgrading || currentPlan === 'gold'}
-                                    className={`w-full py-2 rounded-lg font-bold text-sm transition-all ${currentPlan === 'gold' ? 'bg-yellow-500/20 text-yellow-500 cursor-not-allowed border border-yellow-500/30' : 'bg-white/5 border border-white/10 text-white hover:border-yellow-500/50 hover:text-yellow-500'}`}
+                                    disabled={isUpgrading || currentRank >= 2}
+                                    className={`w-full py-2 rounded-lg font-bold text-sm transition-all ${currentPlan === 'gold' ? 'bg-yellow-500/20 text-yellow-500 cursor-not-allowed border border-yellow-500/30' : currentRank > 2 ? 'bg-white/10 text-gray-400 cursor-not-allowed' : 'bg-white/5 border border-white/10 text-white hover:border-yellow-500/50 hover:text-yellow-500'}`}
                                 >
-                                    {currentPlan === 'gold' ? 'Current Plan' : 'Upgrade to Gold'}
+                                    {currentPlan === 'gold' ? 'Current Plan' : currentRank > 2 ? 'Included' : 'Upgrade to Gold'}
                                 </button>
                             </div>
 
@@ -358,7 +360,7 @@ export default function SettingsPage() {
                                 </ul>
                                 <button
                                     onClick={() => handleUpgradePlan('Platinum')}
-                                    disabled={isUpgrading || currentPlan === 'platinum'}
+                                    disabled={isUpgrading || currentRank >= 3}
                                     className={`w-full py-2 rounded-lg font-bold text-sm transition-all ${currentPlan === 'platinum' ? 'bg-purple-500/20 text-purple-400 cursor-not-allowed border border-purple-500/30' : 'bg-white/5 border border-white/10 text-white hover:border-purple-500/50 hover:text-purple-400'}`}
                                 >
                                     {currentPlan === 'platinum' ? 'Current Plan' : 'Upgrade to Platinum'}

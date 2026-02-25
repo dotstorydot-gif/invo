@@ -85,7 +85,7 @@ export default function Sidebar() {
     const isPlatinum = plan === 'platinum';
 
     // Module Logic
-    const isMarketingModule = session?.moduleType === 'Service & Marketing';
+    const isMarketingModule = session?.moduleType?.toLowerCase().includes('marketing') || session?.moduleType?.toLowerCase().includes('service');
     const isEmployee = session?.isEmployee === true;
 
     return (

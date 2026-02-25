@@ -6,14 +6,10 @@ import {
     Activity,
     ArrowLeft,
     Edit2,
-    Search,
-    Filter,
-    MapPin,
     Trash2
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { useLanguage } from "@/context/LanguageContext";
 import { useERPData } from "@/hooks/useERPData";
 import ERPFormModal from "@/components/ERPFormModal";
 
@@ -76,9 +72,7 @@ const PROVIDERS = [
 ];
 
 export default function ServicesPage() {
-    const { t } = useLanguage();
     const { data: services, loading, upsert, remove } = useERPData<Service>('services');
-    const { data: projects } = useERPData<any>('projects');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -181,6 +175,17 @@ export default function ServicesPage() {
         setIsModalOpen(true);
     };
 
+    const handleDeleteService = async (id: string) => {
+        if (confirm("Are you sure you want to delete this service?")) {
+            try {
+                await remove(id);
+            } catch (error) {
+                console.error("Error deleting service:", error);
+                alert("Failed to delete service.");
+            }
+        }
+    };
+
     return (
         <div className="flex min-h-screen bg-background text-foreground">
             <main className="flex-1 p-8 overflow-y-auto">
@@ -242,7 +247,7 @@ export default function ServicesPage() {
                                         </div>
                                     </div>
                                     <div className="flex flex-col items-end gap-1">
-                                        <span className={`px - 3 py - 1 rounded - full text - [9px] font - bold uppercase tracking - widest border ${service.status === 'Active' ? 'text-emerald-400 border-emerald-400/20 bg-emerald-400/5' :
+                                        <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border ${service.status === 'Active' ? 'text-emerald-400 border-emerald-400/20 bg-emerald-400/5' :
                                             'text-gray-400 border-gray-400/20 bg-gray-400/5'
                                             } `}>
                                             {service.status}

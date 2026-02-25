@@ -15,7 +15,8 @@ import {
     Calendar,
     ChevronRight,
     Filter,
-    UserCircle
+    UserCircle,
+    Trash2
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -29,7 +30,7 @@ export default function CustomersPage() {
     const { session } = useAuth();
     const isMarketing = session?.moduleType === 'Service & Marketing';
 
-    const { data: customers, loading, upsert } = useERPData<any>('customers');
+    const { data: customers, loading, upsert, remove } = useERPData<any>('customers');
     const { data: projects } = useERPData<any>('projects');
     const { data: clientProjects, upsert: upsertClientProject } = useERPData<any>('client_projects');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -91,6 +92,17 @@ export default function CustomersPage() {
             selected_projects: clientProjects.filter((cp: any) => cp.client_id === customer.id).map((cp: any) => cp.project_id)
         });
         setIsModalOpen(true);
+    };
+
+    const handleDeleteCustomer = async (id: string) => {
+        if (confirm("Are you sure you want to remove this client? This action cannot be undone.")) {
+            try {
+                await remove(id);
+            } catch (error) {
+                console.error("Error deleting customer:", error);
+                alert("Failed to delete customer.");
+            }
+        }
     };
 
     const activeOwners = Array.from(new Set(units.filter((u: any) => u.status === 'Sold' || u.status === 'Installments').map((u: any) => u.consumer_name))).length;
@@ -232,6 +244,12 @@ export default function CustomersPage() {
                                                             className="p-2 rounded-lg border border-border-custom text-gray-400 hover:text-white hover:border-white transition-all"
                                                         >
                                                             <ChevronRight size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteCustomer(customer.id)}
+                                                            className="p-2 rounded-lg border border-border-custom text-gray-400 hover:text-red-500 hover:border-red-500 transition-all"
+                                                        >
+                                                            <Trash2 size={16} />
                                                         </button>
                                                     </div>
                                                 </td>

@@ -74,6 +74,7 @@ export default function ServicesPage() {
     const { data: services, loading, upsert } = useERPData<Service>('services');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     // Custom input states
     const [customCategory, setCustomCategory] = useState('');
@@ -104,10 +105,11 @@ export default function ServicesPage() {
         });
     };
 
-    const handleAddService = async () => {
+    const handleSaveService = async () => {
         try {
             setIsSubmitting(true);
             await upsert({
+                ...(editingId ? { id: editingId } : {}),
                 name: formData.name,
                 description: formData.description,
                 price: Number(formData.price),
@@ -120,6 +122,7 @@ export default function ServicesPage() {
                 features: formData.features
             });
             setIsModalOpen(false);
+            setEditingId(null);
             setFormData({
                 name: '',
                 description: '',
@@ -144,6 +147,29 @@ export default function ServicesPage() {
         }
     };
 
+    const handleEditService = (service: Service) => {
+        setEditingId(service.id);
+        const cat = CATEGORIES.includes(service.category || '') ? (service.category || 'Other') : 'Other';
+        const subCat = [...DEV_TYPES, ...MARKETING_PLATFORMS, ...DESIGN_TYPES, ...CONSULTATION_TYPES].includes(service.sub_category || '') ? (service.sub_category || 'Other') : 'Other';
+
+        setCustomCategory(cat === 'Other' ? (service.category || '') : '');
+        setCustomSubCategory(subCat === 'Other' ? (service.sub_category || '') : '');
+
+        setFormData({
+            name: service.name || '',
+            description: service.description || '',
+            price: service.price || 0,
+            status: service.status || 'Active',
+            pricing_type: service.pricing_type || 'Fixed',
+            category: cat,
+            sub_category: subCat,
+            platforms: service.platforms || [],
+            providers: service.providers || [],
+            features: service.features || []
+        });
+        setIsModalOpen(true);
+    };
+
     return (
         <div className="flex min-h-screen bg-background text-foreground">
             <main className="flex-1 p-8 overflow-y-auto">
@@ -159,7 +185,15 @@ export default function ServicesPage() {
                     </div>
 
                     <button
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={() => {
+                            setEditingId(null);
+                            setFormData({
+                                name: '', description: '', price: 0, pricing_type: 'Fixed', status: 'Active',
+                                category: 'Digital Development', sub_category: 'Informative Website',
+                                platforms: [], providers: [], features: []
+                            });
+                            setIsModalOpen(true);
+                        }}
                         className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
                     >
                         <Plus size={20} />
@@ -225,6 +259,14 @@ export default function ServicesPage() {
                                         {service.providers?.map((p, i) => <span key={i} className="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded text-[9px] font-bold">{p}</span>)}
                                         {service.features?.map((p, i) => <span key={i} className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded text-[9px] font-bold">{p}</span>)}
                                     </div>
+                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                                        <button
+                                            onClick={() => handleEditService(service)}
+                                            className="p-1.5 bg-black/50 backdrop-blur-md rounded-lg border border-white/20 text-gray-300 hover:text-white"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        </button>
+                                    </div>
                                 </div>
                             </motion.div>
                         ))}
@@ -233,9 +275,12 @@ export default function ServicesPage() {
 
                 <ERPFormModal
                     isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    title="Add Service"
-                    onSubmit={handleAddService}
+                    onClose={() => {
+                        setIsModalOpen(false);
+                        setEditingId(null);
+                    }}
+                    title={editingId ? "Edit Service" : "Add Service"}
+                    onSubmit={handleSaveService}
                     loading={isSubmitting}
                 >
                     <div className="grid grid-cols-1 gap-6">

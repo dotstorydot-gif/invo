@@ -52,6 +52,7 @@ export default function ProjectsPage() {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         name: '',
         location: '',
@@ -64,10 +65,11 @@ export default function ProjectsPage() {
 
     const isMarketing = session?.moduleType === 'Service & Marketing';
 
-    const handleAddProject = async () => {
+    const handleSaveProject = async () => {
         try {
             setIsSubmitting(true);
             await upsertProject({
+                ...(editingId ? { id: editingId } : {}),
                 name: formData.name,
                 location: formData.location,
                 description: formData.description,
@@ -77,6 +79,7 @@ export default function ProjectsPage() {
                 end_date: formData.end_date || undefined
             });
             setIsModalOpen(false);
+            setEditingId(null);
             setFormData({
                 name: '',
                 location: '',
@@ -91,6 +94,20 @@ export default function ProjectsPage() {
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleEditProject = (project: Project) => {
+        setEditingId(project.id);
+        setFormData({
+            name: project.name || '',
+            location: project.location || '',
+            description: project.description || '',
+            billing_cycle: project.billing_cycle || 'Monthly',
+            payment_terms: project.payment_terms || 'Net 30',
+            start_date: project.start_date || new Date().toISOString().split('T')[0],
+            end_date: project.end_date || ''
+        });
+        setIsModalOpen(true);
     };
 
     return (
@@ -108,7 +125,14 @@ export default function ProjectsPage() {
                     </div>
 
                     <button
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={() => {
+                            setEditingId(null);
+                            setFormData({
+                                name: '', location: '', description: '', billing_cycle: 'Monthly',
+                                payment_terms: 'Net 30', start_date: new Date().toISOString().split('T')[0], end_date: ''
+                            });
+                            setIsModalOpen(true);
+                        }}
                         className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
                     >
                         <Plus size={20} />
@@ -207,10 +231,18 @@ export default function ProjectsPage() {
                                                     </div>
                                                 </td>
                                                 <td className="p-6">
-                                                    <Link href={`/units?project=${prj.name}`} className="flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-accent transition-all group/btn">
-                                                        {t('view_details')}
-                                                        <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
-                                                    </Link>
+                                                    <div className="flex justify-end items-center gap-4">
+                                                        <Link href={`/projects/${prj.id}`} className="flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-accent transition-all group/btn">
+                                                            {t('view_details')}
+                                                            <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                                                        </Link>
+                                                        <button
+                                                            onClick={() => handleEditProject(prj)}
+                                                            className="p-2 text-gray-400 hover:text-white transition-all title='Edit Project'"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );
@@ -239,9 +271,12 @@ export default function ProjectsPage() {
                 </div>
                 <ERPFormModal
                     isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    title={isMarketing ? "New Project" : t('add_project')}
-                    onSubmit={handleAddProject}
+                    onClose={() => {
+                        setIsModalOpen(false);
+                        setEditingId(null);
+                    }}
+                    title={editingId ? "Edit Project" : (isMarketing ? "New Project" : t('add_project'))}
+                    onSubmit={handleSaveProject}
                     loading={isSubmitting}
                 >
                     <div className="flex flex-col gap-6">

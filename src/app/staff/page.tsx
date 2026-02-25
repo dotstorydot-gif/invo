@@ -39,17 +39,32 @@ interface Employee {
 
 export default function StaffPage() {
     const { t } = useLanguage();
-    const { data: employees, loading, upsert } = useERPData<any>('staff');
+    const { data: employees, loading, upsert, refresh: refreshStaff } = useERPData<any>('staff');
     const { data: projects } = useERPData<any>('projects');
     const { upsert: upsertExpense } = useERPData<any>('expenses');
+    const { upsert: upsertPenalty } = useERPData<any>('staff_penalties');
+    const { upsert: upsertVacation } = useERPData<any>('staff_vacations');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
 
     const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+    const [isPenaltyModalOpen, setIsPenaltyModalOpen] = useState(false);
+    const [isVacationModalOpen, setIsVacationModalOpen] = useState(false);
     const [selectedEmp, setSelectedEmp] = useState<any>(null);
     const [payDays, setPayDays] = useState(1);
+
+    const [penaltyFormData, setPenaltyFormData] = useState({
+        amount: 0,
+        reason: ''
+    });
+
+    const [vacationFormData, setVacationFormData] = useState({
+        start_date: new Date().toISOString().split('T')[0],
+        end_date: new Date().toISOString().split('T')[0],
+        reason: ''
+    });
 
     const [formData, setFormData] = useState({
         full_name: '',
@@ -149,6 +164,78 @@ export default function StaffPage() {
         } catch (error) {
             console.error(error);
             alert("Failed to pay salary.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleSavePenalty = async () => {
+        if (!selectedEmp) return;
+        try {
+            setIsSubmitting(true);
+            // 1. Save penalty log
+            await upsertPenalty({
+                organization_id: selectedEmp.organization_id,
+                staff_id: selectedEmp.id,
+                amount: Number(penaltyFormData.amount),
+                reason: penaltyFormData.reason,
+                date: new Date().toISOString().split('T')[0]
+            });
+
+            // 2. Update staff cumulative penalties
+            await upsert({
+                id: selectedEmp.id,
+                penalties: (selectedEmp.penalties || 0) + Number(penaltyFormData.amount)
+            });
+
+            setIsPenaltyModalOpen(false);
+            setPenaltyFormData({ amount: 0, reason: '' });
+            setSelectedEmp(null);
+            alert("Penalty added successfully.");
+        } catch (error) {
+            console.error(error);
+            alert("Failed to add penalty.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleSaveVacation = async () => {
+        if (!selectedEmp) return;
+        try {
+            setIsSubmitting(true);
+            const start = new Date(vacationFormData.start_date);
+            const end = new Date(vacationFormData.end_date);
+            const diffTime = Math.abs(end.getTime() - start.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+            // 1. Save vacation log
+            await upsertVacation({
+                organization_id: selectedEmp.organization_id,
+                staff_id: selectedEmp.id,
+                start_date: vacationFormData.start_date,
+                end_date: vacationFormData.end_date,
+                total_days: diffDays,
+                reason: vacationFormData.reason
+            });
+
+            // 2. Update staff cumulative vacations
+            await upsert({
+                id: selectedEmp.id,
+                vacations: (selectedEmp.vacations || 0) + diffDays
+            });
+
+            setIsVacationModalOpen(false);
+            setVacationFormData({
+                start_date: new Date().toISOString().split('T')[0],
+                end_date: new Date().toISOString().split('T')[0],
+                reason: ''
+            });
+            setSelectedEmp(null);
+            alert("Vacation recorded successfully.");
+        } catch (error) {
+            console.error(error);
+            alert("Failed to record vacation.");
         } finally {
             setIsSubmitting(false);
         }
@@ -256,10 +343,28 @@ export default function StaffPage() {
                                             </td>
                                             <td className="p-6">
                                                 <div className="flex gap-2">
-                                                    <button className="p-2 text-gray-400 hover:text-red-400 transition-all title='Add Penalty'">
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedEmp(emp);
+                                                            setPenaltyFormData({ amount: 0, reason: '' });
+                                                            setIsPenaltyModalOpen(true);
+                                                        }}
+                                                        className="p-2 text-gray-400 hover:text-red-400 transition-all title='Add Penalty'"
+                                                    >
                                                         <AlertTriangle size={16} />
                                                     </button>
-                                                    <button className="p-2 text-gray-400 hover:text-blue-400 transition-all title='Add Vacation'">
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedEmp(emp);
+                                                            setVacationFormData({
+                                                                start_date: new Date().toISOString().split('T')[0],
+                                                                end_date: new Date().toISOString().split('T')[0],
+                                                                reason: ''
+                                                            });
+                                                            setIsVacationModalOpen(true);
+                                                        }}
+                                                        className="p-2 text-gray-400 hover:text-blue-400 transition-all title='Add Vacation'"
+                                                    >
                                                         <Calendar size={16} />
                                                     </button>
                                                     <button
@@ -443,6 +548,91 @@ export default function StaffPage() {
                             </div>
                         </div>
                     )}
+                </ERPFormModal>
+
+                {/* Penalty Modal */}
+                <ERPFormModal
+                    isOpen={isPenaltyModalOpen}
+                    onClose={() => setIsPenaltyModalOpen(false)}
+                    title={selectedEmp ? `Add Penalty: ${selectedEmp.full_name || selectedEmp.name}` : 'Add Penalty'}
+                    onSubmit={handleSavePenalty}
+                    loading={isSubmitting}
+                >
+                    <div className="grid grid-cols-1 gap-6">
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Penalty Amount (EGP)</label>
+                            <input
+                                type="number"
+                                value={penaltyFormData.amount}
+                                onChange={(e) => setPenaltyFormData({ ...penaltyFormData, amount: Number(e.target.value) })}
+                                className="glass bg-red-500/5 border-red-500/20 p-4 rounded-xl outline-none focus:border-red-500 transition-all text-2xl font-bold font-mono text-center shadow-inner"
+                                placeholder="0"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Reason</label>
+                            <textarea
+                                value={penaltyFormData.reason}
+                                onChange={(e) => setPenaltyFormData({ ...penaltyFormData, reason: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm h-24"
+                                placeholder="e.g. Late for work, Misconduct"
+                            />
+                        </div>
+                        <p className="text-[10px] text-gray-500 italic">This amount will be automatically subtracted from the next salary payment.</p>
+                    </div>
+                </ERPFormModal>
+
+                {/* Vacation Modal */}
+                <ERPFormModal
+                    isOpen={isVacationModalOpen}
+                    onClose={() => setIsVacationModalOpen(false)}
+                    title={selectedEmp ? `Record Vacation: ${selectedEmp.full_name || selectedEmp.name}` : 'Record Vacation'}
+                    onSubmit={handleSaveVacation}
+                    loading={isSubmitting}
+                >
+                    <div className="grid grid-cols-1 gap-6">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase">Start Date</label>
+                                <input
+                                    type="date"
+                                    value={vacationFormData.start_date}
+                                    onChange={(e) => setVacationFormData({ ...vacationFormData, start_date: e.target.value })}
+                                    className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm [color-scheme:dark]"
+                                />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase">End Date</label>
+                                <input
+                                    type="date"
+                                    value={vacationFormData.end_date}
+                                    onChange={(e) => setVacationFormData({ ...vacationFormData, end_date: e.target.value })}
+                                    className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm [color-scheme:dark]"
+                                />
+                            </div>
+                        </div>
+                        <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 text-center">
+                            <div className="text-xs text-blue-400 font-bold uppercase mb-1">Total Vacation Days</div>
+                            <div className="text-3xl font-bold text-white">
+                                {(() => {
+                                    const start = new Date(vacationFormData.start_date);
+                                    const end = new Date(vacationFormData.end_date);
+                                    if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+                                    const diffTime = Math.abs(end.getTime() - start.getTime());
+                                    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                                })()} Days
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Reason / Notes</label>
+                            <textarea
+                                value={vacationFormData.reason}
+                                onChange={(e) => setVacationFormData({ ...vacationFormData, reason: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm h-24"
+                                placeholder="e.g. Annual Leave, Family Event"
+                            />
+                        </div>
+                    </div>
                 </ERPFormModal>
             </main>
         </div>

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Building2, Search, Plus, CheckCircle2, MoreVertical, ExternalLink } from 'lucide-react';
+import { Search, Plus, ExternalLink, Edit2 } from 'lucide-react';
 import ERPFormModal from '@/components/ERPFormModal';
 
 interface Org {
@@ -20,8 +20,10 @@ export default function OrganizationsPage() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
 
-    // Org Creation State
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    // Org Form State
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editOrgId, setEditOrgId] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
@@ -32,7 +34,7 @@ export default function OrganizationsPage() {
 
     const loadData = async () => {
         setLoading(true);
-        const { data, error } = await supabase
+        const { data } = await supabase
             .from('organizations')
             .select('*')
             .order('created_at', { ascending: false });
@@ -45,35 +47,68 @@ export default function OrganizationsPage() {
         loadData();
     }, []);
 
-    const handleCreateOrganization = async () => {
+    const openCreateModal = () => {
+        setIsEditing(false);
+        setEditOrgId(null);
+        setFormData({ name: '', subdomain: '', subscription_plan: 'Platinum', module_type: 'Real Estate' });
+        setIsModalOpen(true);
+    };
+
+    const handleEditOrg = (org: Org) => {
+        setIsEditing(true);
+        setEditOrgId(org.id);
+        setFormData({
+            name: org.name,
+            subdomain: org.subdomain || '',
+            subscription_plan: org.subscription_plan || 'Platinum',
+            module_type: org.module_type || 'Real Estate'
+        });
+        setIsModalOpen(true);
+    };
+
+    const handleSubmitOrganization = async () => {
         setIsSubmitting(true);
         try {
-            const { data: newOrg, error: orgError } = await supabase.from('organizations').insert({
-                name: formData.name,
-                subdomain: formData.subdomain,
-                subscription_plan: formData.subscription_plan,
-                module_type: formData.module_type,
-                subscription_status: 'Active'
-            }).select('id').single();
+            if (isEditing && editOrgId) {
+                const { error: orgError } = await supabase
+                    .from('organizations')
+                    .update({
+                        name: formData.name,
+                        subdomain: formData.subdomain,
+                        subscription_plan: formData.subscription_plan,
+                        module_type: formData.module_type
+                    })
+                    .eq('id', editOrgId);
 
-            if (orgError) throw orgError;
+                if (orgError) throw orgError;
+                alert(`Organization "${formData.name}" updated!`);
+            } else {
+                const { data: newOrg, error: orgError } = await supabase.from('organizations').insert({
+                    name: formData.name,
+                    subdomain: formData.subdomain,
+                    subscription_plan: formData.subscription_plan,
+                    module_type: formData.module_type,
+                    subscription_status: 'Active'
+                }).select('id').single();
 
-            const { error: userError } = await supabase.from('users').insert({
-                organization_id: newOrg.id,
-                username: 'admin',
-                password_hash: '123456',
-                role: 'Admin',
-                full_name: 'System Admin'
-            });
+                if (orgError) throw orgError;
 
-            if (userError) throw userError;
+                const { error: userError } = await supabase.from('users').insert({
+                    organization_id: newOrg.id,
+                    username: 'admin',
+                    password_hash: '123456',
+                    role: 'Admin',
+                    full_name: 'System Admin'
+                });
 
-            alert(`Organization "${formData.name}" created! Default login: admin / 123456`);
+                if (userError) throw userError;
+                alert(`Organization "${formData.name}" created! Default login: admin / 123456`);
+            }
+
             loadData();
-            setIsCreateModalOpen(false);
-            setFormData({ name: '', subdomain: '', subscription_plan: 'Platinum', module_type: 'Real Estate' });
-        } catch (error: any) {
-            alert('Error creating organization: ' + error.message);
+            setIsModalOpen(false);
+        } catch (error: Error | any) {
+            alert('Error: ' + error.message);
         } finally {
             setIsSubmitting(false);
         }
@@ -93,7 +128,7 @@ export default function OrganizationsPage() {
                         <p className="text-gray-400 mt-2">Manage all SaaS tenants and their core configurations.</p>
                     </div>
                     <button
-                        onClick={() => setIsCreateModalOpen(true)}
+                        onClick={openCreateModal}
                         className="px-6 py-2.5 bg-accent text-black font-bold flex items-center gap-2 rounded-xl transition-all hover:bg-emerald-500 shadow-[0_0_20px_rgba(20,255,140,0.15)]"
                     >
                         <Plus size={18} /> Provision Tenant
@@ -151,8 +186,8 @@ export default function OrganizationsPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-2.5 py-1 rounded-lg text-[10px] uppercase font-black tracking-widest ${org.subscription_plan === 'Platinum' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
-                                                    org.subscription_plan === 'Gold' ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20' :
-                                                        'bg-white/5 text-gray-400 border border-white/10'
+                                                org.subscription_plan === 'Gold' ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20' :
+                                                    'bg-white/5 text-gray-400 border border-white/10'
                                                 }`}>
                                                 {org.subscription_plan}
                                             </span>
@@ -162,11 +197,15 @@ export default function OrganizationsPage() {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button className="p-2 text-gray-500 hover:text-white transition-colors">
-                                                    <ExternalLink size={16} />
+                                                <button
+                                                    onClick={() => handleEditOrg(org)}
+                                                    className="p-2 text-gray-500 hover:text-accent transition-colors"
+                                                    title="Edit Organization"
+                                                >
+                                                    <Edit2 size={16} />
                                                 </button>
                                                 <button className="p-2 text-gray-500 hover:text-white transition-colors">
-                                                    <MoreVertical size={16} />
+                                                    <ExternalLink size={16} />
                                                 </button>
                                             </div>
                                         </td>
@@ -182,10 +221,11 @@ export default function OrganizationsPage() {
             </div>
 
             <ERPFormModal
-                isOpen={isCreateModalOpen}
-                onClose={() => setIsCreateModalOpen(false)}
-                title="Provision New Organization"
-                onSubmit={handleCreateOrganization}
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title={isEditing ? "Update Organization" : "Provision New Organization"}
+                submitLabel={isEditing ? "Update" : "Provision"}
+                onSubmit={handleSubmitOrganization}
                 loading={isSubmitting}
             >
                 <div className="space-y-4">

@@ -157,9 +157,11 @@ export default function ProjectsPage() {
                             <span className="text-sm font-bold uppercase tracking-widest">{isMarketing ? "Fulfillment Rate" : "Occupancy Rate"}</span>
                         </div>
                         <div className="text-3xl font-bold">
-                            {isMarketing ? "94%" : (units.length > 0 ? Math.round((units.filter((u) => u.status === 'Occupied' || u.status === 'Sold').length / units.length) * 100) : 0)}%
+                            {isMarketing
+                                ? (services.length > 0 ? Math.round((services.filter((s) => s.status === 'Active' || s.status === 'Completed').length / services.length) * 100) : 0)
+                                : (units.length > 0 ? Math.round((units.filter((u) => u.status === 'Occupied' || u.status === 'Sold').length / units.length) * 100) : 0)}%
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">{isMarketing ? "Service delivery performance" : "Based on sold/occupied units"}</div>
+                        <div className="text-xs text-gray-500 mt-1">{isMarketing ? "Active service performance" : "Based on sold/occupied units"}</div>
                     </div>
                     <div className="glass p-6">
                         <div className="flex items-center gap-3 mb-4 text-amber-400">
@@ -167,9 +169,11 @@ export default function ProjectsPage() {
                             <span className="text-sm font-bold uppercase tracking-widest">{isMarketing ? "Contract Value" : "Est. Project Revenue"}</span>
                         </div>
                         <div className="text-3xl font-bold">
-                            {((isMarketing ? 2.4 : units.reduce((sum, u) => sum + (Number(u.price) || 0), 0) / 1000000)).toFixed(1)}M EGP
+                            {isMarketing
+                                ? (services.reduce((sum, s) => sum + (Number(s.price) || 0), 0) / 1000000).toFixed(1)
+                                : (units.reduce((sum, u) => sum + (Number(u.price) || 0), 0) / 1000000).toFixed(1)}M EGP
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">{isMarketing ? "Projected service revenue" : "Total unit asset value"}</div>
+                        <div className="text-xs text-gray-500 mt-1">{isMarketing ? "Total service contract value" : "Total unit asset value"}</div>
                     </div>
                 </div>
 

@@ -5,10 +5,7 @@ import {
     ArrowLeft,
     TrendingUp,
     TrendingDown,
-    Calendar,
     BarChart3,
-    ArrowUpRight,
-    ArrowDownRight,
     Briefcase,
     Zap,
     Scale
@@ -23,10 +20,7 @@ import {
     YAxis,
     CartesianGrid,
     Tooltip,
-    ResponsiveContainer,
-    BarChart,
-    Bar,
-    Legend
+    ResponsiveContainer
 } from 'recharts';
 
 export default function ForecastingPage() {
@@ -67,9 +61,9 @@ export default function ForecastingPage() {
             // Average historical overhead (from expenses)
             const overheadExpense = expenses.length > 0
                 ? expenses.reduce((sum: number, e: any) => sum + Number(e.amount), 0) / (expenses.length > 3 ? 3 : expenses.length)
-                : 5000;
+                : 0;
 
-            const totalIncome = Math.round(projectIncome + quoteIncome + (i === 0 ? 0 : 5000)); // Add a small buffer for growth
+            const totalIncome = Math.round(projectIncome + quoteIncome);
             const totalExpense = Math.round(payrollExpense + overheadExpense);
             const profit = totalIncome - totalExpense;
 
@@ -120,8 +114,8 @@ export default function ForecastingPage() {
                             <TrendingUp size={16} /> 12M Projected Income
                         </div>
                         <div className="text-3xl font-bold">{totalProjectedIncome.toLocaleString()} EGP</div>
-                        <div className="flex items-center gap-1 text-emerald-400 text-xs mt-2 font-bold">
-                            <ArrowUpRight size={14} /> +12.4% Projected Growth
+                        <div className="flex items-center gap-1 text-gray-500 text-xs mt-2">
+                            Full 12-Month pipeline estimate
                         </div>
                     </div>
                     <div className="glass p-6 border-red-500/20 bg-red-500/5">
@@ -138,7 +132,9 @@ export default function ForecastingPage() {
                             <Scale size={16} /> Projected Net Margin
                         </div>
                         <div className="text-3xl font-bold text-blue-400">
-                            {Math.round(((totalProjectedIncome - totalProjectedExpense) / totalProjectedIncome) * 100)}%
+                            {totalProjectedIncome > 0
+                                ? Math.round(((totalProjectedIncome - totalProjectedExpense) / totalProjectedIncome) * 100)
+                                : 0}%
                         </div>
                         <div className="text-xs text-gray-500 mt-2 italic">Based on active contracts</div>
                     </div>
@@ -213,7 +209,10 @@ export default function ForecastingPage() {
                                     <span className="text-sm font-bold text-red-400">-{staff.reduce((s, e) => s + (Number(e.base_salary || e.baseSalary) || 0), 0).toLocaleString()} EGP</span>
                                 </div>
                                 <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                                    <div className="w-[85%] h-full bg-red-400" />
+                                    <div
+                                        className="h-full bg-red-400 transition-all duration-500"
+                                        style={{ width: `${Math.min((totalProjectedExpense / (totalProjectedIncome || 1)) * 100, 100)}%` }}
+                                    />
                                 </div>
                                 <p className="text-[10px] text-gray-500 mt-2 italic">Based on {staff.length} active employees</p>
                             </div>
@@ -224,17 +223,20 @@ export default function ForecastingPage() {
                                     <span className="text-sm font-bold text-accent">+{quotations.filter((q: any) => q.status === 'Accepted' && q.is_recurring).reduce((s, e) => s + Number(e.amount), 0).toLocaleString()} EGP</span>
                                 </div>
                                 <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                                    <div className="w-[60%] h-full bg-accent" />
+                                    <div
+                                        className="h-full bg-accent transition-all duration-500"
+                                        style={{ width: `${Math.min((quotations.filter((q: any) => q.status === 'Accepted' && q.is_recurring).reduce((s, e) => s + Number(e.amount), 0) / (totalProjectedIncome || 1)) * 100, 100)}%` }}
+                                    />
                                 </div>
                                 <p className="text-[10px] text-gray-500 mt-2 italic">From {quotations.filter((q: any) => q.status === 'Accepted' && q.is_recurring).length} recurring contracts</p>
                             </div>
 
-                            <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
-                                <h4 className="flex items-center gap-2 text-sm font-bold text-emerald-400 mb-2">
-                                    <Zap size={16} /> Monthly Growth Estimate
+                            <div className="p-4 rounded-xl bg-accent/5 border border-accent/20">
+                                <h4 className="flex items-center gap-2 text-sm font-bold text-accent mb-2">
+                                    <Zap size={16} /> Analysis Engine
                                 </h4>
                                 <p className="text-xs text-gray-400 leading-relaxed">
-                                    The algorithm predicts a steady <strong>5% MoM increase</strong> in service revenue based on historical conversion of "Sent" quotations.
+                                    Projections are based on current contractual obligations and historical overheads. Update your quotations and salary registers to refine this forecast.
                                 </p>
                             </div>
                         </div>

@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import {
   Users2,
   Building2,
-  BarChart3,
   ChevronUp,
   Plus,
   Search,
@@ -33,10 +32,12 @@ const KPICard = ({ title, value, change, icon: Icon, color }: { title: string, v
       <div className={`p-4 rounded-2xl bg-background ${color} group-hover:scale-110 transition-transform`}>
         <Icon size={24} />
       </div>
-      <div className="flex items-center gap-1 text-accent text-sm font-semibold">
-        <ChevronUp size={16} />
-        {change}
-      </div>
+      {change !== "0%" && change !== "+0%" && (
+        <div className="flex items-center gap-1 text-accent text-sm font-semibold">
+          <ChevronUp size={16} />
+          {change}
+        </div>
+      )}
     </div>
     <div className="text-gray-400 text-sm font-medium mb-1">{title}</div>
     <div className="text-2xl font-bold gradient-text">{value}</div>
@@ -80,7 +81,9 @@ export default function Dashboard() {
   const totalExpensesValue = filteredExpenses.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
   const totalUnits = (units || []).length;
   const totalCustomers = (customers || []).length;
-  const totalActiveLoans = (loans || []).filter(l => l.status === 'Active').reduce((sum, l) => sum + ((Number(l.principal_amount) || 0) - (Number(l.amount_paid) || 0)), 0);
+  const totalActiveLoans = (loans || [])
+    .filter(l => l.status === 'Active')
+    .reduce((sum, l) => sum + (Math.max(0, (Number(l.principal_amount) || 0) - (Number(l.amount_paid) || 0))), 0);
 
   const activeUnits = units.filter(u => u.status === 'Available').length;
   const customerCount = customers.length;
@@ -167,7 +170,7 @@ export default function Dashboard() {
 
       {/* KPI Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-        <KPICard title={t('total_revenue')} value={`${(totalRevenue / 1000000).toFixed(1)}M`} change="+0%" icon={TrendingUp} color="text-emerald-400" />
+        <KPICard title={t('total_revenue')} value={`${(totalRevenue / 1000).toFixed(1)}k EGP`} change="+0%" icon={TrendingUp} color="text-emerald-400" />
         <KPICard
           title={isMarketing ? "Listed Services" : t('active_units')}
           value={isMarketing ? activeServicesCount.toString() : activeUnits.toString()}

@@ -34,7 +34,6 @@ interface InventoryItem {
 }
 
 export default function InventoryPage() {
-    const { t } = useLanguage();
     const { data: items, loading, upsert } = useERPData<InventoryItem>('inventory');
     const { data: projects } = useERPData<any>('projects');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -54,7 +53,7 @@ export default function InventoryPage() {
     const handleAddItem = async () => {
         try {
             setIsSubmitting(true);
-            const status = formData.quantity <= 0 ? 'Out of Stock' :
+            const status: 'In Stock' | 'Low Stock' | 'Out of Stock' = formData.quantity <= 0 ? 'Out of Stock' :
                 formData.quantity < formData.stock_threshold ? 'Low Stock' : 'In Stock';
 
             await upsert({
@@ -64,10 +63,10 @@ export default function InventoryPage() {
                 cost_price: Number(formData.cost_price),
                 quantity: Number(formData.quantity),
                 stock_threshold: Number(formData.stock_threshold),
-                status: status as any,
+                status,
                 supplier: formData.supplier,
                 last_restocked: new Date().toISOString().split('T')[0],
-                project_id: formData.project_id || null
+                project_id: formData.project_id || undefined
             });
             setIsModalOpen(false);
             setFormData({
@@ -91,13 +90,13 @@ export default function InventoryPage() {
     const handleAdjustStock = async (item: InventoryItem, amount: number) => {
         try {
             const newQuantity = Math.max(0, item.quantity + amount);
-            const status = newQuantity <= 0 ? 'Out of Stock' :
+            const status: 'In Stock' | 'Low Stock' | 'Out of Stock' = newQuantity <= 0 ? 'Out of Stock' :
                 newQuantity < item.stock_threshold ? 'Low Stock' : 'In Stock';
 
             await upsert({
                 ...item,
                 quantity: newQuantity,
-                status: status as any
+                status
             });
         } catch (error) {
             console.error("Error adjusting stock:", error);

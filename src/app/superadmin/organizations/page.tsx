@@ -12,6 +12,7 @@ interface Org {
     subscription_plan: string;
     subscription_status: string;
     module_type: string;
+    billing_cycle: 'Monthly' | 'Yearly';
     created_at: string;
 }
 
@@ -29,7 +30,8 @@ export default function OrganizationsPage() {
         name: '',
         subdomain: '',
         subscription_plan: 'Platinum',
-        module_type: 'Real Estate'
+        module_type: 'Real Estate',
+        billing_cycle: 'Monthly'
     });
 
     const loadData = async () => {
@@ -50,7 +52,7 @@ export default function OrganizationsPage() {
     const openCreateModal = () => {
         setIsEditing(false);
         setEditOrgId(null);
-        setFormData({ name: '', subdomain: '', subscription_plan: 'Platinum', module_type: 'Real Estate' });
+        setFormData({ name: '', subdomain: '', subscription_plan: 'Platinum', module_type: 'Real Estate', billing_cycle: 'Monthly' });
         setIsModalOpen(true);
     };
 
@@ -61,7 +63,8 @@ export default function OrganizationsPage() {
             name: org.name,
             subdomain: org.subdomain || '',
             subscription_plan: org.subscription_plan || 'Platinum',
-            module_type: org.module_type || 'Real Estate'
+            module_type: org.module_type || 'Real Estate',
+            billing_cycle: org.billing_cycle || 'Monthly'
         });
         setIsModalOpen(true);
     };
@@ -76,7 +79,8 @@ export default function OrganizationsPage() {
                         name: formData.name,
                         subdomain: formData.subdomain,
                         subscription_plan: formData.subscription_plan,
-                        module_type: formData.module_type
+                        module_type: formData.module_type,
+                        billing_cycle: formData.billing_cycle
                     })
                     .eq('id', editOrgId);
 
@@ -88,6 +92,7 @@ export default function OrganizationsPage() {
                     subdomain: formData.subdomain,
                     subscription_plan: formData.subscription_plan,
                     module_type: formData.module_type,
+                    billing_cycle: formData.billing_cycle,
                     subscription_status: 'Active'
                 }).select('id').single();
 
@@ -107,8 +112,9 @@ export default function OrganizationsPage() {
 
             loadData();
             setIsModalOpen(false);
-        } catch (error: Error | any) {
-            alert('Error: ' + error.message);
+        } catch (error: any) {
+            const message = error instanceof Error ? error.message : String(error);
+            alert('Error: ' + message);
         } finally {
             setIsSubmitting(false);
         }
@@ -156,6 +162,7 @@ export default function OrganizationsPage() {
                                     <th className="px-6 py-4 font-bold">Organization</th>
                                     <th className="px-6 py-4 font-bold">Identifier</th>
                                     <th className="px-6 py-4 font-bold">Module</th>
+                                    <th className="px-6 py-4 font-bold">Billing</th>
                                     <th className="px-6 py-4 font-bold">Plan</th>
                                     <th className="px-6 py-4 font-bold">Created</th>
                                     <th className="px-6 py-4 font-bold text-right">Actions</th>
@@ -182,6 +189,12 @@ export default function OrganizationsPage() {
                                         <td className="px-6 py-4">
                                             <span className="text-xs font-semibold text-gray-400">
                                                 {org.module_type}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${org.billing_cycle === 'Yearly' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-white/5 text-gray-500 border border-white/10'
+                                                }`}>
+                                                {org.billing_cycle || 'Monthly'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
@@ -261,6 +274,17 @@ export default function OrganizationsPage() {
                             <option value="Platinum">Platinum (8 Users, Max Features)</option>
                             <option value="Gold">Gold (4 Users)</option>
                             <option value="Silver">Silver (2 Users)</option>
+                        </select>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <label className="text-xs font-bold text-gray-500 uppercase">Billing Cycle</label>
+                        <select
+                            value={formData.billing_cycle}
+                            onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value as 'Monthly' | 'Yearly' })}
+                            className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                        >
+                            <option value="Monthly">Monthly</option>
+                            <option value="Yearly">Yearly</option>
                         </select>
                     </div>
                 </div>

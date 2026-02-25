@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { CreditCard, Users, Clock, AlertTriangle, TrendingUp, DollarSign } from 'lucide-react';
+import { CreditCard, Clock, TrendingUp, DollarSign } from 'lucide-react';
 
 interface Subscription {
     id: string;
@@ -12,6 +12,7 @@ interface Subscription {
     status: string;
     users_count: number;
     amount: number;
+    billing_cycle: string;
     next_billing: string;
 }
 
@@ -22,9 +23,9 @@ export default function SubscriptionsPage() {
     const loadData = async () => {
         setLoading(true);
         // Joining organizations to get the subscription details
-        const { data, error } = await supabase
+        const { data } = await supabase
             .from('organizations')
-            .select('id, name, subscription_plan, subscription_status, created_at');
+            .select('id, name, subscription_plan, subscription_status, billing_cycle, created_at');
 
         if (data) {
             const mapped: Subscription[] = data.map(org => ({
@@ -33,7 +34,8 @@ export default function SubscriptionsPage() {
                 org_name: org.name,
                 plan: org.subscription_plan || 'Platinum',
                 status: org.subscription_status || 'Active',
-                users_count: 0, // In real app, count users per org
+                users_count: 0,
+                billing_cycle: org.billing_cycle || 'Monthly',
                 amount: org.subscription_plan === 'Platinum' ? 7000 : org.subscription_plan === 'Gold' ? 5000 : 3000,
                 next_billing: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString()
             }));
@@ -43,7 +45,10 @@ export default function SubscriptionsPage() {
     };
 
     useEffect(() => {
-        loadData();
+        const initData = async () => {
+            await loadData();
+        };
+        initData();
     }, []);
 
     const totalMRR = subscriptions.reduce((acc, sub) => acc + sub.amount, 0);
@@ -104,6 +109,7 @@ export default function SubscriptionsPage() {
                                 <tr>
                                     <th className="px-6 py-4 font-bold">Tenant</th>
                                     <th className="px-6 py-4 font-bold">Current Plan</th>
+                                    <th className="px-6 py-4 font-bold">Cycle</th>
                                     <th className="px-6 py-4 font-bold text-right">Monthly Amount</th>
                                     <th className="px-6 py-4 font-bold text-right">Next Billing</th>
                                     <th className="px-6 py-4 font-bold text-right">Status</th>
@@ -118,6 +124,12 @@ export default function SubscriptionsPage() {
                                             <span className="font-bold text-white tracking-wide">{sub.org_name}</span>
                                         </td>
                                         <td className="px-6 py-4 text-xs font-bold text-gray-400">{sub.plan}</td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${sub.billing_cycle === 'Yearly' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-white/5 text-gray-500 border border-white/10'
+                                                }`}>
+                                                {sub.billing_cycle}
+                                            </span>
+                                        </td>
                                         <td className="px-6 py-4 text-right font-mono text-white">{sub.amount.toLocaleString()} EGP</td>
                                         <td className="px-6 py-4 text-right text-xs">
                                             {new Date(sub.next_billing).toLocaleDateString()}

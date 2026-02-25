@@ -23,6 +23,7 @@ export default function SettingsPage() {
 
     const [profileName, setProfileName] = useState(session?.fullName || '');
     const [profileImage, setProfileImage] = useState(session?.profilePicture || '');
+    const [orgName, setOrgName] = useState(session?.orgName || '');
     const [isSavingProfile, setIsSavingProfile] = useState(false);
 
     const [isUpgrading, setIsUpgrading] = useState(false);
@@ -38,19 +39,29 @@ export default function SettingsPage() {
     const currentRank = planRank[currentPlan] || 3;
 
     const handleSaveProfile = async () => {
-        if (!session?.userId) return;
+        if (!session?.userId || !session?.orgId) return;
         setIsSavingProfile(true);
         try {
-            const { error } = await supabase.from('users').update({
+            // Update User Profile
+            const { error: userError } = await supabase.from('users').update({
                 full_name: profileName,
                 profile_picture: profileImage
             }).eq('id', session.userId);
 
-            if (!error) {
-                updateSession({ fullName: profileName, profilePicture: profileImage });
-                alert("Profile updated successfully!");
+            // Update Organization Name
+            const { error: orgError } = await supabase.from('organizations').update({
+                name: orgName
+            }).eq('id', session.orgId);
+
+            if (!userError && !orgError) {
+                updateSession({
+                    fullName: profileName,
+                    profilePicture: profileImage,
+                    orgName: orgName
+                });
+                alert("Settings updated successfully!");
             } else {
-                alert("Error updating profile: " + error.message);
+                alert("Error updating settings: " + (userError?.message || orgError?.message));
             }
         } finally {
             setIsSavingProfile(false);
@@ -198,6 +209,16 @@ export default function SettingsPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-4">
+                                <div>
+                                    <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-2">Company Name (Dashboard Title)</label>
+                                    <input
+                                        type="text"
+                                        value={orgName}
+                                        onChange={(e) => setOrgName(e.target.value)}
+                                        className="w-full bg-[#111111] border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-accent"
+                                        placeholder="e.g. My Business Ltd"
+                                    />
+                                </div>
                                 <div>
                                     <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-2">Full Name</label>
                                     <input

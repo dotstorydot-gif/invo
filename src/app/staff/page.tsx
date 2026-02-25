@@ -13,7 +13,8 @@ import {
     FileText,
     AlertTriangle,
     Umbrella,
-    CreditCard
+    CreditCard,
+    User
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -75,8 +76,20 @@ export default function StaffPage() {
         email: '',
         status: 'Active',
         project_id: '',
-        hire_date: new Date().toISOString().split('T')[0]
+        hire_date: new Date().toISOString().split('T')[0],
+        avatar_url: ''
     });
+
+    const avatarOptions = [
+        // Professional
+        { url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix", label: "Prof 1" },
+        { url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Anita", label: "Prof 2" },
+        { url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka", label: "Prof 3" },
+        // Funny
+        { url: "https://api.dicebear.com/7.x/big-smile/svg?seed=Bubba", label: "Funny 1" },
+        { url: "https://api.dicebear.com/7.x/big-smile/svg?seed=Scoot", label: "Funny 2" },
+        { url: "https://api.dicebear.com/7.x/bottts/svg?seed=Rob", label: "Robot" },
+    ];
 
     const handleSaveStaff = async () => {
         try {
@@ -91,7 +104,8 @@ export default function StaffPage() {
                 email: formData.email,
                 status: formData.status,
                 project_id: formData.project_id || null,
-                hire_date: formData.hire_date
+                hire_date: formData.hire_date,
+                avatar_url: formData.avatar_url
             });
 
             if (result) {
@@ -106,7 +120,8 @@ export default function StaffPage() {
                     email: '',
                     status: 'Active',
                     project_id: '',
-                    hire_date: new Date().toISOString().split('T')[0]
+                    hire_date: new Date().toISOString().split('T')[0],
+                    avatar_url: ''
                 });
                 alert("Employee saved successfully.");
             }
@@ -129,7 +144,8 @@ export default function StaffPage() {
             email: emp.email || '',
             status: emp.status || 'Active',
             project_id: emp.project_id || '',
-            hire_date: emp.hire_date || new Date().toISOString().split('T')[0]
+            hire_date: emp.hire_date || new Date().toISOString().split('T')[0],
+            avatar_url: emp.avatar_url || ''
         });
         setIsModalOpen(true);
     };
@@ -263,7 +279,8 @@ export default function StaffPage() {
                             setFormData({
                                 full_name: '', role: 'Consultant', employment_type: 'Full Time',
                                 base_salary: 0, daily_rate: 0, email: '', status: 'Active',
-                                project_id: '', hire_date: new Date().toISOString().split('T')[0]
+                                project_id: '', hire_date: new Date().toISOString().split('T')[0],
+                                avatar_url: ''
                             });
                             setIsModalOpen(true);
                         }}
@@ -303,8 +320,12 @@ export default function StaffPage() {
                                     {employees.map((emp) => (
                                         <tr key={emp.id} className="border-b border-border-custom hover:bg-white/5 transition-colors group">
                                             <td className="p-6 flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent">
-                                                    <UserCircle size={24} />
+                                                <div className="w-12 h-12 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent overflow-hidden shrink-0">
+                                                    {emp.avatar_url ? (
+                                                        <img src={emp.avatar_url} alt={emp.full_name || emp.name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <UserCircle size={24} />
+                                                    )}
                                                 </div>
                                                 <div>
                                                     <div className="font-bold text-white flex gap-2 items-center">

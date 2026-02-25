@@ -97,10 +97,13 @@ export default function CustomersPage() {
     const handleDeleteCustomer = async (id: string) => {
         if (confirm("Are you sure you want to remove this client? This action cannot be undone.")) {
             try {
-                await remove(id);
-            } catch (error) {
+                const success = await remove(id);
+                if (success) {
+                    alert("Customer deleted successfully.");
+                }
+            } catch (error: any) {
                 console.error("Error deleting customer:", error);
-                alert("Failed to delete customer.");
+                alert("Failed to delete customer: " + (error.message || "Unknown error"));
             }
         }
     };

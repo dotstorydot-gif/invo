@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import {
     Plus,
-    Search,
     ClipboardList,
     ArrowLeft,
     User,
@@ -40,16 +39,14 @@ interface TaskComment {
 
 interface Employee {
     id: string;
-    name: string;
-    department: string;
+    full_name: string;
+    role: string;
 }
 
 export default function TasksBoardPage() {
-    const { t } = useLanguage();
     const { data: tasks, loading, upsert, refresh } = useERPData<any>('tasks');
-    const { data: staff } = useERPData<any>('staff');
+    const { data: staff } = useERPData<Employee>('staff');
     const { data: projects } = useERPData<any>('projects');
-    const { session } = useAuth();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -176,9 +173,6 @@ export default function TasksBoardPage() {
         if (!draggedTaskId) return;
 
         // Optimistic update
-        const updatedTasks = tasks.map(t =>
-            t.id === draggedTaskId ? { ...t, status } : t
-        );
         refresh();
 
         // Persist to DB
@@ -281,8 +275,8 @@ export default function TasksBoardPage() {
                                                         ) : <div />}
 
                                                         {assignedStaff ? (
-                                                            <div className="flex justify-center items-center w-6 h-6 rounded-full bg-accent/20 text-accent text-[10px] font-bold border border-accent/30" title={assignedStaff.name}>
-                                                                {assignedStaff.name.charAt(0).toUpperCase()}
+                                                            <div className="flex justify-center items-center w-6 h-6 rounded-full bg-accent/20 text-accent text-[10px] font-bold border border-accent/30" title={assignedStaff.full_name}>
+                                                                {assignedStaff.full_name.charAt(0).toUpperCase()}
                                                             </div>
                                                         ) : (
                                                             <div className="flex justify-center items-center w-6 h-6 rounded-full bg-white/5 text-gray-500 text-[10px] font-bold border border-white/10 border-dashed" title="Unassigned">
@@ -363,7 +357,7 @@ export default function TasksBoardPage() {
                             >
                                 <option value="">-- Unassigned --</option>
                                 {staff?.map(emp => (
-                                    <option key={emp.id} value={emp.id}>{emp.name} ({emp.department})</option>
+                                    <option key={emp.id} value={emp.id}>{emp.full_name} ({emp.role})</option>
                                 ))}
                             </select>
                         </div>
@@ -450,11 +444,11 @@ export default function TasksBoardPage() {
                                                 return (
                                                     <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2 rounded-xl">
                                                         <div className="w-8 h-8 rounded-full bg-accent/20 text-accent font-bold flex items-center justify-center text-xs">
-                                                            {s.name.charAt(0)}
+                                                            {s.full_name.charAt(0)}
                                                         </div>
                                                         <div>
-                                                            <p className="text-sm font-bold text-white">{s.name}</p>
-                                                            <p className="text-xs text-gray-500">{s.department}</p>
+                                                            <p className="text-sm font-bold text-white">{s.full_name}</p>
+                                                            <p className="text-xs text-gray-500">{s.role}</p>
                                                         </div>
                                                     </div>
                                                 );

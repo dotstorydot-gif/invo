@@ -35,7 +35,7 @@ export function useERPData<T>(table: string) {
     }, [table, orgId]);
 
     const upsert = async (payload: Partial<T>) => {
-        if (!orgId) return null;
+        if (!orgId) throw new Error('Missing organization ID');
         try {
             const { data: result, error: upsertError } = await supabase
                 .from(table)
@@ -46,14 +46,16 @@ export function useERPData<T>(table: string) {
             await fetchData();
             return result;
         } catch (err: unknown) {
-            if (err instanceof Error) setError(err.message);
-            else if ((err as PostgrestError).message) setError((err as PostgrestError).message);
-            return null;
+            let message = 'An unknown error occurred';
+            if (err instanceof Error) message = err.message;
+            else if ((err as PostgrestError).message) message = (err as PostgrestError).message;
+            setError(message);
+            throw err; // Re-throw to allow component level handling
         }
     };
 
     const remove = async (id: string) => {
-        if (!orgId) return false;
+        if (!orgId) throw new Error('Missing organization ID');
         try {
             const { error: removeError } = await supabase
                 .from(table)
@@ -65,9 +67,11 @@ export function useERPData<T>(table: string) {
             await fetchData();
             return true;
         } catch (err: unknown) {
-            if (err instanceof Error) setError(err.message);
-            else if ((err as PostgrestError).message) setError((err as PostgrestError).message);
-            return false;
+            let message = 'An unknown error occurred';
+            if (err instanceof Error) message = err.message;
+            else if ((err as PostgrestError).message) message = (err as PostgrestError).message;
+            setError(message);
+            throw err; // Re-throw to allow component level handling
         }
     };
 

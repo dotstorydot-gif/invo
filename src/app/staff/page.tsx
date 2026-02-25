@@ -66,7 +66,7 @@ export default function StaffPage() {
     const handleSaveStaff = async () => {
         try {
             setIsSubmitting(true);
-            await upsert({
+            const result = await upsert({
                 ...(editingId ? { id: editingId } : {}),
                 full_name: formData.full_name,
                 role: formData.role,
@@ -78,22 +78,26 @@ export default function StaffPage() {
                 project_id: formData.project_id || null,
                 hire_date: formData.hire_date
             });
-            setIsModalOpen(false);
-            setEditingId(null);
-            setFormData({
-                full_name: '',
-                role: 'Consultant',
-                employment_type: 'Full Time',
-                base_salary: 0,
-                daily_rate: 0,
-                email: '',
-                status: 'Active',
-                project_id: '',
-                hire_date: new Date().toISOString().split('T')[0]
-            });
-        } catch (error) {
+
+            if (result) {
+                setIsModalOpen(false);
+                setEditingId(null);
+                setFormData({
+                    full_name: '',
+                    role: 'Consultant',
+                    employment_type: 'Full Time',
+                    base_salary: 0,
+                    daily_rate: 0,
+                    email: '',
+                    status: 'Active',
+                    project_id: '',
+                    hire_date: new Date().toISOString().split('T')[0]
+                });
+                alert("Employee saved successfully.");
+            }
+        } catch (error: any) {
             console.error("Error adding staff:", error);
-            alert("Failed to add staff member.");
+            alert("Failed to add staff member: " + (error.message || "Unknown error"));
         } finally {
             setIsSubmitting(false);
         }

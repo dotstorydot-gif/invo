@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Users2,
   Building2,
@@ -9,11 +9,15 @@ import {
   Plus,
   Search,
   Bell,
-  TrendingUp
+  TrendingUp,
+  Target,
+  Crown,
+  Play
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/context/LanguageContext";
 import { SmartActionCenter } from "@/components/SmartActionCenter";
+import SetupWizard from "@/components/SetupWizard";
 import { useERPData } from "@/hooks/useERPData";
 import { LucideIcon, Briefcase } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -41,6 +45,7 @@ const KPICard = ({ title, value, change, icon: Icon, color }: { title: string, v
 export default function Dashboard() {
   const { t, toggleLanguage, language } = useLanguage();
   const { session } = useAuth();
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
   const { data: expenses } = useERPData<any>('expenses');
   const { data: units } = useERPData<any>('units');
   const { data: customers } = useERPData<any>('customers');
@@ -68,6 +73,32 @@ export default function Dashboard() {
 
   return (
     <main className="flex-1 p-8 overflow-y-auto w-full">
+      <SetupWizard isOpen={isWizardOpen} onClose={() => setIsWizardOpen(false)} isMarketing={isMarketing} />
+
+      {/* Setup Wizard Trigger */}
+      <div className="glass p-6 bg-gradient-to-r from-accent/10 to-transparent border-accent/20 relative overflow-hidden group mb-10">
+        <div className="absolute top-0 right-0 p-4 opacity-10">
+          <Target size={120} />
+        </div>
+        <div className="relative z-10 flex flex-col md:flex-row gap-6 items-center justify-between">
+          <div>
+            <h3 className="text-xl font-bold flex items-center gap-2 text-white">
+              <span className="p-2 bg-accent/20 rounded-lg text-accent"><Crown size={20} /></span>
+              Interactive Setup Wizard
+            </h3>
+            <p className="text-sm text-gray-400 mt-2 max-w-xl">
+              New to the system? Launch our interactive step-by-step pipeline to guide you through creating your team, setting up your first project, and configuring your finances.
+            </p>
+          </div>
+          <button
+            onClick={() => setIsWizardOpen(true)}
+            className="whitespace-nowrap flex items-center gap-2 px-6 py-3 bg-accent hover:bg-emerald-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all"
+          >
+            <Play size={18} fill="currentColor" /> Launch Wizard
+          </button>
+        </div>
+      </div>
+
       {/* Header */}
       <header className="flex justify-between items-center mb-10">
         <div>

@@ -13,7 +13,6 @@ import { useRouter } from "next/navigation";
 
 import { useERPData } from "@/hooks/useERPData";
 import ERPFormModal from "@/components/ERPFormModal";
-import SetupWizard from "@/components/SetupWizard";
 import { Plus, Edit2 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -33,9 +32,6 @@ export default function SettingsPage() {
     const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
     const [branchFormData, setBranchFormData] = useState({ id: '', name: '', address: '' });
     const [isSavingBranch, setIsSavingBranch] = useState(false);
-
-    const [isWizardOpen, setIsWizardOpen] = useState(false);
-    const isMarketing = session?.moduleType === 'Service & Marketing';
 
     const planRank: Record<string, number> = { 'silver': 1, 'gold': 2, 'platinum': 3 };
     const currentPlan = session?.subscriptionPlan?.toLowerCase() || 'platinum';
@@ -151,30 +147,6 @@ export default function SettingsPage() {
                 </header>
 
                 <div className="max-w-4xl space-y-8">
-                    {/* Setup Wizard Trigger */}
-                    <div className="glass p-6 bg-gradient-to-r from-accent/10 to-transparent border-accent/20 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-4 opacity-10">
-                            <Target size={120} />
-                        </div>
-                        <div className="relative z-10 flex flex-col md:flex-row gap-6 items-center justify-between">
-                            <div>
-                                <h3 className="text-xl font-bold flex items-center gap-2 text-white">
-                                    <span className="p-2 bg-accent/20 rounded-lg text-accent"><Crown size={20} /></span>
-                                    Interactive Setup Wizard
-                                </h3>
-                                <p className="text-sm text-gray-400 mt-2 max-w-xl">
-                                    New to the system? Launch our interactive step-by-step pipeline to guide you through creating your team, setting up your first project, and configuring your finances.
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => setIsWizardOpen(true)}
-                                className="whitespace-nowrap flex items-center gap-2 px-6 py-3 bg-accent hover:bg-emerald-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all"
-                            >
-                                <Play size={18} fill="currentColor" /> Launch Wizard
-                            </button>
-                        </div>
-                    </div>
-
                     {/* Language Settings */}
                     <section className="glass border-border-custom p-8 bg-white/5">
                         <div className="flex items-center gap-4 mb-6">

@@ -25,11 +25,17 @@ interface StashTransaction {
     source: string;
     description: string;
     date: string;
+    reference_type?: string;
+    reference_id?: string;
 }
 
 export default function StashPage() {
     const { t } = useLanguage();
     const { data: transactions, loading, upsert } = useERPData<StashTransaction>('stash_transactions');
+    const { data: projects } = useERPData<{ id: string, name: string }>('projects');
+    const { data: staff } = useERPData<{ id: string, first_name: string, last_name: string }>('staff');
+    const { data: loans } = useERPData<{ id: string, borrower_name: string, principal_amount: number }>('loans');
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [modalTitle, setModalTitle] = useState('');
@@ -39,7 +45,9 @@ export default function StashPage() {
         type: 'In' as 'In' | 'Out',
         source: '',
         description: '',
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toISOString().split('T')[0],
+        reference_type: 'General',
+        reference_id: ''
     });
 
     const handleOpenModal = (type: 'In' | 'Out') => {
@@ -56,7 +64,9 @@ export default function StashPage() {
                 type: formData.type,
                 source: formData.source,
                 description: formData.description,
-                date: formData.date
+                date: formData.date,
+                reference_type: formData.reference_type,
+                reference_id: formData.reference_id || undefined
             });
             setIsModalOpen(false);
             setFormData({
@@ -64,7 +74,9 @@ export default function StashPage() {
                 type: 'In',
                 source: '',
                 description: '',
-                date: new Date().toISOString().split('T')[0]
+                date: new Date().toISOString().split('T')[0],
+                reference_type: 'General',
+                reference_id: ''
             });
         } catch (error) {
             console.error("Error adding cash transaction:", error);
@@ -179,9 +191,16 @@ export default function StashPage() {
                                             </td>
                                             <td className="p-4 text-sm text-gray-400 max-w-xs truncate">{tx.description}</td>
                                             <td className="p-4 text-sm">
-                                                <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${tx.type === 'Out' ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
-                                                    {tx.type}
-                                                </span>
+                                                <div className="flex flex-col gap-1">
+                                                    <span className={`w-fit px-2 py-1 rounded text-[10px] font-bold uppercase ${tx.type === 'Out' ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                                                        {tx.type}
+                                                    </span>
+                                                    {tx.reference_type && tx.reference_type !== 'General' && (
+                                                        <span className="text-[9px] text-gray-500 font-bold bg-white/5 px-2 py-0.5 rounded w-fit uppercase">
+                                                            {tx.reference_type}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className={`p-4 text-sm font-bold ${tx.type === 'Out' ? 'text-red-400' : 'text-emerald-400'}`}>
                                                 {tx.type === 'Out' ? '-' : '+'}{(Number(tx.amount) || 0).toLocaleString()} EGP
@@ -218,6 +237,45 @@ export default function StashPage() {
                                 placeholder="0.00"
                             />
                         </div>
+
+                        <div className="flex flex-col gap-2 col-span-2 md:col-span-1">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Link To</label>
+                            <select
+                                value={formData.reference_type}
+                                onChange={(e) => setFormData({ ...formData, reference_type: e.target.value, reference_id: '' })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            >
+                                <option value="General">General / Unlinked</option>
+                                <option value="Project">Project</option>
+                                <option value="Loan">Loan</option>
+                                <option value="Salary">Salary / Staff</option>
+                            </select>
+                        </div>
+
+                        {formData.reference_type !== 'General' && (
+                            <div className="flex flex-col gap-2 col-span-2 md:col-span-1 border-l border-white/5 pl-6">
+                                <label className="text-xs font-bold text-gray-500 uppercase">Select {formData.reference_type}</label>
+                                <select
+                                    value={formData.reference_id}
+                                    onChange={(e) => setFormData({ ...formData, reference_id: e.target.value })}
+                                    className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                                    required
+                                >
+                                    <option value="">-- Choose {formData.reference_type} --</option>
+                                    {formData.reference_type === 'Project' && projects?.map(p => (
+                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                    ))}
+                                    {(formData.reference_type === 'Staff' || formData.reference_type === 'Salary') && staff?.map(s => (
+                                        <option key={s.id} value={s.id}>{s.first_name} {s.last_name}</option>
+                                    ))}
+                                    {formData.reference_type === 'Loan' && loans?.map(l => (
+                                        <option key={l.id} value={l.id}>{l.borrower_name} - {l.principal_amount} EGP</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
+
                         <div className="flex flex-col gap-2">
                             <label className="text-xs font-bold text-gray-500 uppercase">{t('cash_source')}</label>
                             <input

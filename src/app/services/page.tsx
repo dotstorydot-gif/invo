@@ -5,6 +5,11 @@ import {
     Plus,
     Activity,
     ArrowLeft,
+    Edit2,
+    Search,
+    Filter,
+    MapPin,
+    Trash2
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -72,7 +77,7 @@ const PROVIDERS = [
 
 export default function ServicesPage() {
     const { t } = useLanguage();
-    const { data: services, loading, upsert } = useERPData<Service>('services');
+    const { data: services, loading, upsert, remove } = useERPData<Service>('services');
     const { data: projects } = useERPData<any>('projects');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -115,7 +120,7 @@ export default function ServicesPage() {
                 ...(editingId ? { id: editingId } : {}),
                 name: formData.name,
                 description: formData.description,
-                price: Number(formData.price),
+                price: formData.price,
                 pricing_type: formData.pricing_type,
                 status: formData.status,
                 category: formData.category === 'Other' ? (customCategory || 'Other') : formData.category,
@@ -145,8 +150,8 @@ export default function ServicesPage() {
             setCustomPlatform('');
             setCustomProvider('');
         } catch (error) {
-            console.error("Error adding service:", error);
-            alert("Failed to add service. Check console for details.");
+            console.error("Error saving service:", error);
+            alert("Failed to save service. Check console for details.");
         } finally {
             setIsSubmitting(false);
         }
@@ -237,9 +242,9 @@ export default function ServicesPage() {
                                         </div>
                                     </div>
                                     <div className="flex flex-col items-end gap-1">
-                                        <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border ${service.status === 'Active' ? 'text-emerald-400 border-emerald-400/20 bg-emerald-400/5' :
+                                        <span className={`px - 3 py - 1 rounded - full text - [9px] font - bold uppercase tracking - widest border ${service.status === 'Active' ? 'text-emerald-400 border-emerald-400/20 bg-emerald-400/5' :
                                             'text-gray-400 border-gray-400/20 bg-gray-400/5'
-                                            }`}>
+                                            } `}>
                                             {service.status}
                                         </span>
                                     </div>
@@ -256,21 +261,30 @@ export default function ServicesPage() {
                                 </div>
 
                                 {/* Actions */}
-                                <div className="p-4 mt-auto flex flex-col gap-2 border-t border-border-custom bg-white/5">
+                                <div className="p-4 mt-auto flex flex-col gap-2 border-t border-border-custom bg-white/5 relative">
                                     <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{service.category || 'Standard Service'}</span>
                                     {service.sub_category && <span className="text-sm font-bold text-gray-300">{service.sub_category}</span>}
 
-                                    <div className="flex flex-wrap gap-1 mt-2">
+                                    <div className="flex flex-wrap gap-1 mt-2 mb-2">
                                         {service.platforms?.map((p, i) => <span key={i} className="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded text-[9px] font-bold">{p}</span>)}
                                         {service.providers?.map((p, i) => <span key={i} className="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded text-[9px] font-bold">{p}</span>)}
                                         {service.features?.map((p, i) => <span key={i} className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded text-[9px] font-bold">{p}</span>)}
                                     </div>
-                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+
+                                    <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-white/5">
                                         <button
-                                            onClick={() => handleEditService(service)}
-                                            className="p-1.5 bg-black/50 backdrop-blur-md rounded-lg border border-white/20 text-gray-300 hover:text-white"
+                                            onClick={(e) => { e.stopPropagation(); handleEditService(service); }}
+                                            className="p-2 bg-black/50 backdrop-blur-md rounded-lg border border-white/10 text-gray-400 hover:text-accent hover:border-accent/50 transition-all flex items-center justify-center"
+                                            title="Edit Service"
                                         >
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                            <Edit2 size={16} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleDeleteService(service.id); }}
+                                            className="p-2 bg-black/50 backdrop-blur-md rounded-lg border border-white/10 text-gray-400 hover:text-red-400 hover:border-red-400/50 transition-all flex items-center justify-center"
+                                            title="Delete Service"
+                                        >
+                                            <Trash2 size={16} />
                                         </button>
                                     </div>
                                 </div>
@@ -324,8 +338,8 @@ export default function ServicesPage() {
                         <div className="flex flex-col gap-2">
                             <label className="text-xs font-bold text-gray-500 uppercase">Pricing Option</label>
                             <div className="grid grid-cols-2 gap-2">
-                                <button type="button" onClick={() => setFormData({ ...formData, pricing_type: 'Fixed' })} className={`py-2 rounded-lg border text-xs font-bold transition-all ${formData.pricing_type === 'Fixed' ? 'bg-accent/20 border-accent/50 text-accent' : 'bg-[#111] border-white/10 text-gray-400'}`}>Fixed Invoice</button>
-                                <button type="button" onClick={() => setFormData({ ...formData, pricing_type: 'Recurring' })} className={`py-2 rounded-lg border text-xs font-bold transition-all ${formData.pricing_type === 'Recurring' ? 'bg-purple-500/20 border-purple-500/50 text-purple-400' : 'bg-[#111] border-white/10 text-gray-400'}`}>Recurring Setup</button>
+                                <button type="button" onClick={() => setFormData({ ...formData, pricing_type: 'Fixed' })} className={`py - 2 rounded - lg border text - xs font - bold transition - all ${formData.pricing_type === 'Fixed' ? 'bg-accent/20 border-accent/50 text-accent' : 'bg-[#111] border-white/10 text-gray-400'} `}>Fixed Invoice</button>
+                                <button type="button" onClick={() => setFormData({ ...formData, pricing_type: 'Recurring' })} className={`py - 2 rounded - lg border text - xs font - bold transition - all ${formData.pricing_type === 'Recurring' ? 'bg-purple-500/20 border-purple-500/50 text-purple-400' : 'bg-[#111] border-white/10 text-gray-400'} `}>Recurring Setup</button>
                             </div>
                         </div>
 
@@ -427,7 +441,7 @@ export default function ServicesPage() {
                                         <button
                                             key={platform} type="button"
                                             onClick={() => toggleArrayItem('platforms', platform)}
-                                            className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${formData.platforms.includes(platform) ? 'bg-accent/20 border-accent/50 text-accent' : 'bg-[#111] border-white/10 text-gray-400 hover:border-white/30'}`}
+                                            className={`px - 3 py - 1.5 rounded - lg border text - xs font - bold transition - all ${formData.platforms.includes(platform) ? 'bg-accent/20 border-accent/50 text-accent' : 'bg-[#111] border-white/10 text-gray-400 hover:border-white/30'} `}
                                         >
                                             {platform}
                                         </button>
@@ -480,7 +494,7 @@ export default function ServicesPage() {
                                         <button
                                             key={provider} type="button"
                                             onClick={() => toggleArrayItem('providers', provider)}
-                                            className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${formData.providers.includes(provider) ? 'bg-purple-500/20 border-purple-500/50 text-purple-400' : 'bg-[#111] border-white/10 text-gray-400 hover:border-white/30'}`}
+                                            className={`px - 3 py - 1.5 rounded - lg border text - xs font - bold transition - all ${formData.providers.includes(provider) ? 'bg-purple-500/20 border-purple-500/50 text-purple-400' : 'bg-[#111] border-white/10 text-gray-400 hover:border-white/30'} `}
                                         >
                                             {provider}
                                         </button>

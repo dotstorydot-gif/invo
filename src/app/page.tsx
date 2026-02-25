@@ -9,10 +9,10 @@ import {
   Plus,
   Search,
   Bell,
-  TrendingUp,
   Target,
   Crown,
-  Play
+  Play,
+  TrendingUp
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/context/LanguageContext";
@@ -46,28 +46,32 @@ export default function Dashboard() {
   const { t, toggleLanguage, language } = useLanguage();
   const { session } = useAuth();
   const [isWizardOpen, setIsWizardOpen] = useState(false);
-  const { data: expenses } = useERPData<any>('expenses');
-  const { data: units } = useERPData<any>('units');
-  const { data: customers } = useERPData<any>('customers');
-  const { data: salesInvoices } = useERPData<any>('sales_invoices');
-  const { data: stashTransactions } = useERPData<any>('stash_transactions');
-  const { data: services } = useERPData<any>('services');
+  const { data: expenses = [] } = useERPData<{ amount: number, category: string, date: string }>('expenses');
+  const { data: units = [] } = useERPData<{ id: string, status: string }>('units');
+  const { data: customers = [] } = useERPData<{ id: string }>('customers');
+  const { data: salesInvoices = [] } = useERPData<{ amount: number, created_at: string }>('sales_invoices');
+  const { data: staff } = useERPData<any>('staff'); // Unused, keeping original type
+  const { data: loans = [] } = useERPData<{ status: string, principal_amount: number, amount_paid: number }>('loans');
+  const { data: stashTransactions = [] } = useERPData<{ amount: number, type: string, source: string, created_at: string }>('stash_transactions');
+  const { data: services = [] } = useERPData<{ id: string, name: string, created_at: string }>('services');
 
   const isMarketing = session?.moduleType === 'Service & Marketing';
 
   // Aggregations
-  const totalRevenue = salesInvoices.reduce((sum: number, inv: any) => sum + (Number(inv.amount) || 0), 0) +
-    stashTransactions.filter((tx: any) => tx.type === 'In').reduce((sum: number, tx: any) => sum + (Number(tx.amount) || 0), 0);
+  const totalRevenue = salesInvoices.reduce((sum: number, inv) => sum + (Number(inv.amount) || 0), 0) +
+    stashTransactions.filter(tx => tx.type === 'In').reduce((sum: number, tx) => sum + (Number(tx.amount) || 0), 0);
+  const totalExpenses = (expenses || []).reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
+  const totalUnits = (units || []).length;
+  const totalCustomers = (customers || []).length;
+  const totalActiveLoans = (loans || []).filter(l => l.status === 'Active').reduce((sum, l) => sum + ((Number(l.principal_amount) || 0) - (Number(l.amount_paid) || 0)), 0);
 
-  const activeUnits = units.filter((u: any) => u.status === 'Available').length;
+  const activeUnits = units.filter(u => u.status === 'Available').length;
   const customerCount = customers.length;
-  const occupancyRate = units.length > 0 ? (units.filter((u: any) => u.status !== 'Available').length / units.length) * 100 : 0;
-  const serviceCount = services.length;
+  const activeServicesCount = services.length;
+  const occupancyRate = totalUnits > 0 ? ((totalUnits - activeUnits) / totalUnits) * 100 : 0; // Corrected occupancy rate logic
+  // const serviceCount = services.length; // Redundant, replaced by activeServicesCount
 
   const recentActivity = [
-    ...salesInvoices.map((inv: any) => ({ label: "Invoice created", client: `Amount: ${inv.amount}`, time: new Date(inv.created_at).toLocaleDateString() })),
-    ...stashTransactions.map((tx: any) => ({ label: `Cash Stash ${tx.type}`, client: tx.source, time: new Date(tx.created_at).toLocaleDateString() })),
-    ...expenses.slice(0, 2).map((exp: any) => ({ label: "Expense recorded", client: exp.category, time: new Date(exp.date).toLocaleDateString() })),
     ...services.slice(0, 2).map((svc: any) => ({ label: "Service listed", client: svc.name, time: new Date(svc.created_at).toLocaleDateString() }))
   ].sort((a: any, b: any) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 4);
 
@@ -136,19 +140,13 @@ export default function Dashboard() {
         <KPICard title={t('total_revenue')} value={`${(totalRevenue / 1000000).toFixed(1)}M`} change="+0%" icon={TrendingUp} color="text-emerald-400" />
         <KPICard
           title={isMarketing ? "Listed Services" : t('active_units')}
-          value={isMarketing ? serviceCount.toString() : activeUnits.toString()}
+          value={isMarketing ? activeServicesCount.toString() : activeUnits.toString()}
           change="+0%"
           icon={isMarketing ? Briefcase : Building2}
           color="text-accent"
         />
         <KPICard title="Customers" value={customerCount.toString()} change="+0%" icon={Users2} color="text-blue-400" />
-        <KPICard
-          title={isMarketing ? "Fulfillment Rate" : "Occupancy"}
-          value={isMarketing ? "94.2%" : `${occupancyRate.toFixed(1)}%`}
-          change="+0%"
-          icon={BarChart3}
-          color="text-purple-400"
-        />
+        <KPICard title="Active Loans Debt" value={`${totalActiveLoans.toLocaleString()} EGP`} change="+0%" icon={Target} color="text-red-400" />
       </div>
 
       {/* Charts & Activity Section */}

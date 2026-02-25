@@ -11,7 +11,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
-import { useAuth } from "@/context/AuthContext";
 import { LucideIcon, Lock } from "lucide-react";
 
 type SubItem = { label: string; href: string };

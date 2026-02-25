@@ -8,6 +8,7 @@ const inter = Inter({ subsets: ["latin"] });
 import { LanguageProvider } from "@/context/LanguageContext";
 import { AuthProvider } from "@/context/AuthContext";
 import SuperadminSidebar from "@/components/SuperadminSidebar";
+import Sidebar from "@/components/Sidebar";
 
 export const metadata: Metadata = {
   title: "Invoica | Modern ERP & Invoicing",

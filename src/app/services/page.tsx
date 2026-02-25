@@ -26,6 +26,7 @@ interface Service {
     providers?: string[];
     features?: string[];
     created_at: string;
+    project_id?: string;
 }
 
 const CATEGORIES = [
@@ -72,6 +73,7 @@ const PROVIDERS = [
 export default function ServicesPage() {
     const { t } = useLanguage();
     const { data: services, loading, upsert } = useERPData<Service>('services');
+    const { data: projects } = useERPData<any>('projects');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -92,7 +94,8 @@ export default function ServicesPage() {
         sub_category: 'Informative Website',
         platforms: [] as string[],
         providers: [] as string[],
-        features: [] as string[]
+        features: [] as string[],
+        project_id: ''
     });
 
     const toggleArrayItem = (arrayName: 'platforms' | 'providers' | 'features', item: string) => {
@@ -119,7 +122,8 @@ export default function ServicesPage() {
                 sub_category: formData.sub_category === 'Other' ? (customSubCategory || 'Other') : formData.sub_category,
                 platforms: formData.platforms,
                 providers: formData.providers,
-                features: formData.features
+                features: formData.features,
+                project_id: formData.project_id || null
             });
             setIsModalOpen(false);
             setEditingId(null);
@@ -133,7 +137,8 @@ export default function ServicesPage() {
                 sub_category: 'Informative Website',
                 platforms: [],
                 providers: [],
-                features: []
+                features: [],
+                project_id: ''
             });
             setCustomCategory('');
             setCustomSubCategory('');
@@ -165,7 +170,8 @@ export default function ServicesPage() {
             sub_category: subCat,
             platforms: service.platforms || [],
             providers: service.providers || [],
-            features: service.features || []
+            features: service.features || [],
+            project_id: service.project_id || ''
         });
         setIsModalOpen(true);
     };
@@ -190,7 +196,7 @@ export default function ServicesPage() {
                             setFormData({
                                 name: '', description: '', price: 0, pricing_type: 'Fixed', status: 'Active',
                                 category: 'Digital Development', sub_category: 'Informative Website',
-                                platforms: [], providers: [], features: []
+                                platforms: [], providers: [], features: [], project_id: ''
                             });
                             setIsModalOpen(true);
                         }}

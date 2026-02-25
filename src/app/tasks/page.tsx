@@ -45,8 +45,10 @@ interface Employee {
 
 export default function TasksBoardPage() {
     const { t } = useLanguage();
-    const { data: tasks, loading, upsert, refresh } = useERPData<Task>('tasks');
-    const { data: staff } = useERPData<Employee>('staff');
+    const { data: tasks, loading, upsert, refresh } = useERPData<any>('tasks');
+    const { data: staff } = useERPData<any>('staff');
+    const { data: projects } = useERPData<any>('projects');
+    const { session } = useAuth();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,7 +59,8 @@ export default function TasksBoardPage() {
         description: '',
         assigned_to: '',
         status: 'Todo',
-        due_date: ''
+        due_date: '',
+        project_id: ''
     });
 
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -128,7 +131,8 @@ export default function TasksBoardPage() {
                 description: formData.description,
                 assigned_to: formData.assigned_to || null,
                 status: formData.status as any,
-                due_date: formData.due_date || null
+                due_date: formData.due_date || null,
+                project_id: formData.project_id || null
             });
             setIsModalOpen(false);
             setFormData({
@@ -136,7 +140,8 @@ export default function TasksBoardPage() {
                 description: '',
                 assigned_to: '',
                 status: 'Todo',
-                due_date: ''
+                due_date: '',
+                project_id: ''
             });
         } catch (error) {
             console.error("Error adding task:", error);
@@ -358,6 +363,19 @@ export default function TasksBoardPage() {
                                 <option value="">-- Unassigned --</option>
                                 {staff?.map(emp => (
                                     <option key={emp.id} value={emp.id}>{emp.name} ({emp.department})</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-2 col-span-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Link to Project (Optional)</label>
+                            <select
+                                value={formData.project_id}
+                                onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            >
+                                <option value="">-- No Project --</option>
+                                {projects?.map((p: any) => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
                                 ))}
                             </select>
                         </div>

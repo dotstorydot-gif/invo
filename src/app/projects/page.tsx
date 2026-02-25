@@ -197,55 +197,56 @@ export default function ProjectsPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {projects.map((prj: Project) => {
-                                        const projectUnits = units.filter((u: Unit) => u.project_id === prj.id);
-                                        const totalUnits = projectUnits.length;
-                                        const soldUnits = projectUnits.filter((u: Unit) => u.status === 'Sold' || u.status === 'Installments').length;
-                                        const progress = totalUnits > 0 ? Math.round((soldUnits / totalUnits) * 100) : 0;
+                                        const projectItems = isMarketing ? services.filter((s: any) => s.project_id === prj.id) : units.filter((u: Unit) => u.project_id === prj.id);
+                                    const totalItems = projectItems.length;
+                                    const completedItems = isMarketing 
+                                            ? projectItems.filter((s: any) => s.status === 'Active' || s.status === 'Completed').length 
+                                            : projectItems.filter((u: Unit) => u.status === 'Sold' || u.status === 'Installments').length;
+                                        const progress = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
-                                        return (
-                                            <tr key={prj.id} className="border-b border-border-custom hover:bg-white/5 transition-colors group">
-                                                <td className="p-6">
-                                                    <div className="font-bold text-white text-lg">{prj.name}</div>
-                                                    <div className="text-[10px] text-accent font-mono">{prj.id?.slice(0, 8)}</div>
-                                                </td>
-                                                <td className="p-6 text-sm text-gray-400">{prj.location || 'N/A'}</td>
-                                                <td className="p-6">
-                                                    <div className="flex items-center gap-2 font-bold">
-                                                        <Home size={16} className="text-gray-500" />
-                                                        {totalUnits}
-                                                    </div>
-                                                </td>
-                                                <td className="p-6 min-w-[200px]">
-                                                    <div className="space-y-2">
-                                                        <div className="flex justify-between text-[10px] font-bold">
-                                                            <span className="text-gray-400">{soldUnits} Sold</span>
-                                                            <span className="text-accent">{progress}%</span>
-                                                        </div>
-                                                        <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                                                            <div
-                                                                className="h-full bg-accent"
-                                                                style={{ width: `${progress}%` }}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="p-6">
-                                                    <div className="flex justify-end items-center gap-4">
-                                                        <Link href={`/projects/${prj.id}`} className="flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-accent transition-all group/btn">
-                                                            {t('view_details')}
-                                                            <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
-                                                        </Link>
-                                                        <button
-                                                            onClick={() => handleEditProject(prj)}
-                                                            className="p-2 text-gray-400 hover:text-white transition-all title='Edit Project'"
-                                                        >
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
+                                    return (
+                                    <tr key={prj.id} className="border-b border-border-custom hover:bg-white/5 transition-colors group">
+                                        <td className="p-6">
+                                            <div className="font-bold text-white text-lg">{prj.name}</div>
+                                            <div className="text-[10px] text-accent font-mono">{prj.id?.slice(0, 8)}</div>
+                                        </td>
+                                        <td className="p-6 text-sm text-gray-400">{prj.location || 'N/A'}</td>
+                                        <td className="p-6">
+                                            <div className="flex items-center gap-2 font-bold">
+                                                <Home size={16} className="text-gray-500" />
+                                                {totalItems}
+                                            </div>
+                                        </td>
+                                        <td className="p-6 min-w-[200px]">
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between text-[10px] font-bold">
+                                                    <span className="text-gray-400">{completedItems} {isMarketing ? 'Active' : 'Sold'}</span>
+                                                    <span className="text-accent">{progress}%</span>
+                                                </div>
+                                                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full bg-accent"
+                                                        style={{ width: `${progress}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="p-6">
+                                            <div className="flex justify-end items-center gap-4">
+                                                <Link href={`/projects/${prj.id}`} className="flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-accent transition-all group/btn">
+                                                    {t('view_details')}
+                                                    <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                                                </Link>
+                                                <button
+                                                    onClick={() => handleEditProject(prj)}
+                                                    className="p-2 text-gray-400 hover:text-white transition-all title='Edit Project'"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    );
                                     })}
                                     {/* Unassigned Project Row */}
                                     {units.filter((u: Unit) => !u.project_id).length > 0 && (

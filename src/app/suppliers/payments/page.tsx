@@ -1,60 +1,260 @@
 "use client";
 
-import React from "react";
-import { ArrowLeft, Clock } from "lucide-react";
+import React, { useState } from "react";
+import {
+    ArrowLeft,
+    CreditCard,
+    Plus,
+    Search,
+    UserCircle,
+    Calendar,
+    DollarSign,
+    ExternalLink,
+    Trash2
+} from "lucide-react";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { useERPData } from "@/hooks/useERPData";
+import ERPFormModal from "@/components/ERPFormModal";
 
-export default function Page() {
+export default function SupplierPaymentsPage() {
     const { t } = useLanguage();
-    const { data, loading } = useERPData<any>('cheques');
+    const { data: payments, loading, upsert, remove } = useERPData<any>('supplier_payments');
+    const { data: suppliers } = useERPData<any>('suppliers');
+    const { upsert: upsertExpense } = useERPData<any>('expenses');
 
-    const filteredData = data;
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const [formData, setFormData] = useState({
+        supplier_id: '',
+        amount: 0,
+        payment_date: new Date().toISOString().split('T')[0],
+        payment_method: 'Bank Transfer',
+        reference_no: '',
+        description: ''
+    });
+
+    const handleSavePayment = async () => {
+        try {
+            setIsSubmitting(true);
+            const selectedSupplier = suppliers.find((s: any) => s.id === formData.supplier_id);
+
+            // 1. Create the expense first
+            const expenseResult = await upsertExpense({
+                date: formData.payment_date,
+                amount: Number(formData.amount),
+                category: 'Cost of Goods Sold',
+                description: `Supplier Payment: ${selectedSupplier?.name || 'Unknown'}. Ref: ${formData.reference_no}. ${formData.description}`,
+                status: 'Approved'
+            });
+
+            // 2. Link to supplier payment
+            await upsert({
+                supplier_id: formData.supplier_id,
+                expense_id: expenseResult?.[0]?.id,
+                amount: Number(formData.amount),
+                payment_date: formData.payment_date,
+                payment_method: formData.payment_method,
+                reference_no: formData.reference_no,
+                status: 'Completed'
+            });
+
+            setIsModalOpen(false);
+            setFormData({
+                supplier_id: '',
+                amount: 0,
+                payment_date: new Date().toISOString().split('T')[0],
+                payment_method: 'Bank Transfer',
+                reference_no: '',
+                description: ''
+            });
+        } catch (error) {
+            console.error("Error saving payment:", error);
+            alert("Failed to save payment.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
         <div className="flex min-h-screen bg-background text-foreground">
-            <main className="flex-1 p-8 overflow-y-auto">
+            <main className="flex-1 p-8 overflow-y-auto w-full">
                 <header className="flex justify-between items-center mb-10">
                     <div className="flex items-center gap-4">
-                        <Link href="javascript:history.back()" className="p-2 rounded-xl border border-border-custom hover:border-accent hover:text-accent transition-all">
+                        <Link href="/suppliers" className="p-2 rounded-xl border border-border-custom hover:border-accent hover:text-accent transition-all">
                             <ArrowLeft size={20} />
                         </Link>
                         <div>
                             <h2 className="text-3xl font-bold gradient-text">Supplier Payments</h2>
-                            <p className="text-gray-400 text-sm mt-1">Manage all your payments here.</p>
+                            <p className="text-gray-400 text-sm mt-1">Settle invoices and track outgoing logistics funds.</p>
                         </div>
                     </div>
+
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
+                    >
+                        <Plus size={20} />
+                        <span>Process Payment</span>
+                    </button>
                 </header>
 
-                <div className="glass p-8 flex flex-col items-center justify-center min-h-[400px] border-border-custom text-center">
-                    <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center text-accent mb-6">
-                        <Clock size={40} />
-                    </div>
-                    <h3 className="text-2xl font-bold mb-2">Module Active</h3>
-                    <p className="text-gray-400 max-w-md mb-8">
-                        The Supplier Payments module is currently running. Full interactive features are rolling out shortly.
-                        Found {filteredData.length} records in the database.
-                    </p>
-
-                    <div className="w-full max-w-4xl text-left glass bg-white/5 p-4 rounded-xl border border-border-custom">
-                        <h4 className="font-bold text-sm text-gray-400 uppercase tracking-widest mb-4">Latest Records</h4>
-                        {loading ? (
-                            <div className="text-gray-500 italic text-sm text-center py-4">Syncing with database...</div>
-                        ) : filteredData.length > 0 ? (
-                            <div className="space-y-2">
-                                {filteredData.slice(0, 5).map((item: any, i: number) => (
-                                    <div key={i} className="p-3 bg-white/5 rounded-lg text-sm border border-border-custom flex justify-between">
-                                        <span className="font-mono text-accent">{item.id?.substring(0, 8) || `ID-${1000 + i}`}</span>
-                                        <span className="text-gray-400">{item.created_at ? new Date(item.created_at).toLocaleDateString() : 'Recently Added'}</span>
-                                    </div>
-                                ))}
+                <div className="grid grid-cols-1 gap-6">
+                    <div className="glass overflow-hidden border-border-custom">
+                        <div className="p-6 border-b border-border-custom flex justify-between items-center bg-white/5">
+                            <div className="flex items-center gap-3">
+                                <CreditCard className="text-accent" />
+                                <h3 className="text-xl font-bold">Payment History</h3>
                             </div>
-                        ) : (
-                            <div className="text-gray-500 italic text-sm text-center py-4">No records found for this module yet.</div>
-                        )}
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead>
+                                    <tr className="border-b border-border-custom bg-white/2">
+                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">Supplier</th>
+                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">Date</th>
+                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">Reference</th>
+                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">Method</th>
+                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">Amount</th>
+                                        <th className="p-6 text-xs font-bold uppercase text-gray-500 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {loading ? (
+                                        <tr><td colSpan={6} className="p-10 text-center italic text-gray-500">Loading payments...</td></tr>
+                                    ) : payments.length > 0 ? (
+                                        payments.map((payment: any) => (
+                                            <tr key={payment.id} className="border-b border-border-custom hover:bg-white/5 transition-colors group">
+                                                <td className="p-6">
+                                                    <div className="font-bold text-white flex items-center gap-2">
+                                                        <UserCircle size={16} className="text-accent" />
+                                                        {suppliers.find((s: any) => s.id === payment.supplier_id)?.name || 'Unknown Supplier'}
+                                                    </div>
+                                                </td>
+                                                <td className="p-6 text-sm text-gray-400">
+                                                    {new Date(payment.payment_date).toLocaleDateString()}
+                                                </td>
+                                                <td className="p-6 text-xs font-mono text-gray-500 uppercase tracking-widest">
+                                                    {payment.reference_no || 'N/A'}
+                                                </td>
+                                                <td className="p-6">
+                                                    <span className="text-[10px] bg-white/10 text-gray-400 px-2 py-1 rounded-lg border border-white/5 uppercase font-bold">
+                                                        {payment.payment_method}
+                                                    </span>
+                                                </td>
+                                                <td className="p-6 font-bold text-emerald-400">
+                                                    {payment.amount.toLocaleString()} EGP
+                                                </td>
+                                                <td className="p-6">
+                                                    <div className="flex justify-end gap-2">
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (confirm("Delete this payment record? Note: Linked expense will persist.")) {
+                                                                    await remove(payment.id);
+                                                                }
+                                                            }}
+                                                            className="p-2 rounded-lg hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-all"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr><td colSpan={6} className="p-20 text-center text-gray-500">No payment records found.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
+
+                <ERPFormModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    title="Process Supplier Payment"
+                    onSubmit={handleSavePayment}
+                    loading={isSubmitting}
+                >
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2 col-span-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Select Supplier</label>
+                            <select
+                                value={formData.supplier_id}
+                                onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm w-full shadow-inner"
+                                required
+                            >
+                                <option value="">Select a logistics partner...</option>
+                                {suppliers.map((s: any) => (
+                                    <option key={s.id} value={s.id}>{s.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Payment Amount (EGP)</label>
+                            <div className="relative">
+                                <DollarSign size={16} className="absolute left-3 top-3.5 text-gray-500" />
+                                <input
+                                    type="number"
+                                    value={formData.amount}
+                                    onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
+                                    className="glass bg-white/5 border-border-custom p-3 pl-10 rounded-xl outline-none focus:border-accent transition-all text-sm w-full"
+                                    placeholder="0"
+                                    required
+                                />
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Payment Date</label>
+                            <div className="relative">
+                                <Calendar size={16} className="absolute left-3 top-3.5 text-gray-500" />
+                                <input
+                                    type="date"
+                                    value={formData.payment_date}
+                                    onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })}
+                                    className="glass bg-white/5 border-border-custom p-3 pl-10 rounded-xl outline-none focus:border-accent transition-all text-sm w-full [color-scheme:dark]"
+                                />
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Payment Method</label>
+                            <select
+                                value={formData.payment_method}
+                                onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm w-full shadow-inner"
+                            >
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="Cash">Cash</option>
+                                <option value="Cheque">Cheque</option>
+                                <option value="Stash Funds">Stash Funds</option>
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Reference / Receipt No.</label>
+                            <input
+                                type="text"
+                                value={formData.reference_no}
+                                onChange={(e) => setFormData({ ...formData, reference_no: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm w-full shadow-inner"
+                                placeholder="e.g. TRX-99021"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2 col-span-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Payment Description</label>
+                            <textarea
+                                value={formData.description}
+                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm w-full shadow-inner h-20 resize-none"
+                                placeholder="Additional notes..."
+                            />
+                        </div>
+                    </div>
+                </ERPFormModal>
             </main>
         </div>
     );

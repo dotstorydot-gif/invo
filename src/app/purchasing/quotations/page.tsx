@@ -1,64 +1,234 @@
 "use client";
 
-import React from "react";
-import { ArrowLeft, Clock } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import {
+    ArrowLeft,
+    ClipboardCheck,
+    Plus,
+    Search,
+    UserCircle,
+    Calendar,
+    Trophy,
+    CheckCircle2,
+    XCircle,
+    BadgeDollarSign,
+    ExternalLink
+} from "lucide-react";
+import { motion } from "framer-motion";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useLanguage } from "@/context/LanguageContext";
 import { useERPData } from "@/hooks/useERPData";
+import ERPFormModal from "@/components/ERPFormModal";
 
-interface PurchaseRecord {
-    id: string;
-    type: string;
-    created_at: string;
-}
+export default function PurchaseQuotationsPage() {
+    const { t } = useLanguage();
+    const searchParams = useSearchParams();
+    const rfqId = searchParams.get('rfq_id');
 
-export default function Page() {
-    const { data, loading } = useERPData<PurchaseRecord>('purchases');
+    const { data: quotations, loading, upsert } = useERPData<any>('purchase_quotations');
+    const { data: rfqs } = useERPData<any>('rfqs');
+    const { data: suppliers } = useERPData<any>('suppliers');
 
-    const filteredData = data.filter((item) => item.type === 'Quotation');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const [formData, setFormData] = useState({
+        rfq_id: rfqId || '',
+        supplier_id: '',
+        total_amount: 0,
+        quote_date: new Date().toISOString().split('T')[0],
+        valid_until: '',
+        status: 'Pending'
+    });
+
+    useEffect(() => {
+        if (rfqId) setFormData(prev => ({ ...prev, rfq_id: rfqId }));
+    }, [rfqId]);
+
+    const handleApproveQuote = async (quote: any) => {
+        if (!confirm("Approve this quotation? This will reject others for the same RFQ.")) return;
+        try {
+            // 1. Accept this one
+            await upsert({ id: quote.id, status: 'Accepted' });
+
+            // 2. Reject others for same RFQ
+            const others = quotations.filter((q: any) => q.rfq_id === quote.rfq_id && q.id !== quote.id);
+            for (const other of others) {
+                await upsert({ id: other.id, status: 'Rejected' });
+            }
+            alert("Quotation approved successfully!");
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const filteredQuotations = rfqId
+        ? quotations.filter((q: any) => q.rfq_id === rfqId)
+        : quotations;
 
     return (
         <div className="flex min-h-screen bg-background text-foreground">
-            <main className="flex-1 p-8 overflow-y-auto">
+            <main className="flex-1 p-8 overflow-y-auto w-full">
                 <header className="flex justify-between items-center mb-10">
                     <div className="flex items-center gap-4">
-                        <Link href="javascript:history.back()" className="p-2 rounded-xl border border-border-custom hover:border-accent hover:text-accent transition-all">
+                        <Link href="/purchasing/rfq" className="p-2 rounded-xl border border-border-custom hover:border-accent hover:text-accent transition-all">
                             <ArrowLeft size={20} />
                         </Link>
                         <div>
                             <h2 className="text-3xl font-bold gradient-text">Purchase Quotations</h2>
-                            <p className="text-gray-400 text-sm mt-1">Manage all your purchase quotations here.</p>
+                            <p className="text-gray-400 text-sm mt-1">Review and approve final supplier bids.</p>
                         </div>
                     </div>
+
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
+                    >
+                        <Plus size={20} />
+                        <span>Add Quote</span>
+                    </button>
                 </header>
 
-                <div className="glass p-8 flex flex-col items-center justify-center min-h-[400px] border-border-custom text-center">
-                    <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center text-accent mb-6">
-                        <Clock size={40} />
-                    </div>
-                    <h3 className="text-2xl font-bold mb-2">Module Active</h3>
-                    <p className="text-gray-400 max-w-md mb-8">
-                        The Purchase Quotations module is currently running. Full interactive features are rolling out shortly.
-                        Found {filteredData.length} records in the database.
-                    </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredQuotations.map((quote: any) => {
+                        const supplier = suppliers.find((s: any) => s.id === quote.supplier_id);
+                        const rfq = rfqs.find((r: any) => r.id === quote.rfq_id);
 
-                    <div className="w-full max-w-4xl text-left glass bg-white/5 p-4 rounded-xl border border-border-custom">
-                        <h4 className="font-bold text-sm text-gray-400 uppercase tracking-widest mb-4">Latest Records</h4>
-                        {loading ? (
-                            <div className="text-gray-500 italic text-sm text-center py-4">Syncing with database...</div>
-                        ) : filteredData.length > 0 ? (
-                            <div className="space-y-2">
-                                {filteredData.slice(0, 5).map((item, i) => (
-                                    <div key={i} className="p-3 bg-white/5 rounded-lg text-sm border border-border-custom flex justify-between">
-                                        <span className="font-mono text-accent">{item.id?.substring(0, 8) || `ID-${1000 + i}`}</span>
-                                        <span className="text-gray-400">{item.created_at ? new Date(item.created_at).toLocaleDateString() : 'New'}</span>
+                        return (
+                            <motion.div
+                                key={quote.id}
+                                layout
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className={`glass p-6 border-border-custom relative overflow-hidden flex flex-col h-full ${quote.status === 'Accepted' ? 'border-accent/50 ring-1 ring-accent/20 bg-accent/5' : ''}`}
+                            >
+                                {quote.status === 'Accepted' && (
+                                    <div className="absolute top-0 right-0 p-2 bg-accent text-white rounded-bl-xl flex items-center gap-1 shadow-lg">
+                                        <Trophy size={14} />
+                                        <span className="text-[10px] font-bold uppercase tracking-widest">Winning Bid</span>
                                     </div>
-                                ))}
+                                )}
+
+                                <div className="mb-6">
+                                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{rfq?.title || 'General Quote'}</div>
+                                    <h3 className="text-xl font-bold text-white mb-2">{supplier?.name || 'Unknown Supplier'}</h3>
+                                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                                        <Calendar size={12} className="text-accent" />
+                                        Date: {new Date(quote.quote_date).toLocaleDateString()}
+                                    </div>
+                                </div>
+
+                                <div className="flex-1 flex flex-col justify-end">
+                                    <div className="p-4 rounded-xl bg-white/5 border border-white/5 mb-6">
+                                        <div className="text-[10px] font-bold text-gray-500 uppercase mb-1">Total Bid Amount</div>
+                                        <div className="text-2xl font-bold text-accent">{Number(quote.total_amount).toLocaleString()} <span className="text-sm">{quote.currency}</span></div>
+                                    </div>
+
+                                    {quote.status === 'Pending' && (
+                                        <div className="flex gap-2 w-full">
+                                            <button
+                                                onClick={() => handleApproveQuote(quote)}
+                                                className="flex-1 py-2 rounded-lg bg-accent text-white text-xs font-bold hover:bg-accent-hover transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <CheckCircle2 size={14} /> Approve
+                                            </button>
+                                            <button className="flex-1 py-2 rounded-lg bg-white/5 text-gray-400 text-xs font-bold border border-white/5 hover:bg-white/10 transition-all flex items-center justify-center gap-2">
+                                                <XCircle size={14} /> Reject
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {quote.status !== 'Pending' && (
+                                        <div className={`w-full py-2 rounded-lg text-center text-xs font-bold uppercase tracking-widest ${quote.status === 'Accepted' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+                                            {quote.status}
+                                        </div>
+                                    )}
+                                </div>
+                            </motion.div>
+                        );
+                    })}
+
+                    {filteredQuotations.length === 0 && !loading && (
+                        <div className="col-span-full glass p-20 text-center border-border-custom bg-white/2">
+                            <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center text-accent mx-auto mb-6">
+                                <ClipboardCheck size={32} />
                             </div>
-                        ) : (
-                            <div className="text-gray-500 italic text-sm text-center py-4">No records found for this module yet.</div>
-                        )}
-                    </div>
+                            <h3 className="text-xl font-bold mb-2">No quotations found</h3>
+                            <p className="text-gray-400 max-w-sm mx-auto mb-8">Enter supplier quotes for your RFQs to start the comparison process.</p>
+                        </div>
+                    )}
                 </div>
+
+                <ERPFormModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    title="Enter Supplier Quotation"
+                    onSubmit={async () => {
+                        setIsSubmitting(true);
+                        await upsert(formData);
+                        setIsModalOpen(false);
+                        setIsSubmitting(false);
+                    }}
+                    loading={isSubmitting}
+                >
+                    <div className="grid grid-cols-1 gap-6">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase">Linked RFQ</label>
+                                <select
+                                    value={formData.rfq_id}
+                                    onChange={(e) => setFormData({ ...formData, rfq_id: e.target.value })}
+                                    className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                                >
+                                    <option value="">Independent Quote</option>
+                                    {rfqs.map((r: any) => (
+                                        <option key={r.id} value={r.id}>{r.title}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase">Select Supplier</label>
+                                <select
+                                    value={formData.supplier_id}
+                                    onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
+                                    className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                                    required
+                                >
+                                    <option value="">Select supplier...</option>
+                                    {suppliers.map((s: any) => (
+                                        <option key={s.id} value={s.id}>{s.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase">Total Quote Amount</label>
+                                <div className="relative">
+                                    <BadgeDollarSign size={16} className="absolute left-3 top-3.5 text-gray-500" />
+                                    <input
+                                        type="number"
+                                        value={formData.total_amount}
+                                        onChange={(e) => setFormData({ ...formData, total_amount: Number(e.target.value) })}
+                                        className="glass bg-white/5 border-border-custom p-3 pl-10 rounded-xl outline-none focus:border-accent transition-all text-sm w-full font-bold"
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase">Quote Date</label>
+                                <input
+                                    type="date"
+                                    value={formData.quote_date}
+                                    onChange={(e) => setFormData({ ...formData, quote_date: e.target.value })}
+                                    className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm [color-scheme:dark]"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </ERPFormModal>
             </main>
         </div>
     );

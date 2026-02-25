@@ -35,12 +35,15 @@ interface PurchaseOrder {
     request_type: 'Inventory' | 'Office Supplies' | 'Items';
     quotation_style: 'Standard' | 'Urgent' | 'Bulk';
     attachment_url: string;
+    quotation_id?: string;
     items: any[];
 }
 
 export default function PurchaseOrdersPage() {
     const { t } = useLanguage();
     const { data: orders, loading, upsert, remove } = useERPData<PurchaseOrder>('purchase_orders');
+    const { data: quotations } = useERPData<any>('purchase_quotations');
+    const { data: suppliers } = useERPData<any>('suppliers');
     const { upsert: upsertExpense } = useERPData<any>('expenses');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -58,6 +61,7 @@ export default function PurchaseOrdersPage() {
         request_type: 'Items' as 'Inventory' | 'Office Supplies' | 'Items',
         quotation_style: 'Standard' as 'Standard' | 'Urgent' | 'Bulk',
         attachment_url: '',
+        quotation_id: '',
         items: [] as any[]
     });
 
@@ -75,6 +79,7 @@ export default function PurchaseOrdersPage() {
                 request_type: order.request_type || 'Items',
                 quotation_style: order.quotation_style || 'Standard',
                 attachment_url: order.attachment_url || '',
+                quotation_id: order.quotation_id || '',
                 items: order.items || []
             });
         } else {
@@ -90,6 +95,7 @@ export default function PurchaseOrdersPage() {
                 request_type: 'Items',
                 quotation_style: 'Standard',
                 attachment_url: '',
+                quotation_id: '',
                 items: []
             });
         }
@@ -111,6 +117,7 @@ export default function PurchaseOrdersPage() {
                 request_type: formData.request_type,
                 quotation_style: formData.quotation_style,
                 attachment_url: formData.attachment_url,
+                quotation_id: formData.quotation_id || undefined,
                 items: formData.items
             });
 
@@ -248,6 +255,7 @@ export default function PurchaseOrdersPage() {
                                             <td className="p-4">
                                                 <div className="font-bold text-white text-sm font-mono flex items-center gap-2">
                                                     {order.order_number}
+                                                    {order.quotation_id && <CheckCircle size={12} className="text-emerald-400" />}
                                                     {order.attachment_url && <Paperclip size={14} className="text-accent" />}
                                                 </div>
                                             </td>
@@ -305,6 +313,30 @@ export default function PurchaseOrdersPage() {
                                 placeholder="Order Reference"
                                 required
                             />
+                            <div className="flex flex-col gap-2 mt-2">
+                                <label className="text-[10px] font-bold text-gray-500 uppercase">Link Approved Quotation</label>
+                                <select
+                                    value={formData.quotation_id}
+                                    onChange={(e) => {
+                                        const qId = e.target.value;
+                                        const q = quotations.find((quote: any) => quote.id === qId);
+                                        setFormData({
+                                            ...formData,
+                                            quotation_id: qId,
+                                            supplier_id: q?.supplier_id || formData.supplier_id,
+                                            total_amount: q?.total_amount || formData.total_amount
+                                        });
+                                    }}
+                                    className="glass bg-white/5 border-border-custom p-2 rounded-lg outline-none focus:border-accent transition-all text-xs"
+                                >
+                                    <option value="">Independent Order</option>
+                                    {quotations.filter((q: any) => q.status === 'Accepted').map((q: any) => (
+                                        <option key={q.id} value={q.id}>
+                                            {suppliers.find((s: any) => s.id === q.supplier_id)?.name || 'Unknown'} - {q.total_amount} EGP
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                             <div className="flex gap-2 mt-2">
                                 <input
                                     type="date"

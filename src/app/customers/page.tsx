@@ -73,9 +73,9 @@ export default function CustomersPage() {
             setIsModalOpen(false);
             setEditingId(null);
             setFormData({ name: '', email: '', phone: '', address: '', country: '', selected_projects: [] });
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error adding customer:", error);
-            alert("Failed to add customer.");
+            alert("Failed to add customer: " + (error.message || "Unknown error"));
         } finally {
             setIsSubmitting(false);
         }

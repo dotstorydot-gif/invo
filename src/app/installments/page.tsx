@@ -43,8 +43,8 @@ export default function InstallmentsPage() {
     const { t } = useLanguage();
     const { data: plans, loading: plansLoading, upsert: upsertPlan } = useERPData<PaymentPlan>('payment_plans');
     const { data: records, loading: recordsLoading, upsert: upsertRecord } = useERPData<InstallmentRecord>('installments');
-    const { data: customers } = useERPData<any[]>('customers');
-    const { data: units } = useERPData<any[]>('units');
+    const { data: customers } = useERPData<any>('customers');
+    const { data: units } = useERPData<any>('units');
     const { upsert: upsertInvoice } = useERPData<any>('sales_invoices');
 
     const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);

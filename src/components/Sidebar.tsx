@@ -5,7 +5,7 @@ import {
     Users2, CircleDollarSign, Building2, BarChart3, LayoutDashboard,
     Settings, Package, CreditCard, Wallet, Activity, Truck, ShoppingCart,
     Banknote, Users, BadgePercent, ChevronDown, ChevronRight, FileText,
-    ClipboardList, Receipt, ArrowRightLeft, ShieldAlert
+    ClipboardList, Receipt, ArrowRightLeft, ShieldAlert, Handshake
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -141,6 +141,7 @@ export default function Sidebar() {
                             { label: "Client Quotations", href: "/quotations" },
                         ]} />
                         <SidebarItem href="/customers" icon={Users} label={isMarketingModule ? "Clients" : "Customers"} active={pathname === '/customers'} />
+                        <SidebarItem href="/loans" icon={Handshake} label="Loans Dashboard" active={pathname === '/loans'} />
 
                         <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2 pl-4">Purchasing & Logistics</div>
                         <SidebarItem isLocked={isSilver} icon={ShoppingCart} label="Purchasing Cycle" subItems={[
@@ -163,12 +164,12 @@ export default function Sidebar() {
                             <SidebarItem isLocked={isSilver} href="/inventory" icon={Package} label={t('inventory')} active={pathname === '/inventory'} />
                         )}
 
-                        <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2 pl-4">Financials</div>
+                        <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2 pl-4">Financials & Reports</div>
                         <SidebarItem href="/expenses" icon={Activity} label={t('expenses')} active={pathname === '/expenses'} />
+                        <SidebarItem href="/stash" icon={Wallet} label={t('stash')} active={pathname === '/stash'} />
                         <SidebarItem href="/installments" icon={CreditCard} label={t('installments')} active={pathname === '/installments'} />
                         <SidebarItem href="/cheques" icon={Wallet} label={t('cheques')} active={pathname === '/cheques'} />
-                        <SidebarItem href="/stash" icon={Wallet} label={t('stash')} active={pathname === '/stash'} />
-                        <SidebarItem href="/forecasting" icon={BarChart3} label="Revenue Forecast" active={pathname === '/forecasting'} />
+                        <SidebarItem href="/forecasting" icon={BarChart3} label="Cashflow Forecast" active={pathname === '/forecasting'} />
                         <SidebarItem isLocked={isSilver} href="/reports" icon={BarChart3} label={t('reports')} active={pathname === '/reports'} />
 
                         <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2 pl-4">Human Resources</div>

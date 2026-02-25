@@ -12,7 +12,8 @@ import {
   Target,
   Crown,
   Play,
-  TrendingUp
+  TrendingUp,
+  Calendar
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/context/LanguageContext";
@@ -46,6 +47,8 @@ export default function Dashboard() {
   const { t, toggleLanguage, language } = useLanguage();
   const { session } = useAuth();
   const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [dateRange, setDateRange] = useState('Last 6 Months');
+
   const { data: expenses = [] } = useERPData<{ amount: number, category: string, date: string }>('expenses');
   const { data: units = [] } = useERPData<{ id: string, status: string }>('units');
   const { data: customers = [] } = useERPData<{ id: string }>('customers');
@@ -57,10 +60,24 @@ export default function Dashboard() {
 
   const isMarketing = session?.moduleType === 'Service & Marketing';
 
+  const filterByDate = (date: string) => {
+    if (!date) return true;
+    const d = new Date(date);
+    const now = new Date();
+    if (dateRange === 'Last 30 Days') return d >= new Date(now.setDate(now.getDate() - 30));
+    if (dateRange === 'Last 3 Months') return d >= new Date(now.setMonth(now.getMonth() - 3));
+    if (dateRange === 'This Year') return d.getFullYear() === now.getFullYear();
+    return true; // Last 6 Months (default) or other
+  };
+
+  const filteredSales = salesInvoices.filter(inv => filterByDate(inv.created_at));
+  const filteredStashIn = stashTransactions.filter(tx => tx.type === 'In' && filterByDate(tx.created_at));
+  const filteredExpenses = expenses.filter(exp => filterByDate(exp.date));
+
   // Aggregations
-  const totalRevenue = salesInvoices.reduce((sum: number, inv) => sum + (Number(inv.amount) || 0), 0) +
-    stashTransactions.filter(tx => tx.type === 'In').reduce((sum: number, tx) => sum + (Number(tx.amount) || 0), 0);
-  const totalExpenses = (expenses || []).reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
+  const totalRevenue = filteredSales.reduce((sum: number, inv) => sum + (Number(inv.amount) || 0), 0) +
+    filteredStashIn.reduce((sum: number, tx) => sum + (Number(tx.amount) || 0), 0);
+  const totalExpensesValue = filteredExpenses.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
   const totalUnits = (units || []).length;
   const totalCustomers = (customers || []).length;
   const totalActiveLoans = (loans || []).filter(l => l.status === 'Active').reduce((sum, l) => sum + ((Number(l.principal_amount) || 0) - (Number(l.amount_paid) || 0)), 0);
@@ -111,6 +128,19 @@ export default function Dashboard() {
         </div>
 
         <div className="flex items-center gap-4">
+          <div className="glass flex items-center px-4 py-2 gap-2 border-border-custom bg-white/5 text-xs font-bold text-accent">
+            <Calendar size={16} />
+            <select
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+              className="bg-transparent border-none outline-none cursor-pointer"
+            >
+              <option value="Last 30 Days">Last 30 Days</option>
+              <option value="Last 3 Months">Last 3 Months</option>
+              <option value="Last 6 Months">Last 6 Months</option>
+              <option value="This Year">This Year</option>
+            </select>
+          </div>
           <button
             onClick={toggleLanguage}
             className="px-4 py-2 rounded-xl border border-border-custom hover:border-accent hover:text-accent transition-all text-xs font-bold uppercase tracking-widest bg-white/5"
@@ -154,26 +184,56 @@ export default function Dashboard() {
         <div className="lg:col-span-2 glass p-8 flex flex-col min-h-[400px]">
           <div className="flex justify-between items-start mb-6">
             <h3 className="text-xl font-bold">{t('revenue_overview')}</h3>
-            <select className="bg-background border border-border-custom rounded-lg px-3 py-1 text-sm outline-none">
-              <option>Last 6 Months</option>
+            <select
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+              className="bg-background border border-border-custom rounded-lg px-3 py-1 text-sm outline-none cursor-pointer"
+            >
+              <option value="Last 30 Days">Last 30 Days</option>
+              <option value="Last 3 Months">Last 3 Months</option>
+              <option value="Last 6 Months">Last 6 Months</option>
+              <option value="This Year">This Year</option>
             </select>
           </div>
           <div className="flex-1 flex items-end gap-3 px-4">
-            {[40, 65, 45, 90, 75, 100].map((height, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                <motion.div
-                  initial={{ height: 0 }}
-                  animate={{ height: `${height}%` }}
-                  transition={{ delay: i * 0.1, duration: 1 }}
-                  className="w-full rounded-t-lg bg-gradient-to-t from-accent/20 to-accent relative group"
-                >
-                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 glass px-2 py-1 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
-                    ${height * 10}k
+            {(() => {
+              // Simple grouping by month for the filtered revenue
+              const last6Months = Array.from({ length: 6 }, (_, i) => {
+                const d = new Date();
+                d.setMonth(d.getMonth() - i);
+                return d.toLocaleString('default', { month: 'short' });
+              }).reverse();
+
+              return last6Months.map((month, i) => {
+                const monthRevenue = filteredSales.filter(inv => {
+                  const d = new Date(inv.created_at);
+                  return d.toLocaleString('default', { month: 'short' }) === month;
+                }).reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0);
+
+                const maxHeight = Math.max(...last6Months.map(m =>
+                  filteredSales.filter(inv => new Date(inv.created_at).toLocaleString('default', { month: 'short' }) === m)
+                    .reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0)
+                ), 1);
+
+                const height = (monthRevenue / maxHeight) * 100;
+
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-2">
+                    <motion.div
+                      initial={{ height: 0 }}
+                      animate={{ height: `${Math.max(height, 5)}%` }}
+                      transition={{ delay: i * 0.1, duration: 1 }}
+                      className="w-full rounded-t-lg bg-gradient-to-t from-accent/20 to-accent relative group"
+                    >
+                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 glass px-2 py-1 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20">
+                        {monthRevenue.toLocaleString()} EGP
+                      </div>
+                    </motion.div>
+                    <span className="text-[10px] text-gray-500 uppercase font-bold">{month}</span>
                   </div>
-                </motion.div>
-                <span className="text-[10px] text-gray-500 uppercase font-bold">{['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'][i]}</span>
-              </div>
-            ))}
+                );
+              });
+            })()}
           </div>
         </div>
 

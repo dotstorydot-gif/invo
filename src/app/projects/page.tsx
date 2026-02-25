@@ -49,6 +49,7 @@ export default function ProjectsPage() {
     const { data: projects, upsert: upsertProject } = useERPData<Project>('projects');
     const { data: units } = useERPData<Unit>('units');
     const { data: services } = useERPData<any>('services');
+    const { data: staff = [] } = useERPData<{ id: string, full_name: string }>('staff');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -294,13 +295,26 @@ export default function ProjectsPage() {
                         </div>
                         <div className="flex flex-col gap-2">
                             <label className="text-xs font-bold text-gray-500 uppercase">{isMarketing ? "Account Manager" : "Location"}</label>
-                            <input
-                                type="text"
-                                value={formData.location}
-                                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                                placeholder={isMarketing ? "e.g. John Doe" : "e.g. New Cairo"}
-                            />
+                            {isMarketing ? (
+                                <select
+                                    value={formData.location}
+                                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                    className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                                >
+                                    <option value="">Select Account Manager</option>
+                                    {staff.map((s) => (
+                                        <option key={s.id} value={s.full_name}>{s.full_name}</option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <input
+                                    type="text"
+                                    value={formData.location}
+                                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                    className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                                    placeholder="e.g. New Cairo"
+                                />
+                            )}
                         </div>
                         <div className="grid grid-cols-2 gap-6">
                             <div className="flex flex-col gap-2">

@@ -225,7 +225,6 @@ const translations: Translations = {
         prepared_by: "Prepared By",
         approved_by: "Approved By",
         days: "Days",
-        item_name: "Item Name",
         staff_label: "Staff",
         save_failed: "Failed to save data.",
         delete_confirm: "Are you sure you want to delete this?",

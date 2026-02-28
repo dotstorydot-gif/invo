@@ -5,6 +5,7 @@ import '../features/dashboard/dashboard_screen.dart';
 import '../features/inventory/inventory_screen.dart';
 import '../features/staff/staff_screen.dart';
 import '../features/suppliers/suppliers_screen.dart';
+import '../features/financials/financials_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -96,7 +97,11 @@ class AppDrawer extends StatelessWidget {
                   context,
                   icon: LucideIcons.banknote,
                   label: 'Financials',
-                  onTap: () {},
+                  isSelected: currentRoute == '/financials',
+                  onTap: () => Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const FinancialsScreen(), settings: const RouteSettings(name: '/financials')),
+                  ),
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 16),

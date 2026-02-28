@@ -107,7 +107,7 @@ export default function Sidebar() {
                             plan === 'gold' ? 'bg-yellow-500/20 text-yellow-500' :
                                 'bg-gray-500/20 text-gray-400'
                             }`}>
-                            {isEmployee ? 'Staff Member' : `${session?.subscriptionPlan || 'Platinum'} Plan`}
+                            {isEmployee ? t('staff_member') : `${session?.subscriptionPlan || t('plan_platinum')} ${t('plan_label')}`}
                         </span>
                     </div>
                 </div>
@@ -117,70 +117,70 @@ export default function Sidebar() {
                 {isEmployee ? (
                     <>
                         <SidebarItem href="/" icon={LayoutDashboard} label={t('dashboard')} active={pathname === '/'} />
-                        <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2 pl-4">Staff Modules</div>
-                        <SidebarItem href="/tasks" icon={ClipboardList} label="Task Board" active={pathname === '/tasks'} />
+                        <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2 pl-4">{t('staff_modules')}</div>
+                        <SidebarItem href="/tasks" icon={ClipboardList} label={t('task_board')} active={pathname === '/tasks'} />
                     </>
                 ) : (
                     <>
                         <SidebarItem href="/" icon={LayoutDashboard} label={t('dashboard')} active={pathname === '/'} />
 
-                        <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2 pl-4">Core Modules</div>
+                        <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2 pl-4">{t('core_modules')}</div>
                         <SidebarItem href="/projects" icon={Building2} label={t('projects')} active={pathname === '/projects'} />
 
                         {isMarketingModule ? (
                             <>
-                                <SidebarItem href="/services" icon={Activity} label="Services" active={pathname === '/services'} />
-                                <SidebarItem href="/tasks" icon={ClipboardList} label="Task Board" active={pathname === '/tasks'} />
+                                <SidebarItem href="/services" icon={Activity} label={t('services_module')} active={pathname === '/services'} />
+                                <SidebarItem href="/tasks" icon={ClipboardList} label={t('task_board')} active={pathname === '/tasks'} />
                             </>
                         ) : (
                             <SidebarItem href="/units" icon={Building2} label={t('rentals')} active={pathname === '/units'} />
                         )}
 
                         <SidebarItem isLocked={isSilver} icon={BadgePercent} label={t('sales')} subItems={[
-                            { label: "Sales Invoices", href: "/invoices" },
-                            { label: "Client Quotations", href: "/quotations" },
+                            { label: t("sales_invoices"), href: "/invoices" },
+                            { label: t("client_quotations"), href: "/quotations" },
                         ]} />
-                        <SidebarItem href="/customers" icon={Users} label={isMarketingModule ? "Clients" : "Customers"} active={pathname === '/customers'} />
-                        <SidebarItem href="/loans" icon={Handshake} label="Loans Dashboard" active={pathname === '/loans'} />
+                        <SidebarItem href="/customers" icon={Users} label={isMarketingModule ? t("clients") : t("customers")} active={pathname === '/customers'} />
+                        <SidebarItem href="/loans" icon={Handshake} label={t("loans_dashboard")} active={pathname === '/loans'} />
 
-                        <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2 pl-4">Purchasing & Logistics</div>
-                        <SidebarItem isLocked={isSilver} icon={ShoppingCart} label="Purchasing Cycle" subItems={[
-                            { label: "Purchase Requests", href: "/purchasing/requests" },
-                            { label: "Request for Quotations", href: "/purchasing/rfq" },
-                            { label: "Purchase Quotations", href: "/purchasing/quotations" },
-                            { label: "Purchase Orders", href: "/purchasing/orders" },
-                            { label: "Purchase Invoices", href: "/purchasing/invoices" },
-                            { label: "Purchase Returns", href: "/purchasing/returns" },
+                        <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2 pl-4">{t("purchasing_logistics")}</div>
+                        <SidebarItem isLocked={isSilver} icon={ShoppingCart} label={t("purchasing_cycle")} subItems={[
+                            { label: t("purchase_requests"), href: "/purchasing/requests" },
+                            { label: t("rfqs"), href: "/purchasing/rfq" },
+                            { label: t("purchase_quotations"), href: "/purchasing/quotations" },
+                            { label: t("purchase_orders"), href: "/purchasing/orders" },
+                            { label: t("purchase_invoices"), href: "/purchasing/invoices" },
+                            { label: t("purchase_returns"), href: "/purchasing/returns" },
                         ]} />
-                        <SidebarItem isLocked={isSilver} icon={Truck} label="Suppliers" subItems={[
-                            { label: "Supplier Directory & Logistics", href: "/suppliers/directory" },
-                            { label: "Supplier Payments", href: "/suppliers/payments" },
-                            { label: "Debit Notes", href: "/suppliers/debit-notes" },
+                        <SidebarItem isLocked={isSilver} icon={Truck} label={t("suppliers")} subItems={[
+                            { label: t("supplier_management"), href: "/suppliers/directory" },
+                            { label: t("supplier_payments"), href: "/suppliers/payments" },
+                            { label: t("debit_notes"), href: "/suppliers/debit-notes" },
                         ]} />
 
                         {isMarketingModule ? (
-                            <SidebarItem isLocked={isSilver} href="/assets" icon={Package} label="Assets" active={pathname === '/assets'} />
+                            <SidebarItem isLocked={isSilver} href="/assets" icon={Package} label={t("assets")} active={pathname === '/assets'} />
                         ) : (
                             <SidebarItem isLocked={isSilver} href="/inventory" icon={Package} label={t('inventory')} active={pathname === '/inventory'} />
                         )}
 
-                        <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2 pl-4">Financials & Reports</div>
+                        <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2 pl-4">{t("financials_reports")}</div>
                         <SidebarItem href="/expenses" icon={Activity} label={t('expenses')} active={pathname === '/expenses'} />
                         <SidebarItem href="/stash" icon={Wallet} label={t('stash')} active={pathname === '/stash'} />
                         <SidebarItem href="/installments" icon={CreditCard} label={t('installments')} active={pathname === '/installments'} />
                         <SidebarItem href="/cheques" icon={Wallet} label={t('cheques')} active={pathname === '/cheques'} />
-                        <SidebarItem href="/forecasting" icon={BarChart3} label="Cashflow Forecast" active={pathname === '/forecasting'} />
+                        <SidebarItem href="/forecasting" icon={BarChart3} label={t("cashflow_forecast")} active={pathname === '/forecasting'} />
                         <SidebarItem isLocked={isSilver} href="/reports" icon={BarChart3} label={t('reports')} active={pathname === '/reports'} />
 
-                        <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2 pl-4">Human Resources</div>
-                        <SidebarItem href="/staff" icon={Users2} label="Employees Directory" active={pathname === '/staff'} />
-                        <SidebarItem isLocked={isSilver || isGold} icon={Banknote} label="Payroll engine" subItems={[
-                            { label: "Contracts", href: "/payroll/contracts" },
-                            { label: "Salary Register", href: "/payroll/register" },
-                            { label: "Salary Slips", href: "/payroll/slips" },
-                            { label: "Salary Advances", href: "/payroll/advances" },
-                            { label: "Salary Items", href: "/payroll/items" },
-                            { label: "Salary Templates", href: "/payroll/templates" },
+                        <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mt-4 mb-2 pl-4">{t("human_resources")}</div>
+                        <SidebarItem href="/staff" icon={Users2} label={t("employees_directory")} active={pathname === '/staff'} />
+                        <SidebarItem isLocked={isSilver || isGold} icon={Banknote} label={t("payroll_engine")} subItems={[
+                            { label: t("contracts"), href: "/payroll/contracts" },
+                            { label: t("salary_register"), href: "/payroll/register" },
+                            { label: t("salary_slips"), href: "/payroll/slips" },
+                            { label: t("salary_advances"), href: "/payroll/advances" },
+                            { label: t("salary_items"), href: "/payroll/items" },
+                            { label: t("salary_templates"), href: "/payroll/templates" },
                         ]} />
                     </>
                 )}

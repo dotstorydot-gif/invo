@@ -5,18 +5,13 @@ import {
     Users2,
     Plus,
     Search,
-    Clock,
     Calendar,
     ArrowLeft,
-    Briefcase,
     UserCircle,
-    FileText,
     AlertTriangle,
     Umbrella,
-    CreditCard,
-    User
+    CreditCard
 } from "lucide-react";
-import { motion } from "framer-motion";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { useERPData } from "@/hooks/useERPData";
@@ -36,15 +31,18 @@ interface Employee {
     vacations: number;
     project_id?: string;
     hire_date?: string;
+    avatar_url?: string;
+    email?: string;
+    status?: string;
 }
 
 export default function StaffPage() {
     const { t } = useLanguage();
-    const { data: employees, loading, upsert, refresh: refreshStaff } = useERPData<any>('staff');
-    const { data: projects } = useERPData<any>('projects');
-    const { upsert: upsertExpense } = useERPData<any>('expenses');
-    const { upsert: upsertPenalty } = useERPData<any>('staff_penalties');
-    const { upsert: upsertVacation } = useERPData<any>('staff_vacations');
+    const { data: employees, upsert } = useERPData<Employee>('staff');
+    const { data: projects } = useERPData<{ id: string; name: string }>('projects');
+    const { upsert: upsertExpense } = useERPData<{ id?: string; organization_id?: string; date: string; amount: number; category: string; description: string; status: string }>('expenses');
+    const { upsert: upsertPenalty } = useERPData<{ id?: string; organization_id?: string; staff_id: string; amount: number; reason: string; date: string }>('staff_penalties');
+    const { upsert: upsertVacation } = useERPData<{ id?: string; organization_id?: string; staff_id: string; start_date: string; end_date: string; total_days: number; reason: string }>('staff_vacations');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,7 +51,7 @@ export default function StaffPage() {
     const [isPayModalOpen, setIsPayModalOpen] = useState(false);
     const [isPenaltyModalOpen, setIsPenaltyModalOpen] = useState(false);
     const [isVacationModalOpen, setIsVacationModalOpen] = useState(false);
-    const [selectedEmp, setSelectedEmp] = useState<any>(null);
+    const [selectedEmp, setSelectedEmp] = useState<Employee | null>(null);
     const [payDays, setPayDays] = useState(1);
 
     const [penaltyFormData, setPenaltyFormData] = useState({
@@ -103,9 +101,11 @@ export default function StaffPage() {
                 daily_rate: Number(formData.daily_rate),
                 email: formData.email,
                 status: formData.status,
-                project_id: formData.project_id || null,
+                project_id: formData.project_id || undefined,
                 hire_date: formData.hire_date,
-                avatar_url: formData.avatar_url
+                avatar_url: formData.avatar_url,
+                email: formData.email,
+                status: formData.status
             });
 
             if (result) {
@@ -125,15 +125,16 @@ export default function StaffPage() {
                 });
                 alert("Employee saved successfully.");
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Error adding staff:", error);
-            alert("Failed to add staff member: " + (error.message || "Unknown error"));
+            const message = error instanceof Error ? error.message : "Unknown error";
+            alert("Failed to add staff member: " + message);
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const handleEditStaff = (emp: any) => {
+    const handleEditStaff = (emp: Employee) => {
         setEditingId(emp.id);
         setFormData({
             full_name: emp.full_name || emp.name || '',
@@ -257,7 +258,7 @@ export default function StaffPage() {
         }
     };
 
-    const calculateNet = (emp: any) => (emp.base_salary || emp.baseSalary || 0) - (emp.penalties || 0);
+    const calculateNet = (emp: Employee) => (emp.base_salary || emp.baseSalary || 0) - (emp.penalties || 0);
 
     return (
         <div className="flex min-h-screen bg-background text-foreground">
@@ -277,8 +278,8 @@ export default function StaffPage() {
                         onClick={() => {
                             setEditingId(null);
                             setFormData({
-                                full_name: '', role: 'Consultant', employment_type: 'Full Time',
-                                base_salary: 0, daily_rate: 0, email: '', status: 'Active',
+                                full_name: '', role: t('consultant'), employment_type: t('full_time'),
+                                base_salary: 0, daily_rate: 0, email: '', status: t('active'),
                                 project_id: '', hire_date: new Date().toISOString().split('T')[0],
                                 avatar_url: ''
                             });
@@ -296,7 +297,7 @@ export default function StaffPage() {
                         <div className="p-6 border-b border-border-custom flex justify-between items-center bg-white/5">
                             <div className="flex items-center gap-3">
                                 <Users2 className="text-accent" />
-                                <h3 className="text-xl font-bold">{t('team_members')} & Payroll</h3>
+                                <h3 className="text-xl font-bold">{t('team_members_payroll')}</h3>
                             </div>
                             <div className="glass flex items-center px-4 py-2 gap-3 w-64 border-border-custom bg-background">
                                 <Search size={16} className="text-gray-400" />
@@ -308,12 +309,12 @@ export default function StaffPage() {
                             <table className="w-full text-left">
                                 <thead>
                                     <tr className="border-b border-border-custom">
-                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">Employee</th>
+                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('employee')}</th>
                                         <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('salary_base')}</th>
                                         <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('penalties')}</th>
                                         <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('vacations')}</th>
                                         <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('salary_net')}</th>
-                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">Actions</th>
+                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('actions')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -330,29 +331,29 @@ export default function StaffPage() {
                                                 <div>
                                                     <div className="font-bold text-white flex gap-2 items-center">
                                                         {emp.full_name || emp.name}
-                                                        {emp.project_id && projects.find((p: any) => p.id === emp.project_id) && (
+                                                        {emp.project_id && projects.find((p: { id: string, name: string }) => p.id === emp.project_id) && (
                                                             <span className="text-xs bg-accent/20 text-accent px-2 py-0.5 rounded">
-                                                                {projects.find((p: any) => p.id === emp.project_id)?.name}
+                                                                {projects.find((p: { id: string, name: string }) => p.id === emp.project_id)?.name}
                                                             </span>
                                                         )}
                                                     </div>
                                                     <div className="text-[10px] text-gray-500 uppercase tracking-tighter flex items-center gap-2">
                                                         <span>{emp.role}</span>
-                                                        <span className={`px-1.5 py-0.5 rounded ${emp.employment_type === 'Daily' ? 'bg-amber-500/10 text-amber-500' : 'bg-blue-500/10 text-blue-500'}`}>{emp.employment_type || 'Full Time'}</span>
+                                                        <span className={`px-1.5 py-0.5 rounded ${emp.employment_type === 'Daily' ? 'bg-amber-500/10 text-amber-500' : 'bg-blue-500/10 text-blue-500'}`}>{emp.employment_type === 'Daily' ? t('daily') : t('full_time')}</span>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="p-6 text-sm font-medium">
                                                 {emp.employment_type === 'Daily'
-                                                    ? <span className="text-amber-500 font-bold">{(emp.daily_rate || 0).toLocaleString()} EGP <span className="text-[10px] text-gray-500 font-normal">/ day</span></span>
-                                                    : <span>{(emp.base_salary || emp.baseSalary || 0).toLocaleString()} EGP <span className="text-[10px] text-gray-500 font-normal">/ mo</span></span>
+                                                    ? <span className="text-amber-500 font-bold">{(emp.daily_rate || 0).toLocaleString()} EGP <span className="text-[10px] text-gray-500 font-normal">/ {t('day_label')}</span></span>
+                                                    : <span>{(emp.base_salary || emp.baseSalary || 0).toLocaleString()} EGP <span className="text-[10px] text-gray-500 font-normal">/ {t('mo_label')}</span></span>
                                                 }
                                             </td>
                                             <td className="p-6 text-sm text-red-400">-{(emp.penalties || 0).toLocaleString()} EGP</td>
                                             <td className="p-6">
                                                 <div className="flex items-center gap-2 text-xs font-bold bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full w-fit">
                                                     <Umbrella size={12} />
-                                                    {emp.vacations} Days
+                                                    {emp.vacations} {t('days_unit')}
                                                 </div>
                                             </td>
                                             <td className="p-6">
@@ -370,7 +371,8 @@ export default function StaffPage() {
                                                             setPenaltyFormData({ amount: 0, reason: '' });
                                                             setIsPenaltyModalOpen(true);
                                                         }}
-                                                        className="p-2 text-gray-400 hover:text-red-400 transition-all title='Add Penalty'"
+                                                        className="p-2 text-gray-400 hover:text-red-400 transition-all"
+                                                        title={t('add_penalty')}
                                                     >
                                                         <AlertTriangle size={16} />
                                                     </button>
@@ -384,7 +386,8 @@ export default function StaffPage() {
                                                             });
                                                             setIsVacationModalOpen(true);
                                                         }}
-                                                        className="p-2 text-gray-400 hover:text-blue-400 transition-all title='Add Vacation'"
+                                                        className="p-2 text-gray-400 hover:text-blue-400 transition-all"
+                                                        title={t('add_vacation')}
                                                     >
                                                         <Calendar size={16} />
                                                     </button>
@@ -394,7 +397,8 @@ export default function StaffPage() {
                                                             setPayDays(1);
                                                             setIsPayModalOpen(true);
                                                         }}
-                                                        className="p-2 text-gray-400 hover:text-emerald-400 transition-all title='Pay Salary'"
+                                                        className="p-2 text-gray-400 hover:text-emerald-400 transition-all"
+                                                        title={t('pay_salary')}
                                                     >
                                                         <CreditCard size={16} />
                                                     </button>
@@ -420,57 +424,57 @@ export default function StaffPage() {
                         setIsModalOpen(false);
                         setEditingId(null);
                     }}
-                    title={editingId ? "Edit Employee" : t('add_employee')}
+                    title={editingId ? t('edit_employee') : t('add_employee')}
                     onSubmit={handleSaveStaff}
                     loading={isSubmitting}
                 >
                     <div className="grid grid-cols-2 gap-6">
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Full Name</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('full_name')}</label>
                             <input
                                 type="text"
                                 value={formData.full_name}
                                 onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                                placeholder="Employee Name"
+                                placeholder={t('employee_name')}
                             />
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Email</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('email')}</label>
                             <input
                                 type="email"
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                                placeholder="email@company.com"
+                                placeholder={t('email_placeholder')}
                             />
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Role</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('role_label')}</label>
                             <input
                                 type="text"
                                 value={formData.role}
                                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                                placeholder="e.g. Sales Manager"
+                                placeholder={t('role_placeholder')}
                             />
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Employment Type</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('employment_type')}</label>
                             <select
                                 value={formData.employment_type}
                                 onChange={(e) => setFormData({ ...formData, employment_type: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                             >
-                                <option value="Full Time">Full Time</option>
-                                <option value="Part Time">Part Time</option>
-                                <option value="Temporary">Temporary</option>
-                                <option value="Daily">Daily</option>
+                                <option value="Full Time">{t('full_time')}</option>
+                                <option value="Part Time">{t('part_time')}</option>
+                                <option value="Temporary">{t('temporary')}</option>
+                                <option value="Daily">{t('daily')}</option>
                             </select>
                         </div>
                         {formData.employment_type === 'Daily' ? (
                             <div className="flex flex-col gap-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase">Daily Rate (EGP)</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase">{t('daily_rate_label')}</label>
                                 <input
                                     type="number"
                                     value={formData.daily_rate}
@@ -480,7 +484,7 @@ export default function StaffPage() {
                             </div>
                         ) : (
                             <div className="flex flex-col gap-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase">Base Salary (EGP)</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase">{t('salary_base')} (EGP)</label>
                                 <input
                                     type="number"
                                     value={formData.base_salary}
@@ -490,20 +494,37 @@ export default function StaffPage() {
                             </div>
                         )}
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Assigned Project</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('assigned_project')}</label>
                             <select
                                 value={formData.project_id}
                                 onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                             >
-                                <option value="">None / Corporate Staff</option>
-                                {projects.map((p: any) => (
+                                <option value="">{t('none_general')}</option>
+                                {projects.map((p: { id: string, name: string }) => (
                                     <option key={p.id} value={p.id}>{p.name}</option>
                                 ))}
                             </select>
                         </div>
+                        <div className="flex flex-col gap-2 col-span-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('select_avatar')}</label>
+                            <div className="flex flex-wrap gap-3 p-4 glass bg-white/5 border-border-custom rounded-xl">
+                                {avatarOptions.map((opt) => (
+                                    <button
+                                        key={opt.url}
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, avatar_url: opt.url })}
+                                        className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition-all ${formData.avatar_url === opt.url ? 'border-accent scale-110 shadow-lg' : 'border-transparent hover:border-white/20'}`}
+                                        title={opt.label}
+                                    >
+                                        <img src={opt.url} alt={opt.label} className="w-full h-full object-cover" />
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Start Date / Hire Date</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('hire_date_label')}</label>
                             <input
                                 type="date"
                                 value={formData.hire_date}

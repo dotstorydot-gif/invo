@@ -54,7 +54,7 @@ export default function ExpensesPage() {
     const { data: expenses, loading, upsert } = useERPData<ExpenseItem>('expenses');
     const { data: projects } = useERPData<Project>('projects');
     const { data: units } = useERPData<Unit>('units');
-    const { data: services } = useERPData<any>('services');
+    const { data: services } = useERPData<Unit>('services');
     const { data: branches } = useERPData<Branch>('branches');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -236,9 +236,9 @@ export default function ExpensesPage() {
                                                         {projects.find((p) => p.id === expense.project_id)?.name}
                                                     </span>
                                                 )}
-                                                {expense.unit_id && (isMarketing ? services : units).find((item: any) => item.id === expense.unit_id) && (
+                                                {expense.unit_id && (isMarketing ? services : units).find((item: Unit) => item.id === expense.unit_id) && (
                                                     <span className={`ml-2 text-xs font-normal py-0.5 px-2 rounded ${isMarketing ? 'text-purple-400 bg-purple-500/10' : 'text-amber-400 bg-amber-500/10'}`}>
-                                                        {(isMarketing ? services : units).find((item: any) => item.id === expense.unit_id)?.name}
+                                                        {(isMarketing ? services : units).find((item: Unit) => item.id === expense.unit_id)?.name}
                                                     </span>
                                                 )}
                                                 {expense.branch_id && branches.find((b) => b.id === expense.branch_id) && (
@@ -299,18 +299,18 @@ export default function ExpensesPage() {
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm mb-2"
                             >
                                 <option value="">{t('select_category')}</option>
-                                <option value="Rent Invoice">Rent Invoice</option>
-                                <option value="Maintenance Invoice">Maintenance Invoice</option>
-                                <option value="Internet Invoice">Internet Invoice</option>
-                                <option value="Electricity Invoice">Electricity Invoice</option>
-                                <option value="Water Invoice">Water Invoice</option>
-                                <option value="Phone / Mobile Invoice">Phone / Mobile Invoice</option>
-                                <option value="Tax">Tax</option>
-                                <option value="Insurance">Insurance</option>
-                                <option value="Government utilities (الحي)">Government utilities (الحي)</option>
-                                <option value="Asset">Asset Purchase</option>
-                                <option value="Marketing">Marketing</option>
-                                <option value="Office Supplies">Office Supplies</option>
+                                <option value="Rent Invoice">{t('rent_invoice')}</option>
+                                <option value="Maintenance Invoice">{t('maintenance_invoice')}</option>
+                                <option value="Internet Invoice">{t('internet_invoice')}</option>
+                                <option value="Electricity Invoice">{t('electricity_invoice')}</option>
+                                <option value="Water Invoice">{t('water_invoice')}</option>
+                                <option value="Phone / Mobile Invoice">{t('phone_mobile_invoice')}</option>
+                                <option value="Tax">{t('tax')}</option>
+                                <option value="Insurance">{t('insurance')}</option>
+                                <option value="Government utilities (الحي)">{t('government_utilities')}</option>
+                                <option value="Asset">{t('asset')}</option>
+                                <option value="Marketing">{t('marketing')}</option>
+                                <option value="Office Supplies">{t('office_supplies')}</option>
                                 <option value="Transportation">{t('transportation')}</option>
                                 <option value="Parking">{t('parking')}</option>
                                 <option value="Meeting">{t('meeting')}</option>
@@ -325,7 +325,7 @@ export default function ExpensesPage() {
                                     type="text"
                                     value={customCategory}
                                     onChange={(e) => setCustomCategory(e.target.value)}
-                                    placeholder="Enter custom expense category..."
+                                    placeholder={t('custom_expense_placeholder')}
                                     className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                                 />
                             )}
@@ -333,23 +333,17 @@ export default function ExpensesPage() {
 
                         {formData.category === 'Internet Invoice' && (
                             <div className="flex flex-col gap-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase">Internet Provider</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase">{t('internet_provider')}</label>
                                 <select
                                     value={formData.provider}
                                     onChange={(e) => setFormData({ ...formData, provider: e.target.value })}
                                     className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                                 >
-                                    <option value="">Select Provider</option>
-                                    <option value="WE (Telecom Egypt)">WE (Telecom Egypt)</option>
-                                    <option value="Vodafone Egypt">Vodafone Egypt</option>
-                                    <option value="Orange Egypt">Orange Egypt</option>
-                                    <option value="Etisalat Misr">Etisalat Misr</option>
                                     <option value="">{t('select_provider')}</option>
                                     <option value="WE (Telecom Egypt)">{t('we_telecom_egypt')}</option>
                                     <option value="Vodafone Egypt">{t('vodafone_egypt')}</option>
                                     <option value="Orange Egypt">{t('orange_egypt')}</option>
                                     <option value="Etisalat Misr">{t('etisalat_misr')}</option>
-                                    <option value="Nour ADSL">{t('nour_adsl')}</option>
                                 </select>
                             </div>
                         )}
@@ -373,8 +367,8 @@ export default function ExpensesPage() {
                                 onChange={(e) => setFormData({ ...formData, unit_id: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm font-semibold"
                             >
-                                <option value="">{isMarketing ? "General Service Cost" : t('none_service')}</option>
-                                {(isMarketing ? services : units).map((item: any) => (
+                                <option value="">{isMarketing ? t("general_service_cost") : t('none_service')}</option>
+                                {(isMarketing ? services : units).map((item: Unit) => (
                                     <option key={item.id} value={item.id}>{item.name}</option>
                                 ))}
                             </select>
@@ -400,7 +394,7 @@ export default function ExpensesPage() {
                                 onChange={(e) => setFormData({ ...formData, type: e.target.value as 'Fixed' | 'Variable' | 'Asset' | 'General' })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                             >
-                                <option value="General">{t('general')}</option> {/* Changed from Variable */}
+                                <option value="General">{t('general')}</option>
                                 <option value="Variable">{t('variable')}</option>
                                 <option value="Fixed">{t('fixed')}</option>
                                 <option value="Asset">{t('asset')}</option>

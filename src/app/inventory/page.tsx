@@ -9,9 +9,9 @@ import {
     ArrowLeft,
     ArrowUp,
     ArrowDown,
-    History,
     Edit2,
-    Trash2
+    Trash2,
+    History
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -36,7 +36,7 @@ interface InventoryItem {
 export default function InventoryPage() {
     const { t } = useLanguage();
     const { data: items, loading, upsert } = useERPData<InventoryItem>('inventory');
-    const { data: projects } = useERPData<any>('projects');
+    const { data: projects } = useERPData<{ id: string; name: string }>('projects');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -123,7 +123,7 @@ export default function InventoryPage() {
                         className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
                     >
                         <Plus size={20} />
-                        <span>Add Material</span>
+                        <span>{t('add_material')}</span>
                     </button>
                 </header>
 
@@ -133,7 +133,7 @@ export default function InventoryPage() {
                         <div className="p-6 border-b border-border-custom flex justify-between items-center">
                             <h3 className="font-bold text-xl flex items-center gap-2">
                                 <Package className="text-accent" size={24} />
-                                Material Stock
+                                {t('material_stock')}
                             </h3>
                             <div className="flex items-center gap-3">
                                 <div className="glass flex items-center px-4 py-2 gap-3 w-64 border-border-custom bg-background shadow-inner">
@@ -154,12 +154,12 @@ export default function InventoryPage() {
                                         <th className="p-4 text-xs font-bold uppercase text-gray-500">{t('item_code')}</th>
                                         <th className="p-4 text-xs font-bold uppercase text-gray-500">{t('cost_price')}</th>
                                         <th className="p-4 text-xs font-bold uppercase text-gray-500">{t('stock')}</th>
-                                        <th className="p-4 text-xs font-bold uppercase text-gray-500">Actions</th>
+                                        <th className="p-4 text-xs font-bold uppercase text-gray-500">{t('actions')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {loading ? (
-                                        <tr><td colSpan={5} className="p-10 text-center italic text-gray-500">Syncing inventory...</td></tr>
+                                        <tr><td colSpan={5} className="p-10 text-center italic text-gray-500">{t('syncing_inventory')}</td></tr>
                                     ) : (
                                         items.map((item) => (
                                             <motion.tr
@@ -171,9 +171,9 @@ export default function InventoryPage() {
                                                 <td className="p-4">
                                                     <div className="font-bold text-white flex items-center gap-2">
                                                         {item.name}
-                                                        {item.project_id && projects.find((p: any) => p.id === item.project_id) && (
+                                                        {item.project_id && projects.find((p: { id: string; name: string }) => p.id === item.project_id) && (
                                                             <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded">
-                                                                {projects.find((p: any) => p.id === item.project_id)?.name}
+                                                                {projects.find((p: { id: string; name: string }) => p.id === item.project_id)?.name}
                                                             </span>
                                                         )}
                                                     </div>
@@ -221,33 +221,33 @@ export default function InventoryPage() {
                 <ERPFormModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
-                    title="Add Inventory Item"
+                    title={t('add_inventory_item')}
                     onSubmit={handleAddItem}
                     loading={isSubmitting}
                 >
                     <div className="grid grid-cols-2 gap-6">
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Item Name</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('item_name')}</label>
                             <input
                                 type="text"
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                                placeholder="e.g. Cement"
+                                placeholder={t('item_name_placeholder')}
                             />
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Item Code</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('item_code')}</label>
                             <input
                                 type="text"
                                 value={formData.code}
                                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                                placeholder="e.g. MAT-001"
+                                placeholder={t('item_code_placeholder')}
                             />
                         </div>
                         <div className="flex flex-col gap-2 col-span-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Description</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('item_desc')}</label>
                             <textarea
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -255,7 +255,7 @@ export default function InventoryPage() {
                             />
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Cost Price (EGP)</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('amount_egp')}</label>
                             <input
                                 type="number"
                                 value={formData.cost_price}
@@ -264,7 +264,7 @@ export default function InventoryPage() {
                             />
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Quantity</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('quantity')}</label>
                             <input
                                 type="number"
                                 value={formData.quantity}
@@ -273,7 +273,7 @@ export default function InventoryPage() {
                             />
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Stock Threshold</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('stock_threshold')}</label>
                             <input
                                 type="number"
                                 value={formData.stock_threshold}
@@ -282,24 +282,24 @@ export default function InventoryPage() {
                             />
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Supplier</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('supplier')}</label>
                             <input
                                 type="text"
                                 value={formData.supplier}
                                 onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                                placeholder="Supplier name"
+                                placeholder={t('supplier')}
                             />
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Linked Project</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('linked_project_label')}</label>
                             <select
                                 value={formData.project_id}
                                 onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                             >
-                                <option value="">None / General Material</option>
-                                {projects.map((p: any) => (
+                                <option value="">{t('none_general_material')}</option>
+                                {projects.map((p: { id: string; name: string }) => (
                                     <option key={p.id} value={p.id}>{p.name}</option>
                                 ))}
                             </select>

@@ -90,14 +90,14 @@ export default function Dashboard() {
 
   const recentActivity = [
     ...services.slice(0, 2).map((svc: any) => ({
-      label: "Service listed",
+      label: t("service_listed"),
       client: svc.name,
       time: new Date(svc.created_at).toLocaleDateString()
     })),
     ...(staff || []).slice(0, 2).map((s: any) => ({
-      label: "Team Member added",
-      client: s.full_name || s.name || 'New Staff',
-      time: s.created_at ? new Date(s.created_at).toLocaleDateString() : 'Recent'
+      label: t("team_member_added"),
+      client: s.full_name || s.name || t('new_staff'),
+      time: s.created_at ? new Date(s.created_at).toLocaleDateString() : t('recent')
     }))
   ].sort((a: any, b: any) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 4);
 
@@ -114,17 +114,17 @@ export default function Dashboard() {
           <div>
             <h3 className="text-xl font-bold flex items-center gap-2 text-white">
               <span className="p-2 bg-accent/20 rounded-lg text-accent"><Crown size={20} /></span>
-              Interactive Setup Wizard
+              {t('interactive_setup_wizard')}
             </h3>
             <p className="text-sm text-gray-400 mt-2 max-w-xl">
-              New to the system? Launch our interactive step-by-step pipeline to guide you through creating your team, setting up your first project, and configuring your finances.
+              {t('wizard_desc')}
             </p>
           </div>
           <button
             onClick={() => setIsWizardOpen(true)}
             className="whitespace-nowrap flex items-center gap-2 px-6 py-3 bg-accent hover:bg-emerald-400 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all"
           >
-            <Play size={18} fill="currentColor" /> Launch Wizard
+            <Play size={18} fill="currentColor" /> {t('launch_wizard')}
           </button>
         </div>
       </div>
@@ -144,10 +144,10 @@ export default function Dashboard() {
               onChange={(e) => setDateRange(e.target.value)}
               className="bg-transparent border-none outline-none cursor-pointer"
             >
-              <option value="Last 30 Days">Last 30 Days</option>
-              <option value="Last 3 Months">Last 3 Months</option>
-              <option value="Last 6 Months">Last 6 Months</option>
-              <option value="This Year">This Year</option>
+              <option value="Last 30 Days">{t('last_30_days')}</option>
+              <option value="Last 3 Months">{t('last_3_months')}</option>
+              <option value="Last 6 Months">{t('last_6_months')}</option>
+              <option value="This Year">{t('this_year')}</option>
             </select>
           </div>
           <button
@@ -178,15 +178,15 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
         <KPICard title={t('total_revenue')} value={`${(totalRevenue / 1000).toFixed(1)}k EGP`} change="+0%" icon={TrendingUp} color="text-emerald-400" />
         <KPICard
-          title={isMarketing ? "Listed Services" : t('active_units')}
+          title={isMarketing ? t("listed_services") : t('active_units')}
           value={isMarketing ? activeServicesCount.toString() : activeUnits.toString()}
           change="+0%"
           icon={isMarketing ? Briefcase : Building2}
           color="text-accent"
         />
-        <KPICard title="Team Members" value={(staff?.length || 0).toString()} change="+0%" icon={Users2} color="text-emerald-400" />
-        <KPICard title="Customers" value={customerCount.toString()} change="+0%" icon={Briefcase} color="text-blue-400" />
-        <KPICard title="Active Loans Debt" value={`${totalActiveLoans.toLocaleString()} EGP`} change="+0%" icon={Target} color="text-red-400" />
+        <KPICard title={t("team_members_kpi")} value={(staff?.length || 0).toString()} change="+0%" icon={Users2} color="text-emerald-400" />
+        <KPICard title={isMarketing ? t('clients') : t('customers')} value={customerCount.toString()} change="+0%" icon={Briefcase} color="text-blue-400" />
+        <KPICard title={t("active_loans_debt")} value={`${totalActiveLoans.toLocaleString()} EGP`} change="+0%" icon={Target} color="text-red-400" />
       </div>
 
       {/* Charts & Activity Section */}
@@ -199,10 +199,10 @@ export default function Dashboard() {
               onChange={(e) => setDateRange(e.target.value)}
               className="bg-background border border-border-custom rounded-lg px-3 py-1 text-sm outline-none cursor-pointer"
             >
-              <option value="Last 30 Days">Last 30 Days</option>
-              <option value="Last 3 Months">Last 3 Months</option>
-              <option value="Last 6 Months">Last 6 Months</option>
-              <option value="This Year">This Year</option>
+              <option value="Last 30 Days">{t('last_30_days')}</option>
+              <option value="Last 3 Months">{t('last_3_months')}</option>
+              <option value="Last 6 Months">{t('last_6_months')}</option>
+              <option value="This Year">{t('this_year')}</option>
             </select>
           </div>
           <div className="flex-1 flex items-end gap-3 px-4">
@@ -266,7 +266,7 @@ export default function Dashboard() {
               </div>
             ))}
             {recentActivity.length === 0 && (
-              <div className="text-center py-10 text-gray-500 italic">No recent activity detected.</div>
+              <div className="text-center py-10 text-gray-500 italic">{t('no_activity')}</div>
             )}
           </div>
         </div>

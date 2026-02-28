@@ -907,7 +907,6 @@ const translations: Translations = {
         prepared_by: "أعده",
         approved_by: "اعتمد من قبل",
         days: "الأيام",
-        item_name: "اسم البند",
         staff_label: "موظف",
         save_failed: "فشل في حفظ البيانات.",
         delete_confirm: "هل أنت متأكد من حذف هذا؟",

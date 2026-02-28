@@ -5,14 +5,10 @@ import {
     ArrowLeft,
     FileSearch,
     Plus,
-    Search,
-    UserCircle,
     Calendar,
     Users,
     CheckCircle,
-    AlertCircle,
     ChevronRight,
-    Trophy
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -64,7 +60,7 @@ export default function RFQPage() {
             });
         } catch (error) {
             console.error("Error saving RFQ:", error);
-            alert("Failed to save RFQ.");
+            alert(t('save_failed'));
         } finally {
             setIsSubmitting(false);
         }
@@ -79,8 +75,8 @@ export default function RFQPage() {
                             <ArrowLeft size={20} />
                         </Link>
                         <div>
-                            <h2 className="text-3xl font-bold gradient-text">Request for Quotations (RFQ)</h2>
-                            <p className="text-gray-400 text-sm mt-1">Compare prices from multiple suppliers for your purchase requests.</p>
+                            <h2 className="text-3xl font-bold gradient-text">{t('rfqs_title')}</h2>
+                            <p className="text-gray-400 text-sm mt-1">{t('rfq_description_desc')}</p>
                         </div>
                     </div>
 
@@ -89,7 +85,7 @@ export default function RFQPage() {
                         className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
                     >
                         <Plus size={20} />
-                        <span>Create RFQ</span>
+                        <span>{t('new_rfq')}</span>
                     </button>
                 </header>
 
@@ -111,18 +107,18 @@ export default function RFQPage() {
                                         <div className="flex items-center gap-4 mt-2">
                                             <span className="flex items-center gap-1 text-[10px] text-gray-500 uppercase tracking-widest">
                                                 <Calendar size={12} />
-                                                Deadline: {new Date(rfq.deadline).toLocaleDateString()}
+                                                {t('closing_date')}: {new Date(rfq.deadline).toLocaleDateString()}
                                             </span>
                                             <span className="flex items-center gap-1 text-[10px] text-gray-500 uppercase tracking-widest">
                                                 <Users size={12} />
-                                                {rfq.suppliers_invited?.length || 0} Suppliers
+                                                {rfq.suppliers_invited?.length || 0} {t('suppliers_count')}
                                             </span>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${rfq.status === 'Sent' ? 'bg-blue-500/10 text-blue-500' : 'bg-white/10 text-gray-500'}`}>
-                                        {rfq.status}
+                                        {t(rfq.status?.toLowerCase()) || rfq.status}
                                     </div>
                                     <Link
                                         href={`/purchasing/quotations?rfq_id=${rfq.id}`}
@@ -141,7 +137,7 @@ export default function RFQPage() {
                                             <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center text-[8px] font-bold text-accent">
                                                 {supplier?.name?.charAt(0) || 'S'}
                                             </div>
-                                            <span className="text-xs text-gray-400 truncate">{supplier?.name || 'Loading...'}</span>
+                                            <span className="text-xs text-gray-400 truncate">{supplier?.name || t('loading_data')}</span>
                                         </div>
                                     );
                                 })}
@@ -154,8 +150,8 @@ export default function RFQPage() {
                             <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center text-accent mx-auto mb-6">
                                 <FileSearch size={32} />
                             </div>
-                            <h3 className="text-xl font-bold mb-2">No active RFQs</h3>
-                            <p className="text-gray-400 max-w-sm mx-auto mb-8">Create a Request for Quotation to start receiving and comparing supplier bids.</p>
+                            <h3 className="text-xl font-bold mb-2">{t('no_active_rfqs')}</h3>
+                            <p className="text-gray-400 max-w-sm mx-auto mb-8">{t('active_rfqs_desc')}</p>
                         </div>
                     )}
                 </div>
@@ -163,39 +159,39 @@ export default function RFQPage() {
                 <ERPFormModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
-                    title="Create Request for Quotation"
+                    title={t('create_rfq_modal_title')}
                     onSubmit={handleSaveRFQ}
                     loading={isSubmitting}
                 >
                     <div className="grid grid-cols-1 gap-6">
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">RFQ Title / Subject</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('rfq_title_subject')}</label>
                             <input
                                 type="text"
                                 value={formData.title}
                                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                                placeholder="e.g. Bulk Cement Purchase Q2"
+                                placeholder={t('rfq_title_placeholder')}
                                 required
                             />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex flex-col gap-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase">Linked Purchase Request (Optional)</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase">{t('linked_purchase_request')}</label>
                                 <select
                                     value={formData.request_id}
                                     onChange={(e) => setFormData({ ...formData, request_id: e.target.value })}
                                     className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                                 >
-                                    <option value="">Independent RFQ</option>
+                                    <option value="">{t('independent_rfq')}</option>
                                     {requests.map((r: any) => (
                                         <option key={r.id} value={r.id}>{r.title}</option>
                                     ))}
                                 </select>
                             </div>
                             <div className="flex flex-col gap-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase">Deadline for Bids</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase">{t('deadline_for_bids')}</label>
                                 <input
                                     type="date"
                                     value={formData.deadline}
@@ -206,7 +202,7 @@ export default function RFQPage() {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Select Suppliers to Invite</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('select_suppliers_to_invite')}</label>
                             <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                                 {suppliers.map((s: any) => (
                                     <div
@@ -220,7 +216,7 @@ export default function RFQPage() {
                                 ))}
                                 {suppliers.length === 0 && (
                                     <div className="col-span-2 p-4 text-center text-[10px] text-gray-500 italic border border-dashed border-white/10 rounded-xl">
-                                        No suppliers found in directory.
+                                        {t('no_suppliers_in_directory')}
                                     </div>
                                 )}
                             </div>

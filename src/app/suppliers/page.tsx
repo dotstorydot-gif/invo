@@ -6,12 +6,14 @@ import {
     Truck, CreditCard, FileMinus, ChevronRight
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function SuppliersDashboard() {
+    const { t } = useLanguage();
     const tabs = [
-        { name: 'Supplier Directory & Logistics', icon: Truck, href: '/suppliers/directory' },
-        { name: 'Supplier Payments', icon: CreditCard, href: '/suppliers/payments' },
-        { name: 'Debit Notes', icon: FileMinus, href: '/suppliers/debit-notes' },
+        { name: t('supplier_management'), icon: Truck, href: '/suppliers/directory' },
+        { name: t('supplier_payments'), icon: CreditCard, href: '/suppliers/payments' },
+        { name: t('debit_notes'), icon: FileMinus, href: '/suppliers/debit-notes' },
     ];
 
     return (
@@ -20,8 +22,8 @@ export default function SuppliersDashboard() {
 
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Suppliers & Logistics</h1>
-                    <p className="text-gray-400">Manage vendor relationships, payments, and directories.</p>
+                    <h1 className="text-3xl font-bold text-white tracking-tight mb-2">{t('suppliers_logistics')}</h1>
+                    <p className="text-gray-400">{t('suppliers_logistics_desc')}</p>
                 </div>
 
                 {/* Tab List */}

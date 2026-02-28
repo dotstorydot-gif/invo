@@ -90,16 +90,16 @@ export default function SalaryRegisterPage() {
                 date: new Date().toISOString().split('T')[0],
                 amount: Number(paymentAmount),
                 category: 'Salaries',
-                description: `Salary Payment for ${emp?.full_name || 'Employee'} - ${selectedSalary.month} ${selectedSalary.year}`,
+                description: `${t('salary_payment_for')} ${emp?.full_name || t('employee')} - ${selectedSalary.month} ${selectedSalary.year}`,
                 status: 'Approved'
             });
 
             setIsPayModalOpen(false);
             refresh();
-            alert("Payment processed and recorded in expenses.");
+            alert(t('payment_processed_success'));
         } catch (error) {
             console.error("Payment error:", error);
-            alert("Failed to process payment.");
+            alert(t('payment_failed'));
         } finally {
             setIsSubmitting(false);
         }
@@ -109,7 +109,7 @@ export default function SalaryRegisterPage() {
             setIsSubmitting(true);
             const contract = contracts.find((c: any) => c.staff_id === salary.employee_id);
             if (!contract) {
-                alert("No active contract found for this employee. Please create a contract first.");
+                alert(t('no_active_contract_error'));
                 return;
             }
 
@@ -153,11 +153,11 @@ export default function SalaryRegisterPage() {
                 net_pay: net
             });
 
-            alert("Salary slip generated and net pay updated successfully!");
+            alert(t('salary_slip_generated_success'));
             refresh();
         } catch (error) {
             console.error("Error generating slip:", error);
-            alert("Failed to generate salary slip.");
+            alert(t('generate_slip_failed'));
         } finally {
             setIsSubmitting(false);
         }
@@ -179,8 +179,8 @@ export default function SalaryRegisterPage() {
                             <ArrowLeft size={20} />
                         </Link>
                         <div>
-                            <h2 className="text-3xl font-bold gradient-text">Salary Register</h2>
-                            <p className="text-gray-400 text-sm mt-1">Track payments and manage balances</p>
+                            <h2 className="text-3xl font-bold gradient-text">{t('salary_register')}</h2>
+                            <p className="text-gray-400 text-sm mt-1">{t('salary_register_subtitle')}</p>
                         </div>
                     </div>
 
@@ -188,7 +188,7 @@ export default function SalaryRegisterPage() {
                         <Search size={18} className="text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Search employee or month..."
+                            placeholder={t('search_salary_register_placeholder')}
                             className="bg-transparent border-none outline-none text-sm w-full"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -200,23 +200,23 @@ export default function SalaryRegisterPage() {
                     <table className="w-full text-left font-medium">
                         <thead>
                             <tr className="border-b border-border-custom bg-white/5">
-                                <th className="p-6 text-xs font-bold uppercase text-gray-500">Employee</th>
-                                <th className="p-6 text-xs font-bold uppercase text-gray-500">Period</th>
-                                <th className="p-6 text-xs font-bold uppercase text-gray-500 text-right">Net Pay</th>
-                                <th className="p-6 text-xs font-bold uppercase text-gray-500 text-right">Paid</th>
-                                <th className="p-6 text-xs font-bold uppercase text-gray-500 text-right">Remaining</th>
-                                <th className="p-6 text-xs font-bold uppercase text-gray-500">Status</th>
-                                <th className="p-6 text-xs font-bold uppercase text-gray-500 text-center">Actions</th>
+                                <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('employee')}</th>
+                                <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('period')}</th>
+                                <th className="p-6 text-xs font-bold uppercase text-gray-500 text-right">{t('net_pay')}</th>
+                                <th className="p-6 text-xs font-bold uppercase text-gray-500 text-right">{t('paid')}</th>
+                                <th className="p-6 text-xs font-bold uppercase text-gray-500 text-right">{t('remaining')}</th>
+                                <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('status_label')}</th>
+                                <th className="p-6 text-xs font-bold uppercase text-gray-500 text-center">{t('actions')}</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
                                 <tr>
-                                    <td colSpan={7} className="p-10 text-center text-gray-500 italic">Syncing register...</td>
+                                    <td colSpan={7} className="p-10 text-center text-gray-500 italic">{t('syncing_register')}</td>
                                 </tr>
                             ) : filteredSalaries.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="p-10 text-center text-gray-500 italic">No salary records found matching your search.</td>
+                                    <td colSpan={7} className="p-10 text-center text-gray-500 italic">{t('no_salary_records_found')}</td>
                                 </tr>
                             ) : filteredSalaries.map((salary) => {
                                 const emp = staff.find(s => s.id === salary.employee_id);
@@ -230,8 +230,8 @@ export default function SalaryRegisterPage() {
                                                     <User size={16} />
                                                 </div>
                                                 <div>
-                                                    <div className="font-bold text-white">{emp?.full_name || "Unknown Employee"}</div>
-                                                    <div className="text-[10px] text-gray-500 uppercase tracking-widest">{emp?.role || "Staff"}</div>
+                                                    <div className="font-bold text-white">{emp?.full_name || t('unknown_employee')}</div>
+                                                    <div className="text-[10px] text-gray-500 uppercase tracking-widest">{emp?.role || t('staff_label')}</div>
                                                 </div>
                                             </div>
                                         </td>
@@ -257,7 +257,7 @@ export default function SalaryRegisterPage() {
                                                 }`}>
                                                 {salary.status === 'Transferred' && <CheckCircle2 size={10} />}
                                                 {salary.status === 'Partial' && <BadgePercent size={10} />}
-                                                {salary.status || 'Pending'}
+                                                {salary.status === 'Transferred' ? t('transferred') : salary.status === 'Partial' ? t('partial') : t('pending')}
                                             </span>
                                         </td>
                                         <td className="p-6 text-center">
@@ -277,8 +277,8 @@ export default function SalaryRegisterPage() {
                                                 <button
                                                     onClick={() => handleGenerateSlip(salary)}
                                                     className={`p-2 rounded-lg transition-all transform hover:scale-110 ${slips.some((sl: any) => sl.staff_id === salary.employee_id && sl.month_year === `${salary.month} ${salary.year}`)
-                                                            ? 'bg-emerald-500/10 text-emerald-500'
-                                                            : 'bg-white/5 text-gray-500 hover:text-accent hover:bg-accent/10'
+                                                        ? 'bg-emerald-500/10 text-emerald-500'
+                                                        : 'bg-white/5 text-gray-500 hover:text-accent hover:bg-accent/10'
                                                         }`}
                                                     title="Generate/Update Slip"
                                                 >
@@ -296,7 +296,7 @@ export default function SalaryRegisterPage() {
                 <ERPFormModal
                     isOpen={isPayModalOpen}
                     onClose={() => setIsPayModalOpen(false)}
-                    title="Process Salary Payment"
+                    title={t('process_salary_payment')}
                     onSubmit={handleProcessPayment}
                     loading={isSubmitting}
                 >
@@ -310,7 +310,7 @@ export default function SalaryRegisterPage() {
                                     </p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Period</p>
+                                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{t('period')}</p>
                                     <p className="font-bold text-gray-300">{selectedSalary.month} {selectedSalary.year}</p>
                                 </div>
                             </div>

@@ -40,8 +40,8 @@ export default function SalaryTemplatesPage() {
                             <ArrowLeft size={20} />
                         </Link>
                         <div>
-                            <h2 className="text-3xl font-bold gradient-text">Payroll Templates</h2>
-                            <p className="text-gray-400 text-sm mt-1">Exportable monthly payroll sheets and reports</p>
+                            <h2 className="text-3xl font-bold gradient-text">{t('salary_templates')}</h2>
+                            <p className="text-gray-400 text-sm mt-1">{t('salary_templates_subtitle')}</p>
                         </div>
                     </div>
 
@@ -71,8 +71,8 @@ export default function SalaryTemplatesPage() {
                             <DollarSign size={24} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Net Payable</p>
-                            <h3 className="text-2xl font-bold text-white">{totalNet.toLocaleString()} EGP</h3>
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('total_net_payable')}</p>
+                            <h3 className="text-2xl font-bold text-white">{totalNet.toLocaleString()} {t('egp')}</h3>
                         </div>
                     </div>
                     <div className="glass p-6 border-border-custom flex items-center gap-4">
@@ -80,8 +80,8 @@ export default function SalaryTemplatesPage() {
                             <PieChart size={24} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Base Payroll</p>
-                            <h3 className="text-2xl font-bold text-white">{totalBase.toLocaleString()} EGP</h3>
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('total_base_payroll')}</p>
+                            <h3 className="text-2xl font-bold text-white">{totalBase.toLocaleString()} {t('egp')}</h3>
                         </div>
                     </div>
                     <div className="glass p-6 border-border-custom flex items-center gap-4">
@@ -89,8 +89,8 @@ export default function SalaryTemplatesPage() {
                             <Activity size={24} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Deductions</p>
-                            <h3 className="text-2xl font-bold text-white">{totalDeductions.toLocaleString()} EGP</h3>
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('total_deductions')}</p>
+                            <h3 className="text-2xl font-bold text-white">{totalDeductions.toLocaleString()} {t('egp')}</h3>
                         </div>
                     </div>
                 </div>
@@ -98,18 +98,18 @@ export default function SalaryTemplatesPage() {
                 <div className="glass overflow-hidden border-border-custom print:border-none print:shadow-none">
                     <div className="p-8 border-b border-border-custom flex justify-between items-center print:border-black/20">
                         <div>
-                            <h3 className="text-xl font-bold text-white print:text-black">Monthly Payroll Sheet</h3>
+                            <h3 className="text-xl font-bold text-white print:text-black">{t('monthly_payroll_sheet')}</h3>
                             <p className="text-sm text-accent font-bold uppercase tracking-widest">{selectedMonth}</p>
                         </div>
                         <div className="text-right hidden print:block">
-                            <p className="text-xs text-gray-400 font-bold uppercase">Organization Payroll Report</p>
+                            <p className="text-xs text-gray-400 font-bold uppercase">{t('organization_payroll_report')}</p>
                         </div>
                         <div className="print:hidden">
                             <div className="glass flex items-center px-4 py-2 gap-3 w-64 border-border-custom bg-background">
                                 <Search size={18} className="text-gray-400" />
                                 <input
                                     type="text"
-                                    placeholder="Filter by name..."
+                                    placeholder={t('filter_by_name_placeholder')}
                                     className="bg-transparent border-none outline-none text-sm w-full"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -121,19 +121,19 @@ export default function SalaryTemplatesPage() {
                     <table className="w-full text-left font-medium">
                         <thead>
                             <tr className="border-b border-border-custom bg-white/5 print:bg-gray-100 font-bold text-[10px] uppercase text-gray-500 tracking-widest print:text-black">
-                                <th className="p-6">Employee Name</th>
-                                <th className="p-6">Days</th>
-                                <th className="p-6 text-right">Base Salary</th>
-                                <th className="p-6 text-right">Allowances</th>
-                                <th className="p-6 text-right">Deductions</th>
-                                <th className="p-6 text-right">Net Payable</th>
+                                <th className="p-6">{t('employee_name')}</th>
+                                <th className="p-6">{t('days')}</th>
+                                <th className="p-6 text-right">{t('base_salary')}</th>
+                                <th className="p-6 text-right">{t('allowances')}</th>
+                                <th className="p-6 text-right">{t('deductions')}</th>
+                                <th className="p-6 text-right">{t('net_payable')}</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan={6} className="p-10 text-center text-gray-500 animate-pulse">Generating report...</td></tr>
+                                <tr><td colSpan={6} className="p-10 text-center text-gray-500 animate-pulse">{t('generating_report')}</td></tr>
                             ) : filteredSlips.length === 0 ? (
-                                <tr><td colSpan={6} className="p-10 text-center text-gray-500 italic">No payroll data for this month.</td></tr>
+                                <tr><td colSpan={6} className="p-10 text-center text-gray-500 italic">{t('no_payroll_data_month')}</td></tr>
                             ) : filteredSlips.map((slip: any) => {
                                 const emp = staff.find(st => st.id === slip.staff_id);
                                 const allowances = slip.transportation_amount || 0;
@@ -141,25 +141,25 @@ export default function SalaryTemplatesPage() {
                                 return (
                                     <tr key={slip.id} className="border-b border-border-custom hover:bg-white/5 transition-colors print:text-black">
                                         <td className="p-6">
-                                            <div className="font-bold text-white print:text-black">{emp?.full_name || "Unknown"}</div>
-                                            <div className="text-[10px] text-gray-500 uppercase tracking-widest">{emp?.role || "Staff"}</div>
+                                            <div className="font-bold text-white print:text-black">{emp?.full_name || t('unknown')}</div>
+                                            <div className="text-[10px] text-gray-500 uppercase tracking-widest">{emp?.role || t('staff_label')}</div>
                                         </td>
                                         <td className="p-6 text-sm">{slip.days_served || 30}</td>
                                         <td className="p-6 text-right font-mono text-sm">{slip.base_salary?.toLocaleString()}</td>
                                         <td className="p-6 text-right font-mono text-sm text-emerald-500">+{allowances.toLocaleString()}</td>
                                         <td className="p-6 text-right font-mono text-sm text-red-500">-{deductions.toLocaleString()}</td>
-                                        <td className="p-6 text-right font-mono font-bold text-white print:text-black">{slip.net_salary?.toLocaleString()} EGP</td>
+                                        <td className="p-6 text-right font-mono font-bold text-white print:text-black">{slip.net_salary?.toLocaleString()} {t('egp')}</td>
                                     </tr>
                                 );
                             })}
                         </tbody>
                         <tfoot className="print:text-black">
                             <tr className="bg-white/5 font-bold">
-                                <td colSpan={2} className="p-6 text-lg">Totals</td>
+                                <td colSpan={2} className="p-6 text-lg">{t('totals')}</td>
                                 <td className="p-6 text-right font-mono">{totalBase.toLocaleString()}</td>
                                 <td className="p-6 text-right font-mono text-emerald-500">+{filteredSlips.reduce((sum: number, s: any) => sum + (s.transportation_amount || 0), 0).toLocaleString()}</td>
                                 <td className="p-6 text-right font-mono text-red-500">-{totalDeductions.toLocaleString()}</td>
-                                <td className="p-6 text-right font-mono text-xl text-accent">{totalNet.toLocaleString()} EGP</td>
+                                <td className="p-6 text-right font-mono text-xl text-accent">{totalNet.toLocaleString()} {t('egp')}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -167,11 +167,11 @@ export default function SalaryTemplatesPage() {
                     <div className="hidden print:block mt-20 p-8 grid grid-cols-2 gap-20">
                         <div className="text-center">
                             <div className="border-b border-black w-full mb-2" />
-                            <p className="text-[10px] font-bold uppercase">Prepared By</p>
+                            <p className="text-[10px] font-bold uppercase">{t('prepared_by')}</p>
                         </div>
                         <div className="text-center">
                             <div className="border-b border-black w-full mb-2" />
-                            <p className="text-[10px] font-bold uppercase">Approved By</p>
+                            <p className="text-[10px] font-bold uppercase">{t('approved_by')}</p>
                         </div>
                     </div>
                 </div>

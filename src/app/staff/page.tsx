@@ -111,22 +111,22 @@ export default function StaffPage() {
                 setEditingId(null);
                 setFormData({
                     full_name: '',
-                    role: 'Consultant',
-                    employment_type: 'Full Time',
+                    role: t('consultant'),
+                    employment_type: t('full_time'),
                     base_salary: 0,
                     daily_rate: 0,
                     email: '',
-                    status: 'Active',
+                    status: t('active'),
                     project_id: '',
                     hire_date: new Date().toISOString().split('T')[0],
                     avatar_url: ''
                 });
-                alert("Employee saved successfully.");
+                alert(t('employee_saved_success'));
             }
         } catch (error: unknown) {
             console.error("Error adding staff:", error);
             const message = error instanceof Error ? error.message : "Unknown error";
-            alert("Failed to add staff member: " + message);
+            alert(t('add_staff_failed') + message);
         } finally {
             setIsSubmitting(false);
         }
@@ -136,12 +136,12 @@ export default function StaffPage() {
         setEditingId(emp.id);
         setFormData({
             full_name: emp.full_name || emp.name || '',
-            role: emp.role || 'Consultant',
-            employment_type: emp.employment_type || 'Full Time',
+            role: emp.role || t('consultant'),
+            employment_type: emp.employment_type || t('full_time'),
             base_salary: emp.base_salary || emp.baseSalary || 0,
             daily_rate: emp.daily_rate || 0,
             email: emp.email || '',
-            status: emp.status || 'Active',
+            status: emp.status || t('active'),
             project_id: emp.project_id || '',
             hire_date: emp.hire_date || new Date().toISOString().split('T')[0],
             avatar_url: emp.avatar_url || ''
@@ -162,8 +162,8 @@ export default function StaffPage() {
                 date: new Date().toISOString().split('T')[0],
                 amount: amountToPay,
                 category: 'Salaries',
-                description: `Salary Payment for ${selectedEmp.full_name || selectedEmp.name}. ${selectedEmp.employment_type === 'Daily' ? `Days Worked: ${payDays}` : ''}`,
-                status: 'Approved'
+                description: `${t('salary_payment_desc')} ${selectedEmp.full_name || selectedEmp.name}. ${selectedEmp.employment_type === 'Daily' ? `${t('days_worked_colon')} ${payDays}` : ''}`,
+                status: t('approved')
             });
 
             // Optionally clear penalties back to 0 here if full settlement
@@ -175,10 +175,10 @@ export default function StaffPage() {
 
             setIsPayModalOpen(false);
             setSelectedEmp(null);
-            alert("Salary Payment generated successfully in Expenses.");
+            alert(t('pay_salary_success'));
         } catch (error) {
             console.error(error);
-            alert("Failed to pay salary.");
+            alert(t('pay_salary_failed'));
         } finally {
             setIsSubmitting(false);
         }
@@ -206,10 +206,10 @@ export default function StaffPage() {
             setIsPenaltyModalOpen(false);
             setPenaltyFormData({ amount: 0, reason: '' });
             setSelectedEmp(null);
-            alert("Penalty added successfully.");
+            alert(t('penalty_added_success'));
         } catch (error) {
             console.error(error);
-            alert("Failed to add penalty.");
+            alert(t('penalty_failed'));
         } finally {
             setIsSubmitting(false);
         }
@@ -247,10 +247,10 @@ export default function StaffPage() {
                 reason: ''
             });
             setSelectedEmp(null);
-            alert("Vacation recorded successfully.");
+            alert(t('vacation_recorded_success'));
         } catch (error) {
             console.error(error);
-            alert("Failed to record vacation.");
+            alert(t('vacation_recorded_failed'));
         } finally {
             setIsSubmitting(false);
         }
@@ -343,11 +343,11 @@ export default function StaffPage() {
                                             </td>
                                             <td className="p-6 text-sm font-medium">
                                                 {emp.employment_type === 'Daily'
-                                                    ? <span className="text-amber-500 font-bold">{(emp.daily_rate || 0).toLocaleString()} EGP <span className="text-[10px] text-gray-500 font-normal">/ {t('day_label')}</span></span>
-                                                    : <span>{(emp.base_salary || emp.baseSalary || 0).toLocaleString()} EGP <span className="text-[10px] text-gray-500 font-normal">/ {t('mo_label')}</span></span>
+                                                    ? <span className="text-amber-500 font-bold">{(emp.daily_rate || 0).toLocaleString()} {t('egp')} <span className="text-[10px] text-gray-500 font-normal">/ {t('day_label')}</span></span>
+                                                    : <span>{(emp.base_salary || emp.baseSalary || 0).toLocaleString()} {t('egp')} <span className="text-[10px] text-gray-500 font-normal">/ {t('mo_label')}</span></span>
                                                 }
                                             </td>
-                                            <td className="p-6 text-sm text-red-400">-{(emp.penalties || 0).toLocaleString()} EGP</td>
+                                            <td className="p-6 text-sm text-red-400">-{(emp.penalties || 0).toLocaleString()} {t('egp')}</td>
                                             <td className="p-6">
                                                 <div className="flex items-center gap-2 text-xs font-bold bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full w-fit">
                                                     <Umbrella size={12} />
@@ -358,7 +358,7 @@ export default function StaffPage() {
                                                 {emp.employment_type === 'Daily' ? (
                                                     <div className="text-sm font-bold text-gray-500">Variable</div>
                                                 ) : (
-                                                    <div className="text-sm font-bold text-accent">{calculateNet(emp).toLocaleString()} EGP</div>
+                                                    <div className="text-sm font-bold text-accent">{calculateNet(emp).toLocaleString()} {t('egp')}</div>
                                                 )}
                                             </td>
                                             <td className="p-6">
@@ -402,7 +402,7 @@ export default function StaffPage() {
                                                     </button>
                                                     <button
                                                         onClick={() => handleEditStaff(emp)}
-                                                        className="p-2 text-gray-400 hover:text-white transition-all title='Edit Employee'"
+                                                        className="p-2 text-gray-400 hover:text-white transition-all" title={t('edit_employee')}
                                                     >
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                                     </button>
@@ -537,7 +537,7 @@ export default function StaffPage() {
                 <ERPFormModal
                     isOpen={isPayModalOpen}
                     onClose={() => setIsPayModalOpen(false)}
-                    title={selectedEmp ? `Process Salary: ${selectedEmp.full_name || selectedEmp.name}` : 'Process Salary'}
+                    title={selectedEmp ? `${t('process_salary')}: ${selectedEmp.full_name || selectedEmp.name}` : t('process_salary')}
                     onSubmit={handlePaySalary}
                     loading={isSubmitting}
                 >
@@ -545,26 +545,26 @@ export default function StaffPage() {
                         <div className="grid grid-cols-1 gap-6">
                             <div className="p-4 rounded-xl bg-white/5 border border-border-custom flex justify-between items-center">
                                 <div>
-                                    <div className="text-xs text-gray-500 uppercase font-bold mb-1">Employment Type</div>
-                                    <div className="font-bold text-white">{selectedEmp.employment_type || 'Full Time'}</div>
+                                    <div className="text-xs text-gray-500 uppercase font-bold mb-1">{t('employment_type_label')}</div>
+                                    <div className="font-bold text-white">{selectedEmp.employment_type || t('full_time')}</div>
                                 </div>
                                 <div>
-                                    <div className="text-xs text-gray-500 uppercase font-bold mb-1">Rate</div>
+                                    <div className="text-xs text-gray-500 uppercase font-bold mb-1">{t('rate_label')}</div>
                                     <div className="font-bold text-accent">
                                         {selectedEmp.employment_type === 'Daily'
-                                            ? `${selectedEmp.daily_rate.toLocaleString()} EGP / Day`
-                                            : `${(selectedEmp.base_salary || selectedEmp.baseSalary || 0).toLocaleString()} EGP / Month`}
+                                            ? `${selectedEmp.daily_rate.toLocaleString()} {t('egp')} / ${t('day_label')}`
+                                            : `${(selectedEmp.base_salary || selectedEmp.baseSalary || 0).toLocaleString()} {t('egp')} / ${t('mo_label')}`}
                                     </div>
                                 </div>
                                 <div>
-                                    <div className="text-xs text-gray-500 uppercase font-bold mb-1">Penalties</div>
-                                    <div className="font-bold text-red-500">-{(selectedEmp.penalties || 0).toLocaleString()} EGP</div>
+                                    <div className="text-xs text-gray-500 uppercase font-bold mb-1">{t('penalties')}</div>
+                                    <div className="font-bold text-red-500">-{(selectedEmp.penalties || 0).toLocaleString()} {t('egp')}</div>
                                 </div>
                             </div>
 
                             {selectedEmp.employment_type === 'Daily' && (
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase">Days Worked</label>
+                                    <label className="text-xs font-bold text-gray-500 uppercase">{t('days_worked')}</label>
                                     <input
                                         type="number"
                                         min="1"
@@ -577,12 +577,12 @@ export default function StaffPage() {
 
                             <div className="mt-4 pt-4 border-t border-border-custom">
                                 <div className="flex justify-between items-end">
-                                    <span className="text-sm font-bold text-gray-400">Final Salary Invoice</span>
+                                    <span className="text-sm font-bold text-gray-400">{t('final_salary_invoice')}</span>
                                     <span className="text-3xl font-bold gradient-text">
                                         {selectedEmp.employment_type === 'Daily'
                                             ? ((selectedEmp.daily_rate * payDays) - (selectedEmp.penalties || 0)).toLocaleString()
                                             : calculateNet(selectedEmp).toLocaleString()
-                                        } EGP
+                                        } {t('egp')}
                                     </span>
                                 </div>
                             </div>
@@ -594,13 +594,13 @@ export default function StaffPage() {
                 <ERPFormModal
                     isOpen={isPenaltyModalOpen}
                     onClose={() => setIsPenaltyModalOpen(false)}
-                    title={selectedEmp ? `Add Penalty: ${selectedEmp.full_name || selectedEmp.name}` : 'Add Penalty'}
+                    title={selectedEmp ? `${t('add_penalty')}: ${selectedEmp.full_name || selectedEmp.name}` : t('add_penalty')}
                     onSubmit={handleSavePenalty}
                     loading={isSubmitting}
                 >
                     <div className="grid grid-cols-1 gap-6">
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Penalty Amount (EGP)</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('penalty_amount_egp')}</label>
                             <input
                                 type="number"
                                 value={penaltyFormData.amount}
@@ -610,15 +610,15 @@ export default function StaffPage() {
                             />
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Reason</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('reason_label')}</label>
                             <textarea
                                 value={penaltyFormData.reason}
                                 onChange={(e) => setPenaltyFormData({ ...penaltyFormData, reason: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm h-24"
-                                placeholder="e.g. Late for work, Misconduct"
+                                placeholder={t('penalty_placeholder')}
                             />
                         </div>
-                        <p className="text-[10px] text-gray-500 italic">This amount will be automatically subtracted from the next salary payment.</p>
+                        <p className="text-[10px] text-gray-500 italic">{t('penalty_hint')}</p>
                     </div>
                 </ERPFormModal>
 
@@ -626,14 +626,14 @@ export default function StaffPage() {
                 <ERPFormModal
                     isOpen={isVacationModalOpen}
                     onClose={() => setIsVacationModalOpen(false)}
-                    title={selectedEmp ? `Record Vacation: ${selectedEmp.full_name || selectedEmp.name}` : 'Record Vacation'}
+                    title={selectedEmp ? `${t('record_vacation')}: ${selectedEmp.full_name || selectedEmp.name}` : t('record_vacation')}
                     onSubmit={handleSaveVacation}
                     loading={isSubmitting}
                 >
                     <div className="grid grid-cols-1 gap-6">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex flex-col gap-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase">Start Date</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase">{t('start_date_label')}</label>
                                 <input
                                     type="date"
                                     value={vacationFormData.start_date}
@@ -642,7 +642,7 @@ export default function StaffPage() {
                                 />
                             </div>
                             <div className="flex flex-col gap-2">
-                                <label className="text-xs font-bold text-gray-500 uppercase">End Date</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase">{t('end_date_label')}</label>
                                 <input
                                     type="date"
                                     value={vacationFormData.end_date}
@@ -652,7 +652,7 @@ export default function StaffPage() {
                             </div>
                         </div>
                         <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 text-center">
-                            <div className="text-xs text-blue-400 font-bold uppercase mb-1">Total Vacation Days</div>
+                            <div className="text-xs text-blue-400 font-bold uppercase mb-1">{t('total_vacation_days')}</div>
                             <div className="text-3xl font-bold text-white">
                                 {(() => {
                                     const start = new Date(vacationFormData.start_date);
@@ -660,16 +660,16 @@ export default function StaffPage() {
                                     if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
                                     const diffTime = Math.abs(end.getTime() - start.getTime());
                                     return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-                                })()} Days
+                                })()} {t('days_unit')}
                             </div>
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Reason / Notes</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('reason_notes')}</label>
                             <textarea
                                 value={vacationFormData.reason}
                                 onChange={(e) => setVacationFormData({ ...vacationFormData, reason: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm h-24"
-                                placeholder="e.g. Annual Leave, Family Event"
+                                placeholder={t('vacation_placeholder')}
                             />
                         </div>
                     </div>

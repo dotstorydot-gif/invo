@@ -12,13 +12,13 @@ import { useLanguage } from "@/context/LanguageContext";
 export default function PayrollDashboard() {
     const { t } = useLanguage();
     const tabs = [
-        { name: 'Contracts', icon: Briefcase, href: '/payroll/contracts' },
-        { name: 'Salary Register', icon: FileText, href: '/payroll/register' },
-        { name: 'Salary Slips', icon: CreditCard, href: '/payroll/slips' },
-        { name: 'Salary Advances', icon: BadgeDollarSign, href: '/payroll/advances' },
-        { name: 'Salary Items', icon: Activity, href: '/payroll/items' },
-        { name: 'Salary Templates', icon: ShieldCheck, href: '/payroll/templates' },
-        { name: 'Settings', icon: Filter, href: '/settings' },
+        { name: t('contracts'), icon: Briefcase, href: '/payroll/contracts' },
+        { name: t('salary_register'), icon: FileText, href: '/payroll/register' },
+        { name: t('salary_slips'), icon: CreditCard, href: '/payroll/slips' },
+        { name: t('salary_advances'), icon: BadgeDollarSign, href: '/payroll/advances' },
+        { name: t('salary_items'), icon: Activity, href: '/payroll/items' },
+        { name: t('salary_templates'), icon: ShieldCheck, href: '/payroll/templates' },
+        { name: t('settings'), icon: Filter, href: '/settings' },
     ];
 
     return (
@@ -27,8 +27,8 @@ export default function PayrollDashboard() {
 
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Payroll Engine</h1>
-                    <p className="text-gray-400">Manage employee compensation, contracts, and registers.</p>
+                    <h1 className="text-3xl font-bold text-white tracking-tight mb-2">{t('payroll_engine')}</h1>
+                    <p className="text-gray-400">{t('payroll_engine_desc')}</p>
                 </div>
 
                 {/* Tab List */}

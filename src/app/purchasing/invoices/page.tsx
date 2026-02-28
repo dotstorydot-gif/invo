@@ -3,16 +3,9 @@
 import React, { useState } from "react";
 import {
     ArrowLeft,
-    Receipt,
     Plus,
-    Search,
-    UserCircle,
     Calendar,
-    DollarSign,
     CheckCircle2,
-    Clock,
-    AlertTriangle,
-    FileText
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -55,7 +48,7 @@ export default function PurchaseInvoicesPage() {
             });
         } catch (error) {
             console.error("Error saving invoice:", error);
-            alert("Failed to save purchase invoice.");
+            alert(t('save_failed'));
         } finally {
             setIsSubmitting(false);
         }
@@ -70,8 +63,8 @@ export default function PurchaseInvoicesPage() {
                             <ArrowLeft size={20} />
                         </Link>
                         <div>
-                            <h2 className="text-3xl font-bold gradient-text">Purchase Invoices</h2>
-                            <p className="text-gray-400 text-sm mt-1">Manage bills and payments for your purchase orders.</p>
+                            <h2 className="text-3xl font-bold gradient-text">{t('purchase_invoices_title')}</h2>
+                            <p className="text-gray-400 text-sm mt-1">{t('purchase_invoices_subtitle')}</p>
                         </div>
                     </div>
 
@@ -80,7 +73,7 @@ export default function PurchaseInvoicesPage() {
                         className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
                     >
                         <Plus size={20} />
-                        <span>Add Invoice</span>
+                        <span>{t('add_invoice')}</span>
                     </button>
                 </header>
 
@@ -89,17 +82,17 @@ export default function PurchaseInvoicesPage() {
                         <table className="w-full text-left">
                             <thead>
                                 <tr className="border-b border-border-custom bg-white/5">
-                                    <th className="p-6 text-xs font-bold uppercase text-gray-500">Invoice No</th>
-                                    <th className="p-6 text-xs font-bold uppercase text-gray-500">Supplier</th>
-                                    <th className="p-6 text-xs font-bold uppercase text-gray-500">PO Ref</th>
-                                    <th className="p-6 text-xs font-bold uppercase text-gray-500">Due Date</th>
-                                    <th className="p-6 text-xs font-bold uppercase text-gray-500">Amount</th>
-                                    <th className="p-6 text-xs font-bold uppercase text-gray-500">Status</th>
+                                    <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('invoice_no')}</th>
+                                    <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('supplier')}</th>
+                                    <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('po_ref')}</th>
+                                    <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('due_date')}</th>
+                                    <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('amount')}</th>
+                                    <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('status')}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {loading ? (
-                                    <tr><td colSpan={6} className="p-10 text-center italic text-gray-500">Loading invoices...</td></tr>
+                                    <tr><td colSpan={6} className="p-10 text-center italic text-gray-500">{t('loading_invoices')}</td></tr>
                                 ) : invoices.length > 0 ? (
                                     invoices.map((inv: any) => {
                                         const supplier = suppliers.find((s: any) => s.id === inv.supplier_id);
@@ -108,8 +101,8 @@ export default function PurchaseInvoicesPage() {
                                         return (
                                             <tr key={inv.id} className="border-b border-border-custom hover:bg-white/5 transition-colors">
                                                 <td className="p-6 font-bold text-white font-mono">{inv.invoice_no}</td>
-                                                <td className="p-6 text-sm text-gray-300">{supplier?.name || 'Unknown'}</td>
-                                                <td className="p-6 text-sm text-gray-500 font-mono">{po?.order_number || 'N/A'}</td>
+                                                <td className="p-6 text-sm text-gray-300">{supplier?.name || t('unknown')}</td>
+                                                <td className="p-6 text-sm text-gray-500 font-mono">{po?.order_number || t('not_applicable')}</td>
                                                 <td className="p-6 text-sm text-gray-400">
                                                     {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : 'Immediate'}
                                                 </td>
@@ -118,14 +111,14 @@ export default function PurchaseInvoicesPage() {
                                                 </td>
                                                 <td className="p-6">
                                                     <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${inv.status === 'Paid' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
-                                                        {inv.status}
+                                                        {t(inv.status?.toLowerCase()?.replace(' ', '_')) || inv.status}
                                                     </span>
                                                 </td>
                                             </tr>
                                         );
                                     })
                                 ) : (
-                                    <tr><td colSpan={6} className="p-20 text-center text-gray-500 italic">No purchase invoices yet.</td></tr>
+                                    <tr><td colSpan={6} className="p-20 text-center text-gray-500 italic">{t('no_purchase_invoices_yet')}</td></tr>
                                 )}
                             </tbody>
                         </table>
@@ -135,13 +128,13 @@ export default function PurchaseInvoicesPage() {
                 <ERPFormModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
-                    title="Add Purchase Invoice"
+                    title={t('add_purchase_invoice')}
                     onSubmit={handleSaveInvoice}
                     loading={isSubmitting}
                 >
                     <div className="grid grid-cols-2 gap-6">
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Linked Purchase Order</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('linked_purchase_order')}</label>
                             <select
                                 value={formData.po_id}
                                 onChange={(e) => {
@@ -156,14 +149,14 @@ export default function PurchaseInvoicesPage() {
                                 }}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                             >
-                                <option value="">Select PO...</option>
+                                <option value="">{t('select_po_placeholder')}</option>
                                 {orders.map((o: any) => (
                                     <option key={o.id} value={o.id}>{o.order_number}</option>
                                 ))}
                             </select>
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Invoice Number</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('invoice_number_label')}</label>
                             <input
                                 type="text"
                                 value={formData.invoice_no}
@@ -173,7 +166,7 @@ export default function PurchaseInvoicesPage() {
                             />
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Invoice Date</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('invoice_date')}</label>
                             <input
                                 type="date"
                                 value={formData.date}
@@ -183,7 +176,7 @@ export default function PurchaseInvoicesPage() {
                             />
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Due Date</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('due_date')}</label>
                             <input
                                 type="date"
                                 value={formData.due_date}
@@ -192,7 +185,7 @@ export default function PurchaseInvoicesPage() {
                             />
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Amount</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('amount')}</label>
                             <input
                                 type="number"
                                 value={formData.total_amount}
@@ -202,16 +195,16 @@ export default function PurchaseInvoicesPage() {
                             />
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Status</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('status')}</label>
                             <select
                                 value={formData.status}
                                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                             >
-                                <option value="Unpaid">Unpaid</option>
-                                <option value="Partially Paid">Partially Paid</option>
-                                <option value="Paid">Paid</option>
-                                <option value="Overdue">Overdue</option>
+                                <option value="Unpaid">{t('unpaid')}</option>
+                                <option value="Partially Paid">{t('partially_paid')}</option>
+                                <option value="Paid">{t('paid')}</option>
+                                <option value="Overdue">{t('overdue')}</option>
                             </select>
                         </div>
                     </div>

@@ -9,10 +9,8 @@ import {
     UserCircle,
     Calendar,
     DollarSign,
-    ExternalLink,
     Trash2
 } from "lucide-react";
-import { motion } from "framer-motion";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { useERPData } from "@/hooks/useERPData";
@@ -46,8 +44,8 @@ export default function SupplierPaymentsPage() {
                 date: formData.payment_date,
                 amount: Number(formData.amount),
                 category: 'Cost of Goods Sold',
-                description: `Supplier Payment: ${selectedSupplier?.name || 'Unknown'}. Ref: ${formData.reference_no}. ${formData.description}`,
-                status: 'Approved'
+                description: `${t('supplier_payment_desc_prefix')} ${selectedSupplier?.name || t('unknown')}. Ref: ${formData.reference_no}. ${formData.description}`,
+                status: t('approved')
             });
 
             // 2. Link to supplier payment
@@ -72,7 +70,7 @@ export default function SupplierPaymentsPage() {
             });
         } catch (error) {
             console.error("Error saving payment:", error);
-            alert("Failed to save payment.");
+            alert(t('save_failed'));
         } finally {
             setIsSubmitting(false);
         }
@@ -87,8 +85,8 @@ export default function SupplierPaymentsPage() {
                             <ArrowLeft size={20} />
                         </Link>
                         <div>
-                            <h2 className="text-3xl font-bold gradient-text">Supplier Payments</h2>
-                            <p className="text-gray-400 text-sm mt-1">Settle invoices and track outgoing logistics funds.</p>
+                            <h2 className="text-3xl font-bold gradient-text">{t('supplier_payments_title')}</h2>
+                            <p className="text-gray-400 text-sm mt-1">{t('supplier_payments_subtitle')}</p>
                         </div>
                     </div>
 
@@ -97,7 +95,7 @@ export default function SupplierPaymentsPage() {
                         className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
                     >
                         <Plus size={20} />
-                        <span>Process Payment</span>
+                        <span>{t('process_payment')}</span>
                     </button>
                 </header>
 
@@ -106,7 +104,7 @@ export default function SupplierPaymentsPage() {
                         <div className="p-6 border-b border-border-custom flex justify-between items-center bg-white/5">
                             <div className="flex items-center gap-3">
                                 <CreditCard className="text-accent" />
-                                <h3 className="text-xl font-bold">Payment History</h3>
+                                <h3 className="text-xl font-bold">{t('payment_history')}</h3>
                             </div>
                         </div>
 
@@ -114,31 +112,31 @@ export default function SupplierPaymentsPage() {
                             <table className="w-full text-left">
                                 <thead>
                                     <tr className="border-b border-border-custom bg-white/2">
-                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">Supplier</th>
-                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">Date</th>
-                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">Reference</th>
-                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">Method</th>
-                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">Amount</th>
-                                        <th className="p-6 text-xs font-bold uppercase text-gray-500 text-right">Actions</th>
+                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('supplier')}</th>
+                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('date')}</th>
+                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('reference')}</th>
+                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('method')}</th>
+                                        <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('amount')}</th>
+                                        <th className="p-6 text-xs font-bold uppercase text-gray-500 text-right">{t('actions')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {loading ? (
-                                        <tr><td colSpan={6} className="p-10 text-center italic text-gray-500">Loading payments...</td></tr>
+                                        <tr><td colSpan={6} className="p-10 text-center italic text-gray-500">{t('loading_payments')}</td></tr>
                                     ) : payments.length > 0 ? (
                                         payments.map((payment: any) => (
                                             <tr key={payment.id} className="border-b border-border-custom hover:bg-white/5 transition-colors group">
                                                 <td className="p-6">
                                                     <div className="font-bold text-white flex items-center gap-2">
                                                         <UserCircle size={16} className="text-accent" />
-                                                        {suppliers.find((s: any) => s.id === payment.supplier_id)?.name || 'Unknown Supplier'}
+                                                        {suppliers.find((s: any) => s.id === payment.supplier_id)?.name || t('unknown_supplier')}
                                                     </div>
                                                 </td>
                                                 <td className="p-6 text-sm text-gray-400">
                                                     {new Date(payment.payment_date).toLocaleDateString()}
                                                 </td>
                                                 <td className="p-6 text-xs font-mono text-gray-500 uppercase tracking-widest">
-                                                    {payment.reference_no || 'N/A'}
+                                                    {payment.reference_no || t('not_applicable')}
                                                 </td>
                                                 <td className="p-6">
                                                     <span className="text-[10px] bg-white/10 text-gray-400 px-2 py-1 rounded-lg border border-white/5 uppercase font-bold">
@@ -146,13 +144,13 @@ export default function SupplierPaymentsPage() {
                                                     </span>
                                                 </td>
                                                 <td className="p-6 font-bold text-emerald-400">
-                                                    {payment.amount.toLocaleString()} EGP
+                                                    {payment.amount.toLocaleString()} {t('egp')}
                                                 </td>
                                                 <td className="p-6">
                                                     <div className="flex justify-end gap-2">
                                                         <button
                                                             onClick={async () => {
-                                                                if (confirm("Delete this payment record? Note: Linked expense will persist.")) {
+                                                                if (confirm(t('delete_payment_confirm'))) {
                                                                     await remove(payment.id);
                                                                 }
                                                             }}
@@ -165,7 +163,7 @@ export default function SupplierPaymentsPage() {
                                             </tr>
                                         ))
                                     ) : (
-                                        <tr><td colSpan={6} className="p-20 text-center text-gray-500">No payment records found.</td></tr>
+                                        <tr><td colSpan={6} className="p-20 text-center text-gray-500">{t('no_payment_records_found')}</td></tr>
                                     )}
                                 </tbody>
                             </table>
@@ -176,27 +174,27 @@ export default function SupplierPaymentsPage() {
                 <ERPFormModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
-                    title="Process Supplier Payment"
+                    title={t('process_supplier_payment')}
                     onSubmit={handleSavePayment}
                     loading={isSubmitting}
                 >
                     <div className="grid grid-cols-2 gap-6">
                         <div className="flex flex-col gap-2 col-span-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Select Supplier</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('select_supplier')}</label>
                             <select
                                 value={formData.supplier_id}
                                 onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm w-full shadow-inner"
                                 required
                             >
-                                <option value="">Select a logistics partner...</option>
+                                <option value="">{t('select_logistics_partner')}</option>
                                 {suppliers.map((s: any) => (
                                     <option key={s.id} value={s.id}>{s.name}</option>
                                 ))}
                             </select>
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Payment Amount (EGP)</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('payment_amount_egp')}</label>
                             <div className="relative">
                                 <DollarSign size={16} className="absolute left-3 top-3.5 text-gray-500" />
                                 <input
@@ -210,7 +208,7 @@ export default function SupplierPaymentsPage() {
                             </div>
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Payment Date</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('payment_date')}</label>
                             <div className="relative">
                                 <Calendar size={16} className="absolute left-3 top-3.5 text-gray-500" />
                                 <input
@@ -222,20 +220,20 @@ export default function SupplierPaymentsPage() {
                             </div>
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Payment Method</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('payment_method')}</label>
                             <select
                                 value={formData.payment_method}
                                 onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm w-full shadow-inner"
                             >
-                                <option value="Bank Transfer">Bank Transfer</option>
-                                <option value="Cash">Cash</option>
-                                <option value="Cheque">Cheque</option>
-                                <option value="Stash Funds">Stash Funds</option>
+                                <option value="Bank Transfer">{t('bank_transfer')}</option>
+                                <option value="Cash">{t('cash')}</option>
+                                <option value="Cheque">{t('cheque')}</option>
+                                <option value="Stash Funds">{t('stash_funds')}</option>
                             </select>
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Reference / Receipt No.</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('reference_receipt_no')}</label>
                             <input
                                 type="text"
                                 value={formData.reference_no}
@@ -245,7 +243,7 @@ export default function SupplierPaymentsPage() {
                             />
                         </div>
                         <div className="flex flex-col gap-2 col-span-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Payment Description</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('payment_description')}</label>
                             <textarea
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}

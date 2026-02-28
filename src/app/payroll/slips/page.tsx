@@ -8,10 +8,12 @@ import {
     Info, Eye
 } from "lucide-react";
 import Link from "next/link";
+import { useLanguage } from "@/context/LanguageContext";
 import { useERPData } from "@/hooks/useERPData";
 import ERPFormModal from "@/components/ERPFormModal";
 
 export default function SalarySlipsPage() {
+    const { t } = useLanguage();
     const { data: slips, loading } = useERPData<any>('salary_slips');
     const { data: staff } = useERPData<any>('staff');
 
@@ -43,8 +45,8 @@ export default function SalarySlipsPage() {
                             <ArrowLeft size={20} />
                         </Link>
                         <div>
-                            <h2 className="text-3xl font-bold gradient-text">Salary Slips</h2>
-                            <p className="text-gray-400 text-sm mt-1">Detailed monthly breakdowns and payroll receipts</p>
+                            <h2 className="text-3xl font-bold gradient-text">{t('salary_slips')}</h2>
+                            <p className="text-gray-400 text-sm mt-1">{t('salary_slips_subtitle')}</p>
                         </div>
                     </div>
 
@@ -52,7 +54,7 @@ export default function SalarySlipsPage() {
                         <Search size={18} className="text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Search by employee or month..."
+                            placeholder={t('search_slips_placeholder')}
                             className="bg-transparent border-none outline-none text-sm w-full"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -68,18 +70,18 @@ export default function SalarySlipsPage() {
                     ) : filteredSlips.length === 0 ? (
                         <div className="py-20 text-center glass border-dashed border-2 border-border-custom">
                             <Receipt size={40} className="mx-auto text-gray-600 mb-4" />
-                            <p className="text-gray-500 italic">No salary slips generated yet. Generate them from the Register.</p>
+                            <p className="text-gray-500 italic">{t('no_salary_slips_found')}</p>
                         </div>
                     ) : (
                         <div className="glass overflow-hidden border-border-custom">
                             <table className="w-full text-left font-medium">
                                 <thead>
                                     <tr className="border-b border-border-custom bg-white/5 tracking-widest text-[10px] uppercase text-gray-500">
-                                        <th className="p-6">Employee</th>
-                                        <th className="p-6">Period</th>
-                                        <th className="p-6 text-right">Net Salary</th>
-                                        <th className="p-6 text-center">Breakdown</th>
-                                        <th className="p-6 text-right">Actions</th>
+                                        <th className="p-6">{t('employee')}</th>
+                                        <th className="p-6">{t('period')}</th>
+                                        <th className="p-6 text-right">{t('net_salary')}</th>
+                                        <th className="p-6 text-center">{t('breakdown')}</th>
+                                        <th className="p-6 text-right">{t('actions')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -99,7 +101,7 @@ export default function SalarySlipsPage() {
                                                     {slip.month_year}
                                                 </td>
                                                 <td className="p-6 text-right font-mono font-bold text-emerald-400">
-                                                    {slip.net_salary?.toLocaleString()} <span className="text-[10px] text-gray-500">EGP</span>
+                                                    {slip.net_salary?.toLocaleString()} <span className="text-[10px] text-gray-500">{t('egp')}</span>
                                                 </td>
                                                 <td className="p-6">
                                                     <div className="flex justify-center gap-4">
@@ -128,7 +130,7 @@ export default function SalarySlipsPage() {
                 <ERPFormModal
                     isOpen={isViewModalOpen}
                     onClose={() => setIsViewModalOpen(false)}
-                    title="Salary Slip Breakdown"
+                    title={t('salary_slip_breakdown')}
                     onSubmit={() => setIsViewModalOpen(false)}
                     submitLabel="Close"
                     hideSubmit={true}
@@ -162,8 +164,8 @@ export default function SalarySlipsPage() {
                                 <div>
                                     <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Employee Information</p>
                                     <div className="glass bg-white/5 p-4 rounded-xl border border-white/10 print:bg-transparent print:border-black/10">
-                                        <p className="text-lg font-bold text-white print:text-black">{staff.find(s => s.id === selectedSlip.staff_id)?.full_name}</p>
-                                        <p className="text-sm text-gray-400 print:text-gray-600 uppercase tracking-tighter">{staff.find(s => s.id === selectedSlip.staff_id)?.role || 'Permanent Staff'}</p>
+                                        <p className="text-lg font-bold text-white print:text-black">{staff.find((s: any) => s.id === selectedSlip.staff_id)?.full_name}</p>
+                                        <p className="text-sm text-gray-400 print:text-gray-600 uppercase tracking-tighter">{staff.find((s: any) => s.id === selectedSlip.staff_id)?.role || t('permanent_staff')}</p>
                                         <div className="mt-4 flex items-center gap-2 text-xs font-bold text-white/40 print:text-black/40 uppercase">
                                             <Calendar size={12} /> Days Served: <span className="text-white print:text-black">{selectedSlip.days_served || 30}</span>
                                         </div>

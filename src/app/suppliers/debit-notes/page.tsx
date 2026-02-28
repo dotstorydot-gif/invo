@@ -3,10 +3,8 @@
 import React, { useState } from "react";
 import {
     ArrowLeft,
-    FileText,
     Plus,
-    Search,
-    UserCircle,
+    FileText,
     Calendar,
     DollarSign,
     Hash,
@@ -50,9 +48,6 @@ export default function DebitNotesPage() {
             });
 
             if (dnResult?.[0]?.id) {
-                const dnId = dnResult[0].id;
-                const installmentAmount = Math.round(Number(formData.total_amount) / Number(formData.num_installments));
-
                 // 2. Create installments (Simplified: one per month)
                 for (let i = 0; i < Number(formData.num_installments); i++) {
                     const dueDate = new Date(formData.start_date);
@@ -74,10 +69,10 @@ export default function DebitNotesPage() {
                 description: '',
                 start_date: new Date().toISOString().split('T')[0]
             });
-            alert("Debit Note created. Future installments have been scheduled.");
+            alert(t('debit_note_created_alert'));
         } catch (error) {
             console.error("Error saving debit note:", error);
-            alert("Failed to save debit note.");
+            alert(t('save_failed'));
         } finally {
             setIsSubmitting(false);
         }
@@ -92,8 +87,8 @@ export default function DebitNotesPage() {
                             <ArrowLeft size={20} />
                         </Link>
                         <div>
-                            <h2 className="text-3xl font-bold gradient-text">Debit Notes & Installments</h2>
-                            <p className="text-gray-400 text-sm mt-1">Manage long-term supplier liabilities and payment schedules.</p>
+                            <h2 className="text-3xl font-bold gradient-text">{t('debit_notes_title')}</h2>
+                            <p className="text-gray-400 text-sm mt-1">{t('debit_notes_subtitle')}</p>
                         </div>
                     </div>
 
@@ -102,7 +97,7 @@ export default function DebitNotesPage() {
                         className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
                     >
                         <Plus size={20} />
-                        <span>New Debit Note</span>
+                        <span>{t('new_debit_note')}</span>
                     </button>
                 </header>
 
@@ -127,31 +122,31 @@ export default function DebitNotesPage() {
                                     <div>
                                         <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
                                             <FileText size={14} className="text-accent" />
-                                            Debit Note #{dn.id.substring(0, 8)}
+                                            {t('debit_note_prefix')}{dn.id.substring(0, 8)}
                                         </div>
-                                        <h3 className="text-xl font-bold text-white">{supplier?.name || 'Unknown Supplier'}</h3>
-                                        <p className="text-sm text-gray-400 mt-1">{dn.description || 'No description provided'}</p>
+                                        <h3 className="text-xl font-bold text-white">{supplier?.name || t('unknown_supplier')}</h3>
+                                        <p className="text-sm text-gray-400 mt-1">{dn.description || t('no_description_provided')}</p>
                                     </div>
                                     <div className="text-right">
-                                        <div className="text-xs font-bold text-gray-500 uppercase mb-1">Total Liability</div>
-                                        <div className="text-2xl font-bold text-accent">{Number(dn.total_amount).toLocaleString()} EGP</div>
+                                        <div className="text-xs font-bold text-gray-500 uppercase mb-1">{t('total_liability')}</div>
+                                        <div className="text-2xl font-bold text-accent">{Number(dn.total_amount).toLocaleString()} {t('egp')}</div>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-4 gap-6 mb-6">
                                     <div className="p-4 rounded-xl bg-white/5 border border-border-custom text-center">
-                                        <div className="text-[10px] font-bold text-gray-500 uppercase mb-1">Installments</div>
-                                        <div className="font-bold text-white uppercase text-sm">{paidInstallments.length} / {dn.num_installments} Paid</div>
+                                        <div className="text-[10px] font-bold text-gray-500 uppercase mb-1">{t('installments')}</div>
+                                        <div className="font-bold text-white uppercase text-sm">{paidInstallments.length} / {dn.num_installments} {t('paid')}</div>
                                     </div>
                                     <div className="p-4 rounded-xl bg-white/5 border border-border-custom text-center">
-                                        <div className="text-[10px] font-bold text-gray-500 uppercase mb-1">Status</div>
+                                        <div className="text-[10px] font-bold text-gray-500 uppercase mb-1">{t('status')}</div>
                                         <div className={`font-bold uppercase text-[10px] ${dn.status === 'Active' ? 'text-amber-400' : 'text-emerald-400'}`}>
-                                            {dn.status}
+                                            {dn.status === 'Active' ? t('active_status') : t('completed')}
                                         </div>
                                     </div>
                                     <div className="p-4 rounded-xl bg-white/5 border border-border-custom text-center col-span-2">
                                         <div className="flex justify-between items-center mb-2">
-                                            <span className="text-[10px] font-bold text-gray-500 uppercase">Payment Progress</span>
+                                            <span className="text-[10px] font-bold text-gray-500 uppercase">{t('payment_progress')}</span>
                                             <span className="text-[10px] font-bold text-accent">{Math.round(progress)}%</span>
                                         </div>
                                         <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden shadow-inner">
@@ -169,8 +164,8 @@ export default function DebitNotesPage() {
                                             key={ins.id}
                                             className={`p-3 rounded-xl border flex flex-col items-center gap-1 min-w-[100px] transition-all ${ins.status === 'Paid' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-white/5 border-border-custom text-gray-400 hover:border-accent/40 hover:bg-white/10 cursor-pointer'}`}
                                         >
-                                            <span className="text-[8px] font-bold uppercase tracking-tighter">PMT {idx + 1}</span>
-                                            <div className="font-bold text-xs">{Number(ins.amount).toLocaleString()}</div>
+                                            <span className="text-[8px] font-bold uppercase tracking-tighter">{t('pmt_label')} {idx + 1}</span>
+                                            <div className="font-bold text-xs">{Number(ins.amount).toLocaleString()} {t('egp')}</div>
                                             <div className="text-[8px] opacity-60 flex items-center gap-1 uppercase">
                                                 {ins.status === 'Paid' ? <CheckCircle2 size={8} /> : <Clock size={8} />}
                                                 {new Date(ins.due_date).toLocaleDateString()}
@@ -178,7 +173,7 @@ export default function DebitNotesPage() {
                                         </div>
                                     ))}
                                     {dnInstallments.length === 0 && (
-                                        <div className="text-xs text-gray-500 italic">Installments will appear here once synchronized.</div>
+                                        <div className="text-xs text-gray-500 italic">{t('installments_sync_msg')}</div>
                                     )}
                                 </div>
                             </motion.div>
@@ -190,8 +185,8 @@ export default function DebitNotesPage() {
                             <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center text-accent mx-auto mb-6">
                                 <FileText size={32} />
                             </div>
-                            <h3 className="text-xl font-bold mb-2">No active Debit Notes</h3>
-                            <p className="text-gray-400 max-w-sm mx-auto mb-8">You haven't added any supplier liabilities or payment schedules yet.</p>
+                            <h3 className="text-xl font-bold mb-2">{t('no_active_debit_notes')}</h3>
+                            <p className="text-gray-400 max-w-sm mx-auto mb-8">{t('no_debit_notes_desc')}</p>
                         </div>
                     )}
                 </div>
@@ -199,27 +194,27 @@ export default function DebitNotesPage() {
                 <ERPFormModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
-                    title="New Supplier Liability (Debit Note)"
+                    title={t('new_supplier_liability')}
                     onSubmit={handleSaveDebitNote}
                     loading={isSubmitting}
                 >
                     <div className="grid grid-cols-2 gap-6">
                         <div className="flex flex-col gap-2 col-span-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Supplier</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('supplier')}</label>
                             <select
                                 value={formData.supplier_id}
                                 onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm w-full"
                                 required
                             >
-                                <option value="">Select a supplier...</option>
+                                <option value="">{t('select_supplier')}</option>
                                 {suppliers.map((s: any) => (
                                     <option key={s.id} value={s.id}>{s.name}</option>
                                 ))}
                             </select>
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Total Amount (EGP)</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('total_amount_egp')}</label>
                             <div className="relative">
                                 <DollarSign size={16} className="absolute left-3 top-3.5 text-gray-500" />
                                 <input
@@ -232,7 +227,7 @@ export default function DebitNotesPage() {
                             </div>
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Number of Payments</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('number_of_payments')}</label>
                             <div className="relative">
                                 <Hash size={16} className="absolute left-3 top-3.5 text-gray-500" />
                                 <input
@@ -245,7 +240,7 @@ export default function DebitNotesPage() {
                             </div>
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">First Payment Date</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('first_payment_date')}</label>
                             <div className="relative">
                                 <Calendar size={16} className="absolute left-3 top-3.5 text-gray-500" />
                                 <input
@@ -257,12 +252,12 @@ export default function DebitNotesPage() {
                             </div>
                         </div>
                         <div className="flex flex-col gap-2 col-span-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Liability Description</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('liability_description')}</label>
                             <textarea
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm w-full h-24 shadow-inner resize-none"
-                                placeholder="E.g. Purchase of 100 units on credit..."
+                                placeholder={t('liability_description_placeholder')}
                             />
                         </div>
                     </div>

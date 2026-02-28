@@ -7,15 +7,17 @@ import {
     ShoppingCart, ShieldAlert, ChevronRight
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function PurchasingDashboard() {
+    const { t } = useLanguage();
     const tabs = [
-        { name: 'Purchase Requests', icon: FileText, href: '/purchasing/requests' },
-        { name: 'Request for Quotations', icon: ClipboardList, href: '/purchasing/rfq' },
-        { name: 'Purchase Quotations', icon: ShieldAlert, href: '/purchasing/quotations' },
-        { name: 'Purchase Orders', icon: ShoppingCart, href: '/purchasing/orders' },
-        { name: 'Purchase Invoices', icon: Receipt, href: '/purchasing/invoices' },
-        { name: 'Purchase Returns', icon: ArrowRightLeft, href: '/purchasing/returns' },
+        { name: t('purchase_requests'), icon: FileText, href: '/purchasing/requests' },
+        { name: t('rfqs'), icon: ClipboardList, href: '/purchasing/rfq' },
+        { name: t('purchase_quotations'), icon: ShieldAlert, href: '/purchasing/quotations' },
+        { name: t('purchase_orders'), icon: ShoppingCart, href: '/purchasing/orders' },
+        { name: t('purchase_invoices'), icon: Receipt, href: '/purchasing/invoices' },
+        { name: t('purchase_returns'), icon: ArrowRightLeft, href: '/purchasing/returns' },
     ];
 
     return (
@@ -24,8 +26,8 @@ export default function PurchasingDashboard() {
 
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Purchasing Cycle</h1>
-                    <p className="text-gray-400">Manage procurement, orders, and purchase returns.</p>
+                    <h1 className="text-3xl font-bold text-white tracking-tight mb-2">{t('purchasing_cycle')}</h1>
+                    <p className="text-gray-400">{t('purchasing_cycle_desc')}</p>
                 </div>
 
                 {/* Tab List */}

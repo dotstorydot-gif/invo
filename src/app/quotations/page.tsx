@@ -62,7 +62,7 @@ export default function QuotationsPage() {
 
     const handleAddQuotation = async () => {
         if (!formData.title || !formData.client_id || formData.amount <= 0) {
-            alert("Please fill in required fields (Title, Client, Amount)");
+            alert(t('fill_required_fields') || "Please fill in required fields (Title, Client, Amount)");
             return;
         }
 
@@ -95,7 +95,7 @@ export default function QuotationsPage() {
             });
         } catch (error) {
             console.error("Error adding quotation:", error);
-            alert("Failed to save quotation.");
+            alert(t('save_failed') || "Failed to save quotation.");
         } finally {
             setIsSubmitting(false);
         }
@@ -123,8 +123,8 @@ export default function QuotationsPage() {
                             <ArrowLeft size={20} />
                         </Link>
                         <div>
-                            <h2 className="text-3xl font-bold gradient-text">Client Quotations</h2>
-                            <p className="text-gray-400 text-sm mt-1">Manage proposals and recurring service contracts</p>
+                            <h2 className="text-3xl font-bold gradient-text">{t('client_quotations')}</h2>
+                            <p className="text-gray-400 text-sm mt-1">{t('quotations_subtitle')}</p>
                         </div>
                     </div>
 
@@ -133,7 +133,7 @@ export default function QuotationsPage() {
                             <Search size={18} className="text-gray-400" />
                             <input
                                 type="text"
-                                placeholder="Search quotes..."
+                                placeholder={t('search_quotes')}
                                 className="bg-transparent border-none outline-none text-sm w-full"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -144,7 +144,7 @@ export default function QuotationsPage() {
                             className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
                         >
                             <Plus size={20} />
-                            <span>New Quotation</span>
+                            <span>{t('new_quotation')}</span>
                         </button>
                     </div>
                 </header>
@@ -154,23 +154,23 @@ export default function QuotationsPage() {
                         <table className="w-full text-left">
                             <thead>
                                 <tr className="border-b border-border-custom bg-white/5">
-                                    <th className="p-6 text-xs font-bold uppercase text-gray-500">Proposal</th>
-                                    <th className="p-6 text-xs font-bold uppercase text-gray-500">Client / Account</th>
-                                    <th className="p-6 text-xs font-bold uppercase text-gray-500 text-right">Amount</th>
-                                    <th className="p-6 text-xs font-bold uppercase text-gray-500">Billing</th>
-                                    <th className="p-6 text-xs font-bold uppercase text-gray-500">Status</th>
-                                    <th className="p-6 text-xs font-bold uppercase text-gray-500">Valid Until</th>
-                                    <th className="p-6 text-xs font-bold uppercase text-gray-500 text-center">Actions</th>
+                                    <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('proposal')}</th>
+                                    <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('client_account')}</th>
+                                    <th className="p-6 text-xs font-bold uppercase text-gray-500 text-right">{t('cash_amount')}</th>
+                                    <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('billing')}</th>
+                                    <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('status')}</th>
+                                    <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('valid_until')}</th>
+                                    <th className="p-6 text-xs font-bold uppercase text-gray-500 text-center">{t('actions')}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={7} className="p-10 text-center text-gray-500 italic">Syncing proposals...</td>
+                                        <td colSpan={7} className="p-10 text-center text-gray-500 italic">{t('syncing_proposals')}</td>
                                     </tr>
                                 ) : filteredQuotations.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="p-10 text-center text-gray-500 italic">No quotations found. Start by creating one!</td>
+                                        <td colSpan={7} className="p-10 text-center text-gray-500 italic">{t('no_quotations_found')}</td>
                                     </tr>
                                 ) : filteredQuotations.map((quote) => {
                                     const client = clients.find(c => c.id === quote.client_id);
@@ -210,22 +210,22 @@ export default function QuotationsPage() {
                                                 {quote.is_recurring ? (
                                                     <div className="flex items-center gap-2 text-xs font-bold text-purple-400 bg-purple-500/10 px-2 py-1 rounded-lg w-fit">
                                                         <Repeat size={12} />
-                                                        {quote.billing_cycle}
+                                                        {t(quote.billing_cycle.toLowerCase()) || quote.billing_cycle}
                                                     </div>
                                                 ) : (
-                                                    <span className="text-xs text-gray-500">One-time</span>
+                                                    <span className="text-xs text-gray-500">{t('one_time')}</span>
                                                 )}
                                             </td>
                                             <td className="p-6">
                                                 <div className={`flex items-center gap-2 text-[10px] font-bold uppercase px-3 py-1 rounded-full border w-fit ${quote.status === 'Accepted' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                                                        quote.status === 'Rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                                            quote.status === 'Sent' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                                                'bg-gray-500/10 text-gray-400 border-white/5'
+                                                    quote.status === 'Rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                                                        quote.status === 'Sent' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                                            'bg-gray-500/10 text-gray-400 border-white/5'
                                                     }`}>
                                                     {quote.status === 'Accepted' && <CheckCircle2 size={10} />}
                                                     {quote.status === 'Sent' && <Clock size={10} />}
                                                     {quote.status === 'Rejected' && <XCircle size={10} />}
-                                                    {quote.status || 'Draft'}
+                                                    {t(quote.status?.toLowerCase()) || quote.status || t('draft')}
                                                 </div>
                                             </td>
                                             <td className="p-6">
@@ -239,7 +239,7 @@ export default function QuotationsPage() {
                                                     <button
                                                         onClick={() => updateStatus(quote.id, 'Accepted')}
                                                         className="p-2 text-gray-500 hover:text-emerald-400 transition-all"
-                                                        title="Mark Accepted"
+                                                        title={t('mark_accepted')}
                                                     >
                                                         <CheckCircle2 size={18} />
                                                     </button>
@@ -259,30 +259,30 @@ export default function QuotationsPage() {
                 <ERPFormModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
-                    title="New Client Quotation"
+                    title={t('new_client_quotation')}
                     onSubmit={handleAddQuotation}
                     loading={isSubmitting}
                 >
                     <div className="grid grid-cols-2 gap-6">
                         <div className="flex flex-col gap-2 col-span-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Title / Proposal Name</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('proposal_name')}</label>
                             <input
                                 type="text"
                                 value={formData.title}
                                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                                placeholder="e.g. SEO & Content Bundle - Q1"
+                                placeholder={t('scope_placeholder').includes('e.g.') ? t('scope_placeholder') : "e.g. SEO & Content Bundle - Q1"}
                             />
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Select Client</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('select_client')}</label>
                             <select
                                 value={formData.client_id}
                                 onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                             >
-                                <option value="">-- Choose Client --</option>
+                                <option value="">{t('choose_client')}</option>
                                 {clients.map((c: any) => (
                                     <option key={c.id} value={c.id}>{c.full_name}</option>
                                 ))}
@@ -290,13 +290,13 @@ export default function QuotationsPage() {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Related Project / Account</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('related_project')}</label>
                             <select
                                 value={formData.project_id}
                                 onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                             >
-                                <option value="">-- Optional Account --</option>
+                                <option value="">{t('optional_account')}</option>
                                 {projects.map((p: any) => (
                                     <option key={p.id} value={p.id}>{p.name}</option>
                                 ))}
@@ -304,7 +304,7 @@ export default function QuotationsPage() {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Quoted Amount (EGP)</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('quoted_amount')} (EGP)</label>
                             <input
                                 type="number"
                                 value={formData.amount}
@@ -314,7 +314,7 @@ export default function QuotationsPage() {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Valid Until</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('valid_until')}</label>
                             <input
                                 type="date"
                                 value={formData.valid_until}
@@ -325,7 +325,7 @@ export default function QuotationsPage() {
 
                         <div className="flex flex-col gap-2 col-span-2 p-4 bg-white/5 rounded-xl border border-white/5">
                             <div className="flex items-center justify-between mb-4">
-                                <label className="text-xs font-bold text-gray-500 uppercase">Recurring Billing</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase">{t('recurring_billing')}</label>
                                 <button
                                     type="button"
                                     onClick={() => setFormData({ ...formData, is_recurring: !formData.is_recurring })}
@@ -338,18 +338,18 @@ export default function QuotationsPage() {
                             {formData.is_recurring && (
                                 <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-[10px] font-bold text-gray-500 uppercase">Cycle</label>
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase">{t('cycle')}</label>
                                         <select
                                             value={formData.billing_cycle}
                                             onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value })}
                                             className="bg-background border-border-custom p-2 rounded-lg outline-none text-xs"
                                         >
-                                            <option value="Monthly">Monthly</option>
-                                            <option value="Yearly">Yearly</option>
+                                            <option value="Monthly">{t('monthly')}</option>
+                                            <option value="Yearly">{t('yearly')}</option>
                                         </select>
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-[10px] font-bold text-gray-500 uppercase">Terms</label>
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase">{t('terms')}</label>
                                         <input
                                             type="text"
                                             value={formData.payment_terms}
@@ -363,12 +363,12 @@ export default function QuotationsPage() {
                         </div>
 
                         <div className="flex flex-col gap-2 col-span-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Brief Description / Scope</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('brief_description')}</label>
                             <textarea
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm h-24"
-                                placeholder="Outline the services included..."
+                                placeholder={t('scope_placeholder')}
                             />
                         </div>
                     </div>

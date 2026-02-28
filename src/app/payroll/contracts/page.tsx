@@ -33,7 +33,7 @@ export default function PayrollContractsPage() {
     });
 
     const handleSaveContract = async () => {
-        if (!formData.staff_id) return alert("Please select an employee");
+        if (!formData.staff_id) return alert(t('select_employee_error'));
         try {
             setIsSubmitting(true);
             await upsert({
@@ -44,7 +44,7 @@ export default function PayrollContractsPage() {
             resetForm();
         } catch (error) {
             console.error("Error saving contract:", error);
-            alert("Failed to save contract.");
+            alert(t('save_contract_failed'));
         } finally {
             setIsSubmitting(false);
         }
@@ -88,8 +88,8 @@ export default function PayrollContractsPage() {
                             <ArrowLeft size={20} />
                         </Link>
                         <div>
-                            <h2 className="text-3xl font-bold gradient-text">Employee Contracts</h2>
-                            <p className="text-gray-400 text-sm mt-1">Formalize tasks, salary terms and service management</p>
+                            <h2 className="text-3xl font-bold gradient-text">{t('employee_contracts')}</h2>
+                            <p className="text-gray-400 text-sm mt-1">{t('employee_contracts_subtitle')}</p>
                         </div>
                     </div>
 
@@ -98,7 +98,7 @@ export default function PayrollContractsPage() {
                             <Search size={18} className="text-gray-400" />
                             <input
                                 type="text"
-                                placeholder="Search contracts..."
+                                placeholder={t('search_contracts_placeholder')}
                                 className="bg-transparent border-none outline-none text-sm w-full"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -109,7 +109,7 @@ export default function PayrollContractsPage() {
                             className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
                         >
                             <Plus size={20} />
-                            <span>Create Contract</span>
+                            <span>{t('create_contract')}</span>
                         </button>
                     </div>
                 </header>
@@ -122,7 +122,7 @@ export default function PayrollContractsPage() {
                     ) : filteredContracts.length === 0 ? (
                         <div className="col-span-full py-20 text-center glass border-dashed border-2 border-border-custom">
                             <Briefcase size={40} className="mx-auto text-gray-600 mb-4" />
-                            <p className="text-gray-500 italic">No contracts found. Start by creating one.</p>
+                            <p className="text-gray-500 italic">{t('no_contracts_found')}</p>
                         </div>
                     ) : filteredContracts.map((contract: any) => {
                         const employee = staff.find(s => s.id === contract.staff_id);
@@ -139,9 +139,9 @@ export default function PayrollContractsPage() {
                                             </div>
                                             <div>
                                                 <h4 className="font-bold text-white group-hover:text-accent transition-colors">
-                                                    {employee?.full_name || "Unknown Staff"}
+                                                    {employee?.full_name || t('unknown_staff')}
                                                 </h4>
-                                                <p className="text-[10px] uppercase tracking-widest text-gray-500">{contract.employment_type}</p>
+                                                <p className="text-[10px] uppercase tracking-widest text-gray-500">{contract.employment_type === 'Full Time' ? t('full_time') : contract.employment_type === 'Part Time' ? t('part_time') : contract.employment_type === 'Contractor' ? t('contractor') : t('temporary')}</p>
                                             </div>
                                         </div>
                                         <div className="flex gap-2">
@@ -197,51 +197,51 @@ export default function PayrollContractsPage() {
                 <ERPFormModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
-                    title={formData.id ? "Edit Contract" : "New Employment Contract"}
+                    title={formData.id ? t('edit_contract') : t('new_employment_contract')}
                     onSubmit={handleSaveContract}
                     loading={isSubmitting}
                 >
                     <div className="grid grid-cols-2 gap-4">
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Employee</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('employee')}</label>
                             <select
                                 value={formData.staff_id}
                                 onChange={(e) => setFormData({ ...formData, staff_id: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm text-white"
                             >
-                                <option value="" className="bg-background">Select Staff</option>
+                                <option value="" className="bg-background">{t('select_staff_placeholder')}</option>
                                 {staff.map((s: any) => (
                                     <option key={s.id} value={s.id} className="bg-background">{s.full_name}</option>
                                 ))}
                             </select>
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Employment Type</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('employment_type')}</label>
                             <select
                                 value={formData.employment_type}
                                 onChange={(e) => setFormData({ ...formData, employment_type: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm text-white"
                             >
-                                <option value="Full Time" className="bg-background">Full Time</option>
-                                <option value="Part Time" className="bg-background">Part Time</option>
-                                <option value="Contractor" className="bg-background">Contractor</option>
-                                <option value="Temporary" className="bg-background">Temporary</option>
+                                <option value="Full Time" className="bg-background">{t('full_time')}</option>
+                                <option value="Part Time" className="bg-background">{t('part_time')}</option>
+                                <option value="Contractor" className="bg-background">{t('contractor')}</option>
+                                <option value="Temporary" className="bg-background">{t('temporary')}</option>
                             </select>
                         </div>
 
                         <div className="flex flex-col col-span-2 gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Primary Tasks / Responsibilities</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('primary_tasks_label')}</label>
                             <textarea
                                 value={formData.tasks}
                                 onChange={(e) => setFormData({ ...formData, tasks: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm text-white"
-                                placeholder="Core duties and expected deliverables..."
+                                placeholder={t('primary_tasks_placeholder')}
                                 rows={2}
                             />
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Base Monthly Salary (EGP)</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('base_monthly_salary_egp')}</label>
                             <input
                                 type="number"
                                 value={formData.base_salary}
@@ -250,7 +250,7 @@ export default function PayrollContractsPage() {
                             />
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Yearly Increase (%)</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('yearly_increase_label')}</label>
                             <input
                                 type="number"
                                 value={formData.yearly_increase_percent}
@@ -260,13 +260,13 @@ export default function PayrollContractsPage() {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Managed Service (Optional)</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('managed_service_optional')}</label>
                             <select
                                 value={formData.service_id}
                                 onChange={(e) => setFormData({ ...formData, service_id: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm text-white"
                             >
-                                <option value="" className="bg-background">No Service Responsibility</option>
+                                <option value="" className="bg-background">{t('no_service_responsibility')}</option>
                                 {services.map((s: any) => (
                                     <option key={s.id} value={s.id} className="bg-background">{s.name}</option>
                                 ))}
@@ -274,7 +274,7 @@ export default function PayrollContractsPage() {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Start Date</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('start_date_label')}</label>
                             <input
                                 type="date"
                                 value={formData.start_date}
@@ -284,7 +284,7 @@ export default function PayrollContractsPage() {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">End Date (Optional)</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('end_date_optional')}</label>
                             <input
                                 type="date"
                                 value={formData.end_date}

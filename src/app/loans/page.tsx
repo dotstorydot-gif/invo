@@ -115,8 +115,8 @@ export default function LoansPage() {
                             <ArrowLeft size={20} />
                         </Link>
                         <div>
-                            <h2 className="text-3xl font-bold gradient-text">Loan Management</h2>
-                            <p className="text-gray-400 text-sm mt-1">Track internal & external loans and advances</p>
+                            <h2 className="text-3xl font-bold gradient-text">{t('loan_management')}</h2>
+                            <p className="text-gray-400 text-sm mt-1">{t('loans_subtitle')}</p>
                         </div>
                     </div>
 
@@ -125,7 +125,7 @@ export default function LoansPage() {
                         className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
                     >
                         <Plus size={20} />
-                        <span>Issue Loan</span>
+                        <span>{t('issue_loan')}</span>
                     </button>
                 </header>
 
@@ -133,32 +133,32 @@ export default function LoansPage() {
                     <div className="glass p-6 border-accent/20 bg-accent/5 col-span-1">
                         <div className="flex items-center gap-3 text-accent mb-4">
                             <Activity size={24} />
-                            <span className="text-xs font-bold uppercase tracking-widest">Outstanding Balance</span>
+                            <span className="text-xs font-bold uppercase tracking-widest">{t('outstanding_balance')}</span>
                         </div>
                         <div className="text-4xl font-bold">{totalActiveLoans.toLocaleString()} EGP</div>
                         <div className="text-[10px] text-gray-400 mt-2 flex items-center gap-1">
                             <TrendingUp size={12} className="text-accent" />
-                            Total active loan debt currently payable
+                            {t('active_loans_debt_desc')}
                         </div>
                     </div>
 
                     <div className="glass p-6 border-border-custom md:col-span-2 flex flex-col justify-center">
                         <div className="flex items-center gap-3 text-gray-400 mb-2">
                             <Users size={18} />
-                            <span className="text-xs font-bold uppercase tracking-widest">Active Accounts ({loans.filter(l => l.status === 'Active').length})</span>
+                            <span className="text-xs font-bold uppercase tracking-widest">{t('active_accounts')} ({loans.filter(l => l.status === 'Active').length})</span>
                         </div>
-                        <p className="text-sm text-gray-500">Manage payment status, balances, and track linking through the Treasury (Stash) module.</p>
+                        <p className="text-sm text-gray-500">{t('loans_manage_desc')}</p>
                     </div>
                 </div>
 
                 <div className="glass overflow-hidden border-border-custom">
                     <div className="p-6 border-b border-border-custom flex justify-between items-center bg-white/5">
                         <h3 className="font-bold text-xl flex items-center gap-2">
-                            Loan Accounts
+                            {t('loan_accounts')}
                         </h3>
                         <div className="glass flex items-center px-4 py-2 gap-3 w-64 border-border-custom bg-background">
                             <Search size={18} className="text-gray-400" />
-                            <input type="text" placeholder="Search loans..." className="bg-transparent border-none outline-none text-sm w-full" />
+                            <input type="text" placeholder={t('search_loans')} className="bg-transparent border-none outline-none text-sm w-full" />
                         </div>
                     </div>
 
@@ -166,18 +166,18 @@ export default function LoansPage() {
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-white/5 border-b border-border-custom">
-                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">Borrower</th>
-                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">Start Date</th>
-                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">Principal</th>
-                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">Paid</th>
-                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">Remaining Balance</th>
-                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">Status</th>
-                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">Actions</th>
+                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">{t('borrower')}</th>
+                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">{t('start_date')}</th>
+                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">{t('principal')}</th>
+                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">{t('paid')}</th>
+                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">{t('remaining_balance')}</th>
+                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">{t('status')}</th>
+                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">{t('actions')}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {loading ? (
-                                    <tr><td colSpan={7} className="p-10 text-center italic text-gray-500">Loading loans data...</td></tr>
+                                    <tr><td colSpan={7} className="p-10 text-center italic text-gray-500">{t('loading_loans')}</td></tr>
                                 ) : (
                                     loans.map((loan) => {
                                         const remaining = (Number(loan.principal_amount) || 0) - (Number(loan.amount_paid) || 0);
@@ -206,7 +206,7 @@ export default function LoansPage() {
                                                 </td>
                                                 <td className="p-4 text-sm">
                                                     <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${loan.status === 'Paid Off' ? 'bg-emerald-500/10 text-emerald-500' : loan.status === 'Defaulted' ? 'bg-red-500/10 text-red-500' : 'bg-blue-500/10 text-blue-400'}`}>
-                                                        {loan.status}
+                                                        {t(loan.status?.toLowerCase().replace(' ', '_')) || loan.status}
                                                     </span>
                                                 </td>
                                                 <td className="p-4 text-sm" onClick={(e) => e.stopPropagation()}>
@@ -231,24 +231,24 @@ export default function LoansPage() {
                 <ERPFormModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
-                    title={editingId ? "Update Loan Account" : "Issue New Loan"}
+                    title={editingId ? t('update_loan_account') : t('issue_new_loan')}
                     onSubmit={handleSave}
                     loading={isSubmitting}
                 >
                     <div className="grid grid-cols-2 gap-6">
                         <div className="flex flex-col gap-2 col-span-2 md:col-span-1">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Borrower Name</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('borrower_name')}</label>
                             <input
                                 type="text"
                                 value={formData.borrower_name}
                                 onChange={(e) => setFormData({ ...formData, borrower_name: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                                placeholder="Individual or Company Name"
+                                placeholder={t('borrower_name')}
                                 required
                             />
                         </div>
                         <div className="flex flex-col gap-2 col-span-2 md:col-span-1">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Principal Amount (EGP)</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('principal_amount')} (EGP)</label>
                             <input
                                 type="number"
                                 value={formData.principal_amount}
@@ -258,7 +258,7 @@ export default function LoansPage() {
                             />
                         </div>
                         <div className="flex flex-col gap-2 col-span-2 md:col-span-1">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Term limit (Months)</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('term_limit')}</label>
                             <input
                                 type="number"
                                 value={formData.term_months}
@@ -267,7 +267,7 @@ export default function LoansPage() {
                             />
                         </div>
                         <div className="flex flex-col gap-2 col-span-2 md:col-span-1">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Start Date</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('start_date')}</label>
                             <input
                                 type="date"
                                 value={formData.start_date}
@@ -277,29 +277,29 @@ export default function LoansPage() {
                         </div>
 
                         <div className="flex flex-col gap-2 col-span-2 border-t border-white/5 pt-4">
-                            <h4 className="text-xs font-bold text-accent uppercase mb-2">Loan Progress</h4>
+                            <h4 className="text-xs font-bold text-accent uppercase mb-2">{t('loan_progress')}</h4>
                         </div>
 
                         <div className="flex flex-col gap-2 col-span-2 md:col-span-1">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Total Amount Paid Back (EGP)</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('total_paid_back')} (EGP)</label>
                             <input
                                 type="number"
                                 value={formData.amount_paid}
                                 onChange={(e) => setFormData({ ...formData, amount_paid: Number(e.target.value) })}
                                 className="glass bg-emerald-500/5 text-emerald-400 border-emerald-500/20 p-3 rounded-xl outline-none focus:border-emerald-400 transition-all text-sm font-bold"
                             />
-                            <p className="text-[10px] text-gray-500 mt-1">Update this when linking Stash inflows to this loan account.</p>
+                            <p className="text-[10px] text-gray-500 mt-1">{t('linking_stash_hint')}</p>
                         </div>
                         <div className="flex flex-col gap-2 col-span-2 md:col-span-1">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Status</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('status')}</label>
                             <select
                                 value={formData.status}
                                 onChange={(e) => setFormData({ ...formData, status: e.target.value as 'Active' | 'Paid Off' | 'Defaulted' })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                             >
-                                <option value="Active">Active</option>
-                                <option value="Paid Off">Paid Off</option>
-                                <option value="Defaulted">Defaulted</option>
+                                <option value="Active">{t('active')}</option>
+                                <option value="Paid Off">{t('paid_off')}</option>
+                                <option value="Defaulted">{t('defaulted')}</option>
                             </select>
                         </div>
                     </div>

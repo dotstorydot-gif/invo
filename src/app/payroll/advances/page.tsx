@@ -29,8 +29,8 @@ export default function SalaryAdvancesPage() {
     });
 
     const handleSaveAdvance = async () => {
-        if (!formData.staff_id) return alert("Please select an employee");
-        if (formData.amount <= 0) return alert("Amount must be greater than 0");
+        if (!formData.staff_id) return alert(t('select_employee_error'));
+        if (formData.amount <= 0) return alert(t('amount_greater_than_zero_error'));
         try {
             setIsSubmitting(true);
             await upsert(formData);
@@ -38,7 +38,7 @@ export default function SalaryAdvancesPage() {
             resetForm();
         } catch (error) {
             console.error("Error saving advance:", error);
-            alert("Failed to save advance request.");
+            alert(t('save_advance_failed'));
         } finally {
             setIsSubmitting(false);
         }
@@ -64,7 +64,7 @@ export default function SalaryAdvancesPage() {
         try {
             await upsert({ ...adv, status: newStatus });
         } catch (error) {
-            alert("Failed to update status.");
+            alert(t('update_status_failed'));
         }
     };
 
@@ -90,8 +90,8 @@ export default function SalaryAdvancesPage() {
                             <ArrowLeft size={20} />
                         </Link>
                         <div>
-                            <h2 className="text-3xl font-bold gradient-text">Salary Advances</h2>
-                            <p className="text-gray-400 text-sm mt-1">Manage employee loan requests and repayment schedules</p>
+                            <h2 className="text-3xl font-bold gradient-text">{t('salary_advances')}</h2>
+                            <p className="text-gray-400 text-sm mt-1">{t('salary_advances_subtitle')}</p>
                         </div>
                     </div>
 
@@ -100,7 +100,7 @@ export default function SalaryAdvancesPage() {
                             <Search size={18} className="text-gray-400" />
                             <input
                                 type="text"
-                                placeholder="Search advances..."
+                                placeholder={t('search_advances_placeholder')}
                                 className="bg-transparent border-none outline-none text-sm w-full"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -111,7 +111,7 @@ export default function SalaryAdvancesPage() {
                             className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
                         >
                             <Plus size={20} />
-                            <span>Request Advance</span>
+                            <span>{t('request_advance')}</span>
                         </button>
                     </div>
                 </header>
@@ -120,19 +120,19 @@ export default function SalaryAdvancesPage() {
                     <table className="w-full text-left font-medium">
                         <thead>
                             <tr className="border-b border-border-custom bg-white/5">
-                                <th className="p-6 text-xs font-bold uppercase text-gray-500 tracking-widest">Employee</th>
-                                <th className="p-6 text-xs font-bold uppercase text-gray-500 tracking-widest">Amount</th>
-                                <th className="p-6 text-xs font-bold uppercase text-gray-500 tracking-widest">Repayment Starts</th>
-                                <th className="p-6 text-xs font-bold uppercase text-gray-500 tracking-widest">Reason</th>
-                                <th className="p-6 text-xs font-bold uppercase text-gray-500 tracking-widest text-center">Status</th>
-                                <th className="p-6 text-xs font-bold uppercase text-gray-500 tracking-widest text-right">Actions</th>
+                                <th className="p-6 text-xs font-bold uppercase text-gray-500 tracking-widest">{t('employee')}</th>
+                                <th className="p-6 text-xs font-bold uppercase text-gray-500 tracking-widest">{t('amount')}</th>
+                                <th className="p-6 text-xs font-bold uppercase text-gray-500 tracking-widest">{t('repayment_starts')}</th>
+                                <th className="p-6 text-xs font-bold uppercase text-gray-500 tracking-widest">{t('reason')}</th>
+                                <th className="p-6 text-xs font-bold uppercase text-gray-500 tracking-widest text-center">{t('status_label')}</th>
+                                <th className="p-6 text-xs font-bold uppercase text-gray-500 tracking-widest text-right">{t('actions')}</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan={6} className="p-10 text-center text-gray-500 animate-pulse">Syncing advance records...</td></tr>
+                                <tr><td colSpan={6} className="p-10 text-center text-gray-500 animate-pulse">{t('syncing_advances')}</td></tr>
                             ) : filteredAdvances.length === 0 ? (
-                                <tr><td colSpan={6} className="p-10 text-center text-gray-500 italic">No advance requests found.</td></tr>
+                                <tr><td colSpan={6} className="p-10 text-center text-gray-500 italic">{t('no_advance_requests_found')}</td></tr>
                             ) : filteredAdvances.map((adv: any) => {
                                 const emp = staff.find(s => s.id === adv.staff_id);
                                 return (
@@ -192,7 +192,7 @@ export default function SalaryAdvancesPage() {
                 <ERPFormModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
-                    title={formData.id ? "Edit Advance Record" : "New Advance Request"}
+                    title={formData.id ? t('edit_advance_record') : t('new_advance_request')}
                     onSubmit={handleSaveAdvance}
                     loading={isSubmitting}
                 >

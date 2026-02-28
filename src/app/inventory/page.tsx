@@ -82,7 +82,7 @@ export default function InventoryPage() {
             });
         } catch (error) {
             console.error("Error adding inventory item:", error);
-            alert("Failed to add inventory item.");
+            alert(t('add_inventory_item_failed'));
         } finally {
             setIsSubmitting(false);
         }
@@ -180,7 +180,7 @@ export default function InventoryPage() {
                                                     <div className="text-[10px] text-gray-500">{item.description}</div>
                                                 </td>
                                                 <td className="p-4 text-sm font-mono text-accent">{item.code}</td>
-                                                <td className="p-4 text-sm font-bold">{(item.cost_price || 0).toLocaleString()} EGP</td>
+                                                <td className="p-4 text-sm font-bold">{(item.cost_price || 0).toLocaleString()} {t('egp')}</td>
                                                 <td className="p-4">
                                                     <div className="flex items-center gap-3">
                                                         <span className={`px-2 py-1 rounded text-xs font-bold ${item.quantity < item.stock_threshold ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500'}`}>

@@ -14,7 +14,6 @@ import {
   Edit2,
   Trash2
 } from "lucide-react";
-import { motion } from "framer-motion";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { useERPData } from "@/hooks/useERPData";
@@ -49,7 +48,7 @@ export default function SupplierDirectoryPage() {
       setFormData({ name: '', contact_name: '', email: '', phone: '', address: '' });
     } catch (error) {
       console.error("Error saving supplier:", error);
-      alert("Failed to save supplier.");
+      alert(t('save_failed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -76,8 +75,8 @@ export default function SupplierDirectoryPage() {
               <ArrowLeft size={20} />
             </Link>
             <div>
-              <h2 className="text-3xl font-bold gradient-text">Supplier Directory</h2>
-              <p className="text-gray-400 text-sm mt-1">Manage your logistics partners and product sources.</p>
+              <h2 className="text-3xl font-bold gradient-text">{t('supplier_directory_title')}</h2>
+              <p className="text-gray-400 text-sm mt-1">{t('supplier_directory_subtitle')}</p>
             </div>
           </div>
 
@@ -90,7 +89,7 @@ export default function SupplierDirectoryPage() {
             className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
           >
             <Plus size={20} />
-            <span>Add Supplier</span>
+            <span>{t('add_supplier')}</span>
           </button>
         </header>
 
@@ -99,11 +98,11 @@ export default function SupplierDirectoryPage() {
             <div className="p-6 border-b border-border-custom flex justify-between items-center bg-white/5">
               <div className="flex items-center gap-3">
                 <Users2 className="text-accent" />
-                <h3 className="text-xl font-bold">Logistics Partners</h3>
+                <h3 className="text-xl font-bold">{t('logistics_partners')}</h3>
               </div>
               <div className="glass flex items-center px-4 py-2 gap-3 w-64 border-border-custom bg-background shadow-inner">
                 <Search size={16} className="text-gray-400" />
-                <input type="text" placeholder="Search suppliers..." className="bg-transparent border-none outline-none text-xs w-full" />
+                <input type="text" placeholder={t('search_suppliers')} className="bg-transparent border-none outline-none text-xs w-full" />
               </div>
             </div>
 
@@ -111,16 +110,16 @@ export default function SupplierDirectoryPage() {
               <table className="w-full text-left">
                 <thead>
                   <tr className="border-b border-border-custom bg-white/2">
-                    <th className="p-6 text-xs font-bold uppercase text-gray-500">Supplier Name</th>
-                    <th className="p-6 text-xs font-bold uppercase text-gray-500">Contact Person</th>
-                    <th className="p-6 text-xs font-bold uppercase text-gray-500">Linked Products</th>
-                    <th className="p-6 text-xs font-bold uppercase text-gray-500">Contact Info</th>
-                    <th className="p-6 text-xs font-bold uppercase text-gray-500 text-right">Actions</th>
+                    <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('supplier_name_label')}</th>
+                    <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('contact_person')}</th>
+                    <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('linked_products')}</th>
+                    <th className="p-6 text-xs font-bold uppercase text-gray-500">{t('contact_info')}</th>
+                    <th className="p-6 text-xs font-bold uppercase text-gray-500 text-right">{t('actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td colSpan={5} className="p-10 text-center italic text-gray-500">Loading suppliers...</td></tr>
+                    <tr><td colSpan={5} className="p-10 text-center italic text-gray-500">{t('loading_suppliers')}</td></tr>
                   ) : suppliers.length > 0 ? (
                     suppliers.map((supplier: any) => (
                       <tr key={supplier.id} className="border-b border-border-custom hover:bg-white/5 transition-colors group">
@@ -131,12 +130,12 @@ export default function SupplierDirectoryPage() {
                             </div>
                             <div>
                               <div className="font-bold text-white">{supplier.name}</div>
-                              <div className="text-[10px] text-gray-500 uppercase tracking-widest">{supplier.address || 'No Address'}</div>
+                              <div className="text-[10px] text-gray-500 uppercase tracking-widest">{supplier.address || t('no_address')}</div>
                             </div>
                           </div>
                         </td>
                         <td className="p-6 text-sm text-gray-300">
-                          {supplier.contact_name || 'N/A'}
+                          {supplier.contact_name || t('not_applicable')}
                         </td>
                         <td className="p-6">
                           <div className="flex flex-wrap gap-2">
@@ -148,7 +147,7 @@ export default function SupplierDirectoryPage() {
                                 </span>
                               ))
                             ) : (
-                              <span className="text-[10px] text-gray-500 italic">No linked products</span>
+                              <span className="text-[10px] text-gray-500 italic">{t('no_linked_products')}</span>
                             )}
                             {inventory.filter((item: any) => item.supplier_id === supplier.id).length > 3 && (
                               <span className="text-[10px] text-accent font-bold">+{inventory.filter((item: any) => item.supplier_id === supplier.id).length - 3} more</span>
@@ -176,7 +175,7 @@ export default function SupplierDirectoryPage() {
                             <button onClick={() => handleEditSupplier(supplier)} className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-all">
                               <Edit2 size={16} />
                             </button>
-                            <button onClick={() => remove(supplier.id)} className="p-2 rounded-lg hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-all">
+                            <button onClick={() => { if (confirm(t('confirm_delete_supplier'))) remove(supplier.id); }} className="p-2 rounded-lg hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-all">
                               <Trash2 size={16} />
                             </button>
                           </div>
@@ -184,7 +183,7 @@ export default function SupplierDirectoryPage() {
                       </tr>
                     ))
                   ) : (
-                    <tr><td colSpan={5} className="p-20 text-center text-gray-500">No suppliers found. Add your first logistics partner.</td></tr>
+                    <tr><td colSpan={5} className="p-20 text-center text-gray-500">{t('no_suppliers_found_desc')}</td></tr>
                   )}
                 </tbody>
               </table>
@@ -195,24 +194,24 @@ export default function SupplierDirectoryPage() {
         <ERPFormModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          title={editingId ? "Edit Supplier" : "Add New Supplier"}
+          title={editingId ? t('edit_supplier') : t('add_new_supplier')}
           onSubmit={handleSaveSupplier}
           loading={isSubmitting}
         >
           <div className="grid grid-cols-2 gap-6">
             <div className="flex flex-col gap-2 col-span-2">
-              <label className="text-xs font-bold text-gray-500 uppercase">Supplier Company Name</label>
+              <label className="text-xs font-bold text-gray-500 uppercase">{t('supplier_company_name')}</label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm shadow-inner"
-                placeholder="e.g. Al-Futtaim Logistics"
+                placeholder={t('supplier_name_placeholder')}
                 required
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-gray-500 uppercase">Contact Person</label>
+              <label className="text-xs font-bold text-gray-500 uppercase">{t('contact_person')}</label>
               <div className="relative">
                 <UserCircle size={16} className="absolute left-3 top-3.5 text-gray-500" />
                 <input
@@ -220,12 +219,12 @@ export default function SupplierDirectoryPage() {
                   value={formData.contact_name}
                   onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
                   className="glass bg-white/5 border-border-custom p-3 pl-10 rounded-xl outline-none focus:border-accent transition-all text-sm w-full"
-                  placeholder="Full Name"
+                  placeholder={t('full_name_placeholder')}
                 />
               </div>
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-gray-500 uppercase">Phone Number</label>
+              <label className="text-xs font-bold text-gray-500 uppercase">{t('phone_number_label')}</label>
               <div className="relative">
                 <Phone size={16} className="absolute left-3 top-3.5 text-gray-500" />
                 <input
@@ -238,7 +237,7 @@ export default function SupplierDirectoryPage() {
               </div>
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-gray-500 uppercase">Email Address</label>
+              <label className="text-xs font-bold text-gray-500 uppercase">{t('email_address_label')}</label>
               <div className="relative">
                 <Mail size={16} className="absolute left-3 top-3.5 text-gray-500" />
                 <input
@@ -251,7 +250,7 @@ export default function SupplierDirectoryPage() {
               </div>
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-gray-500 uppercase">Address / Warehouse</label>
+              <label className="text-xs font-bold text-gray-500 uppercase">{t('address_warehouse')}</label>
               <div className="relative">
                 <MapPin size={16} className="absolute left-3 top-3.5 text-gray-500" />
                 <input

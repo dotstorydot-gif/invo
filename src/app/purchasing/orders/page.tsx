@@ -138,14 +138,14 @@ export default function PurchaseOrdersPage() {
             setIsModalOpen(false);
         } catch (error) {
             console.error("Error saving purchase order:", error);
-            alert("Failed to save purchase order.");
+            alert(t('save_failed'));
         } finally {
             setIsSubmitting(false);
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (confirm("Are you sure you want to delete this purchase order?")) {
+        if (confirm(t('delete_confirm'))) {
             await remove(id);
         }
     };
@@ -181,8 +181,8 @@ export default function PurchaseOrdersPage() {
                             <ArrowLeft size={20} />
                         </Link>
                         <div>
-                            <h2 className="text-3xl font-bold gradient-text">Purchase Orders</h2>
-                            <p className="text-gray-400 text-sm mt-1">Manage supplier orders, inventory requests, and expenses</p>
+                            <h2 className="text-3xl font-bold gradient-text">{t('purchase_orders_title')}</h2>
+                            <p className="text-gray-400 text-sm mt-1">{t('purchase_orders_subtitle')}</p>
                         </div>
                     </div>
 
@@ -191,7 +191,7 @@ export default function PurchaseOrdersPage() {
                         className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
                     >
                         <Plus size={20} />
-                        <span>Create Order</span>
+                        <span>{t('create_order')}</span>
                     </button>
                 </header>
 
@@ -199,32 +199,32 @@ export default function PurchaseOrdersPage() {
                     <div className="glass p-6 border-accent/20 bg-accent/5 col-span-1">
                         <div className="flex items-center gap-3 text-accent mb-4">
                             <ShoppingCart size={24} />
-                            <span className="text-xs font-bold uppercase tracking-widest">Total Sourced Value</span>
+                            <span className="text-xs font-bold uppercase tracking-widest">{t('total_sourced_value')}</span>
                         </div>
                         <div className="text-4xl font-bold">{totalOrdersValue.toLocaleString()} EGP</div>
                         <div className="text-[10px] text-gray-400 mt-2 flex items-center gap-1">
                             <TrendingUp size={12} className="text-accent" />
-                            Lifetime tracked purchase orders
+                            {t('lifetime_orders_desc')}
                         </div>
                     </div>
 
                     <div className="glass p-6 border-border-custom md:col-span-2 flex flex-col justify-center">
                         <div className="flex items-center gap-3 text-gray-400 mb-2">
                             <Package size={18} />
-                            <span className="text-xs font-bold uppercase tracking-widest">Purchasing Cycle</span>
+                            <span className="text-xs font-bold uppercase tracking-widest">{t('purchasing_cycle')}</span>
                         </div>
-                        <p className="text-sm text-gray-500">Track orders by Quotation Style, Request Type, and Attachments. Completing an order automatically logs it to the main Expenses ledger.</p>
+                        <p className="text-sm text-gray-500">{t('purchase_orders_subtitle')}</p>
                     </div>
                 </div>
 
                 <div className="glass overflow-hidden border-border-custom">
                     <div className="p-6 border-b border-border-custom flex justify-between items-center bg-white/5">
                         <h3 className="font-bold text-xl flex items-center gap-2">
-                            Order History
+                            {t('order_history')}
                         </h3>
                         <div className="glass flex items-center px-4 py-2 gap-3 w-64 border-border-custom bg-background">
                             <Search size={18} className="text-gray-400" />
-                            <input type="text" placeholder="Search orders..." className="bg-transparent border-none outline-none text-sm w-full" />
+                            <input type="text" placeholder={t('search_orders')} className="bg-transparent border-none outline-none text-sm w-full" />
                         </div>
                     </div>
 
@@ -232,17 +232,17 @@ export default function PurchaseOrdersPage() {
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-white/5 border-b border-border-custom">
-                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">Order Ref</th>
-                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">Date Logged</th>
-                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">Classification</th>
-                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">Amount</th>
-                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">Status</th>
-                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">Actions</th>
+                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">{t('order_ref')}</th>
+                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">{t('date_logged')}</th>
+                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">{t('classification')}</th>
+                                    <th className="p-4 text-xs font-bold uppercase text-gray-500 text-right">{t('cash_amount')}</th>
+                                    <th className="p-4 text-xs font-bold uppercase text-gray-500">{t('status')}</th>
+                                    <th className="p-4 text-xs font-bold uppercase text-gray-500 text-center">{t('actions')}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {loading ? (
-                                    <tr><td colSpan={6} className="p-10 text-center italic text-gray-500">Loading purchase orders...</td></tr>
+                                    <tr><td colSpan={6} className="p-10 text-center italic text-gray-500">{t('loading_requests')}</td></tr>
                                 ) : (
                                     orders.map((order) => (
                                         <motion.tr
@@ -274,7 +274,7 @@ export default function PurchaseOrdersPage() {
                                             <td className="p-4 text-sm">
                                                 <div className={`px-3 py-1.5 rounded-lg border text-xs font-bold uppercase flex items-center justify-center gap-2 w-fit ${getStatusColor(order.status)}`}>
                                                     {getStatusIcon(order.status)}
-                                                    {order.status}
+                                                    {t(order.status?.toLowerCase()) || order.status}
                                                 </div>
                                             </td>
                                             <td className="p-4 text-sm" onClick={(e) => e.stopPropagation()}>
@@ -298,23 +298,23 @@ export default function PurchaseOrdersPage() {
                 <ERPFormModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
-                    title={editingId ? "Update Purchase Order" : "Create Purchase Order"}
+                    title={editingId ? t('update_profile') : t('create_order')}
                     onSubmit={handleSave}
                     loading={isSubmitting}
                 >
                     <div className="grid grid-cols-2 gap-6">
                         <div className="flex flex-col gap-2 col-span-2 md:col-span-1">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Order Details</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('order_details')}</label>
                             <input
                                 type="text"
                                 value={formData.order_number}
                                 onChange={(e) => setFormData({ ...formData, order_number: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm font-mono text-accent font-bold"
-                                placeholder="Order Reference"
+                                placeholder={t('order_reference')}
                                 required
                             />
                             <div className="flex flex-col gap-2 mt-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase">Link Approved Quotation</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase">{t('link_approved_quotation')}</label>
                                 <select
                                     value={formData.quotation_id}
                                     onChange={(e) => {
@@ -329,7 +329,7 @@ export default function PurchaseOrdersPage() {
                                     }}
                                     className="glass bg-white/5 border-border-custom p-2 rounded-lg outline-none focus:border-accent transition-all text-xs"
                                 >
-                                    <option value="">Independent Order</option>
+                                    <option value="">{t('independent_order')}</option>
                                     {quotations.filter((q: any) => q.status === 'Accepted').map((q: any) => (
                                         <option key={q.id} value={q.id}>
                                             {suppliers.find((s: any) => s.id === q.supplier_id)?.name || 'Unknown'} - {q.total_amount} EGP
@@ -349,15 +349,15 @@ export default function PurchaseOrdersPage() {
                         </div>
 
                         <div className="flex flex-col gap-2 col-span-2 md:col-span-1 border-l border-white/5 pl-6">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Order Classification</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('order_classification')}</label>
                             <select
                                 value={formData.request_type}
                                 onChange={(e) => setFormData({ ...formData, request_type: e.target.value as any })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm mb-2"
                             >
-                                <option value="Items">Standard Items</option>
-                                <option value="Inventory">Inventory Stock</option>
-                                <option value="Office Supplies">Office Supplies</option>
+                                <option value="Items">{t('standard_items')}</option>
+                                <option value="Inventory">{t('inventory_stock')}</option>
+                                <option value="Office Supplies">{t('office_supplies')}</option>
                             </select>
 
                             <select
@@ -365,18 +365,18 @@ export default function PurchaseOrdersPage() {
                                 onChange={(e) => setFormData({ ...formData, quotation_style: e.target.value as any })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-purple-500 text-purple-400 transition-all text-sm"
                             >
-                                <option value="Standard">Standard Quotation</option>
-                                <option value="Bulk">Bulk / Wholesale</option>
-                                <option value="Urgent">Urgent Request</option>
+                                <option value="Standard">{t('standard_quotation')}</option>
+                                <option value="Bulk">{t('bulk_wholesale')}</option>
+                                <option value="Urgent">{t('urgent_request')}</option>
                             </select>
                         </div>
 
                         <div className="flex flex-col gap-2 col-span-2 border-t border-white/5 pt-4">
-                            <h4 className="text-xs font-bold text-accent uppercase mb-2">Financial & Status</h4>
+                            <h4 className="text-xs font-bold text-accent uppercase mb-2">{t('financial_status')}</h4>
                         </div>
 
                         <div className="flex flex-col gap-2 col-span-2 md:col-span-1">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Total Expected Amount (EGP)</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('total_expected_amount')}</label>
                             <input
                                 type="number"
                                 value={formData.total_amount}
@@ -385,40 +385,40 @@ export default function PurchaseOrdersPage() {
                             />
                         </div>
                         <div className="flex flex-col gap-2 col-span-2 md:col-span-1">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Current Status</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('current_status')}</label>
                             <select
                                 value={formData.status}
                                 onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                             >
-                                <option value="Draft">Draft</option>
-                                <option value="Sent">Sent / Processing</option>
-                                <option value="Completed">Completed / Paid</option>
-                                <option value="Cancelled">Cancelled</option>
+                                <option value="Draft">{t('draft')}</option>
+                                <option value="Sent">{t('sent_processing')}</option>
+                                <option value="Completed">{t('completed_paid')}</option>
+                                <option value="Cancelled">{t('cancelled')}</option>
                             </select>
                             {formData.status === 'Completed' && (
                                 <p className="text-[10px] text-emerald-400 mt-1 uppercase font-bold animate-pulse">
-                                    ★ Marking this completed will auto-log it to Expenses.
+                                    {t('auto_expense_hint')}
                                 </p>
                             )}
                         </div>
 
                         <div className="flex flex-col gap-2 col-span-2 border-t border-white/5 pt-4 mt-2">
                             <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
-                                <FileText size={14} /> Documentation & Notes
+                                <FileText size={14} /> {t('documentation_notes')}
                             </label>
                             <input
                                 type="text"
                                 value={formData.attachment_url}
                                 onChange={(e) => setFormData({ ...formData, attachment_url: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm mb-2"
-                                placeholder="Paste invoice/receipt URL link..."
+                                placeholder={t('invoice_receipt_url')}
                             />
                             <textarea
                                 value={formData.notes}
                                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm h-20 resize-none"
-                                placeholder="Additional details..."
+                                placeholder={t('additional_details')}
                             />
                         </div>
                     </div>

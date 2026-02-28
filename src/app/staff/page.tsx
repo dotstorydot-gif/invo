@@ -103,9 +103,7 @@ export default function StaffPage() {
                 status: formData.status,
                 project_id: formData.project_id || undefined,
                 hire_date: formData.hire_date,
-                avatar_url: formData.avatar_url,
-                email: formData.email,
-                status: formData.status
+                avatar_url: formData.avatar_url
             });
 
             if (result) {

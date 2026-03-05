@@ -20,6 +20,7 @@ import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { useERPData } from "@/hooks/useERPData";
 import ERPFormModal from "@/components/ERPFormModal";
+import LineItemEditor, { LineItem } from "@/components/LineItemEditor";
 
 interface Quotation {
     id: string;
@@ -35,6 +36,7 @@ interface Quotation {
     payment_terms: string;
     valid_until: string;
     created_at: string;
+    items?: LineItem[];
 }
 
 export default function QuotationsPage() {
@@ -58,7 +60,8 @@ export default function QuotationsPage() {
         billing_cycle: 'Monthly',
         payment_terms: 'Net 30',
         valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        status: 'Draft'
+        status: 'Draft',
+        items: [] as LineItem[]
     });
 
     const handleAddQuotation = async () => {
@@ -80,7 +83,8 @@ export default function QuotationsPage() {
                 billing_cycle: formData.billing_cycle,
                 payment_terms: formData.payment_terms,
                 valid_until: formData.valid_until,
-                status: formData.status as any
+                status: formData.status as any,
+                items: formData.items
             });
             setIsModalOpen(false);
             setEditingId(null);
@@ -94,7 +98,8 @@ export default function QuotationsPage() {
                 billing_cycle: 'Monthly',
                 payment_terms: 'Net 30',
                 valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                status: 'Draft'
+                status: 'Draft',
+                items: []
             });
         } catch (error) {
             console.error("Error adding quotation:", error);
@@ -116,7 +121,8 @@ export default function QuotationsPage() {
             billing_cycle: quote.billing_cycle || 'Monthly',
             payment_terms: quote.payment_terms || 'Net 30',
             valid_until: quote.valid_until || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            status: quote.status || 'Draft'
+            status: quote.status || 'Draft',
+            items: quote.items || []
         });
         setIsModalOpen(true);
     };
@@ -166,7 +172,8 @@ export default function QuotationsPage() {
                                     title: '', description: '', client_id: '', project_id: '',
                                     amount: 0, is_recurring: false, billing_cycle: 'Monthly',
                                     payment_terms: 'Net 30', status: 'Draft',
-                                    valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                                    valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                                    items: []
                                 });
                                 setIsModalOpen(true);
                             }}
@@ -342,13 +349,18 @@ export default function QuotationsPage() {
                             </select>
                         </div>
 
-                        <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">{t('quoted_amount')} (EGP)</label>
-                            <input
-                                type="number"
-                                value={formData.amount}
-                                onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
-                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm font-bold font-mono"
+                        <div className="flex flex-col gap-2 col-span-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('quoted_amount')} ({t('auto_calculated') || 'Auto-calculated'})</label>
+                            <div className="glass bg-white/5 border-border-custom p-3 rounded-xl text-sm font-bold font-mono text-accent">
+                                {formData.amount.toLocaleString()} EGP
+                            </div>
+                        </div>
+
+                        <div className="col-span-2">
+                            <LineItemEditor
+                                items={formData.items}
+                                onChange={(items) => setFormData({ ...formData, items })}
+                                onTotalChange={(total) => setFormData(prev => ({ ...prev, amount: total }))}
                             />
                         </div>
 

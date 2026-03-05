@@ -18,6 +18,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useERPData } from "@/hooks/useERPData";
 import ERPFormModal from "@/components/ERPFormModal";
 import { uploadFile } from "@/lib/storage";
+import LineItemEditor, { LineItem } from "@/components/LineItemEditor";
 
 const InvoiceRow = ({ id, fullId, client, date, amount, status, secondaryInfo, onEdit }: { id: string, fullId: string, client: string, date: string, amount: string, status: 'Paid' | 'Pending' | 'Draft', secondaryInfo?: string, onEdit: (id: string) => void }) => {
     const { t } = useLanguage();
@@ -101,6 +102,7 @@ interface Invoice {
     retention_percentage?: number;
     payment_terms?: string;
     boq_reference?: string;
+    items?: LineItem[];
 }
 
 interface Customer {
@@ -155,7 +157,8 @@ export default function InvoicesPage() {
         unit_price: 0,
         vat_percentage: 0,
         retention_percentage: 0,
-        payment_terms: ''
+        payment_terms: '',
+        items: [] as LineItem[]
     });
 
     // Auto-calculate amount when QTY, Unit Price, VAT, or Retention changes
@@ -163,15 +166,17 @@ export default function InvoicesPage() {
         const numVal = Number(value);
         setFormData(prev => {
             const updated = { ...prev, [field]: numVal };
-            const gross = (updated.quantity || 0) * (updated.unit_price || 0);
-            const vatAmount = gross * ((updated.vat_percentage || 0) / 100);
-            const retentionAmount = gross * ((updated.retention_percentage || 0) / 100);
-            const total = gross + vatAmount - retentionAmount;
 
-            // Only auto-update total amount if unit_price was filled
-            if (updated.unit_price > 0) {
-                updated.amount = total;
-            }
+            // Recalculate based on sum of items IF items exist, else use quantity/unit_price
+            const baseAmount = updated.items.length > 0
+                ? updated.items.reduce((sum, item) => sum + (item.total || 0), 0)
+                : (updated.quantity || 0) * (updated.unit_price || 0);
+
+            const vatAmount = baseAmount * ((updated.vat_percentage || 0) / 100);
+            const retentionAmount = baseAmount * ((updated.retention_percentage || 0) / 100);
+            const total = baseAmount + vatAmount - retentionAmount;
+
+            updated.amount = total;
             return updated;
         });
     };
@@ -192,7 +197,8 @@ export default function InvoicesPage() {
             unit_price: invoice.unit_price || 0,
             vat_percentage: invoice.vat_percentage || 0,
             retention_percentage: invoice.retention_percentage || 0,
-            payment_terms: invoice.payment_terms || ''
+            payment_terms: invoice.payment_terms || '',
+            items: invoice.items || []
         });
         setIsModalOpen(true);
     };
@@ -215,7 +221,8 @@ export default function InvoicesPage() {
                 unit_price: Number(formData.unit_price),
                 vat_percentage: Number(formData.vat_percentage),
                 retention_percentage: Number(formData.retention_percentage),
-                payment_terms: formData.payment_terms
+                payment_terms: formData.payment_terms,
+                items: formData.items
             });
             setIsModalOpen(false);
             setEditingId(null);
@@ -233,7 +240,8 @@ export default function InvoicesPage() {
                 unit_price: 0,
                 vat_percentage: 0,
                 retention_percentage: 0,
-                payment_terms: ''
+                payment_terms: '',
+                items: []
             });
         } catch (error) {
             console.error("Error saving invoice:", error);
@@ -279,7 +287,8 @@ export default function InvoicesPage() {
                                 unit_price: 0,
                                 vat_percentage: 0,
                                 retention_percentage: 0,
-                                payment_terms: ''
+                                payment_terms: '',
+                                items: []
                             });
                             setIsModalOpen(true);
                         }}
@@ -427,88 +436,56 @@ export default function InvoicesPage() {
                         </div>
 
                         <div className="col-span-2 mt-4 pt-4 border-t border-border-custom">
-                            <h4 className="text-sm font-bold text-accent mb-4">{t('boq_details')}</h4>
-                            <div className="grid grid-cols-2 gap-6 mb-4">
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase">{t('boq_reference')}</label>
-                                    <select
-                                        value={formData.boq_reference}
-                                        onChange={(e) => setFormData({ ...formData, boq_reference: e.target.value })}
-                                        className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                                    >
-                                        <option value="">{t('no_boq_link')}</option>
-                                        {inventory.map((i) => (
-                                            <option key={i.id} value={i.name}>{i.code ? `[${i.code}] ` : ''}{i.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase">{t('work_description')}</label>
-                                    <input
-                                        type="text"
-                                        placeholder={t('work_description_placeholder')}
-                                        value={formData.work_description}
-                                        onChange={(e) => setFormData({ ...formData, work_description: e.target.value })}
-                                        className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                                    />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase">{t('quantity')}</label>
-                                    <input
-                                        type="number"
-                                        value={formData.quantity}
-                                        onChange={(e) => handleNumberFieldChange('quantity', e.target.value)}
-                                        className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                                    />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase">{t('unit_price')}</label>
-                                    <input
-                                        type="number"
-                                        value={formData.unit_price}
-                                        onChange={(e) => handleNumberFieldChange('unit_price', e.target.value)}
-                                        className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                                    />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase">{t('vat_percentage')}</label>
-                                    <input
-                                        type="number"
-                                        value={formData.vat_percentage}
-                                        onChange={(e) => handleNumberFieldChange('vat_percentage', e.target.value)}
-                                        className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                                    />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase">{t('retention_percentage')}</label>
-                                    <input
-                                        type="number"
-                                        value={formData.retention_percentage}
-                                        onChange={(e) => handleNumberFieldChange('retention_percentage', e.target.value)}
-                                        className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                                    />
-                                </div>
-                                <div className="flex flex-col gap-2 col-span-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase">{t('payment_terms')}</label>
-                                    <input
-                                        type="text"
-                                        placeholder={t('payment_terms_placeholder')}
-                                        value={formData.payment_terms}
-                                        onChange={(e) => setFormData({ ...formData, payment_terms: e.target.value })}
-                                        className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
-                                    />
-                                </div>
-                            </div>
+                            <h4 className="text-sm font-bold text-accent mb-4">{t('boq_line_items') || 'Line Items (BOQ)'}</h4>
+                            <LineItemEditor
+                                items={formData.items}
+                                onChange={(items) => {
+                                    setFormData(prev => {
+                                        const updated = { ...prev, items };
+                                        const baseAmount = items.reduce((sum, item) => sum + (item.total || 0), 0);
+                                        const vatAmount = baseAmount * ((updated.vat_percentage || 0) / 100);
+                                        const retentionAmount = baseAmount * ((updated.retention_percentage || 0) / 100);
+                                        updated.amount = baseAmount + vatAmount - retentionAmount;
+                                        return updated;
+                                    });
+                                }}
+                            />
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('vat_percentage')}</label>
+                            <input
+                                type="number"
+                                value={formData.vat_percentage}
+                                onChange={(e) => handleNumberFieldChange('vat_percentage', e.target.value)}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('retention_percentage')}</label>
+                            <input
+                                type="number"
+                                value={formData.retention_percentage}
+                                onChange={(e) => handleNumberFieldChange('retention_percentage', e.target.value)}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2 col-span-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">{t('payment_terms')}</label>
+                            <input
+                                type="text"
+                                placeholder={t('payment_terms_placeholder')}
+                                value={formData.payment_terms}
+                                onChange={(e) => setFormData({ ...formData, payment_terms: e.target.value })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            />
                         </div>
 
                         <div className="flex flex-col gap-2 mt-4">
                             <label className="text-xs font-bold text-gray-500 uppercase">{t('final_total_amount')}</label>
-                            <input
-                                type="number"
-                                value={formData.amount}
-                                onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
-                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm font-bold text-white shadow-inner"
-                            />
+                            <div className="glass bg-white/5 border-border-custom p-3 rounded-xl text-sm font-bold text-accent shadow-inner">
+                                {formData.amount.toLocaleString()} EGP
+                            </div>
                         </div>
                         <div className="flex flex-col gap-2 mt-4">
                             <label className="text-xs font-bold text-gray-500 uppercase">{t('due_date')}</label>
@@ -519,7 +496,7 @@ export default function InvoicesPage() {
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                             />
                         </div>
-                        <div className="flex flex-col gap-2 mt-4">
+                        <div className="flex flex-col gap-2 mt-4 col-span-2">
                             <label className="text-xs font-bold text-gray-500 uppercase">{t('status')}</label>
                             <select
                                 value={formData.status}
@@ -534,6 +511,6 @@ export default function InvoicesPage() {
                     </div>
                 </ERPFormModal>
             </main>
-        </div>
+        </div >
     );
 }

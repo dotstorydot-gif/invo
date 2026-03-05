@@ -41,7 +41,13 @@ export default function SupplierDirectoryPage() {
       setIsSubmitting(true);
       await upsert({
         ...(editingId ? { id: editingId } : {}),
-        ...formData
+        name: formData.name,
+        company_name: formData.name, // Redundancy for schema compatibility
+        contact_name: formData.contact_name,
+        contact_person: formData.contact_name, // Redundancy for schema compatibility
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address
       });
       setIsModalOpen(false);
       setEditingId(null);

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons_flutter.dart';
+import 'package:provider/provider.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../services/supplier_service.dart';
 import '../../models/supplier.dart';
 import '../../widgets/app_drawer.dart';
+import '../../core/session_provider.dart';
 
 class SuppliersScreen extends StatefulWidget {
   const SuppliersScreen({super.key});
@@ -23,14 +25,17 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
   }
 
   Future<void> _loadSuppliers() async {
+    final session = context.read<SessionProvider>().session;
+    if (session == null) return;
+
     try {
-      final suppliers = await _supplierService.getSuppliers();
+      final suppliers = await _supplierService.fetchSuppliers(session.orgId);
       setState(() {
         _suppliers = suppliers;
         _isLoading = false;
       });
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -42,7 +47,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
         title: const Text('SUPPLIERS'),
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.userPlus, size: 20),
+            icon: Icon(LucideIcons.userPlus, size: 20),
             onPressed: () {},
           ),
         ],
@@ -80,7 +85,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
               color: Colors.white.withOpacity(0.05),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(LucideIcons.truck, color: Color(0xFFFFD700), size: 24),
+            child: Icon(LucideIcons.van, color: Color(0xFFFFD700), size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(

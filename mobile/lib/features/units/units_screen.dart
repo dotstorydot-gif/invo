@@ -1,29 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import '../../services/inventory_service.dart';
-import '../../models/inventory_item.dart';
+import 'package:provider/provider.dart';
+import '../../services/units_service.dart';
+import '../../models/unit.dart';
 import '../../widgets/app_drawer.dart';
 import '../../core/session_provider.dart';
 
-class InventoryScreen extends StatefulWidget {
-  const InventoryScreen({super.key});
+class UnitsScreen extends StatefulWidget {
+  const UnitsScreen({super.key});
 
   @override
-  State<InventoryScreen> createState() => _InventoryScreenState();
+  State<UnitsScreen> createState() => _UnitsScreenState();
 }
 
-class _InventoryScreenState extends State<InventoryScreen> {
-  final _inventoryService = InventoryService();
+class _UnitsScreenState extends State<UnitsScreen> {
+  final _unitsService = UnitsService();
   bool _isLoading = true;
-  List<InventoryItem> _allItems = [];
-  List<InventoryItem> _filteredItems = [];
+  List<Unit> _allUnits = [];
+  List<Unit> _filteredUnits = [];
   final _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _loadItems();
+    _loadUnits();
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -36,22 +36,22 @@ class _InventoryScreenState extends State<InventoryScreen> {
   void _onSearchChanged() {
     final query = _searchController.text.toLowerCase();
     setState(() {
-      _filteredItems = _allItems.where((item) {
-        return item.name.toLowerCase().contains(query) || 
-               (item.code?.toLowerCase().contains(query) ?? false);
+      _filteredUnits = _allUnits.where((u) {
+        return u.name.toLowerCase().contains(query) || 
+               (u.type?.toLowerCase().contains(query) ?? false);
       }).toList();
     });
   }
 
-  Future<void> _loadItems() async {
+  Future<void> _loadUnits() async {
     final session = context.read<SessionProvider>().session;
     if (session == null) return;
 
     try {
-      final items = await _inventoryService.fetchInventory(session.orgId);
+      final units = await _unitsService.fetchUnits(session.orgId);
       setState(() {
-        _allItems = items;
-        _filteredItems = items;
+        _allUnits = units;
+        _filteredUnits = units;
         _isLoading = false;
       });
     } catch (e) {
@@ -64,10 +64,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
-        title: const Text('INVENTORY'),
+        title: const Text('UNITS & PROPERTIES'),
         actions: [
           IconButton(
-            icon: Icon(LucideIcons.plus, size: 20),
+            icon: const Icon(LucideIcons.plus, size: 20),
             onPressed: () {},
           ),
         ],
@@ -75,7 +75,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: const EdgeInsets.all(16.0),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
@@ -88,7 +88,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 style: const TextStyle(fontSize: 14),
                 decoration: const InputDecoration(
                   icon: Icon(LucideIcons.search, size: 18, color: Colors.white24),
-                  hintText: 'Search items...',
+                  hintText: 'Search units...',
                   hintStyle: TextStyle(color: Colors.white24),
                   border: InputBorder.none,
                 ),
@@ -99,16 +99,16 @@ class _InventoryScreenState extends State<InventoryScreen> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator(color: Color(0xFFFFD700)))
                 : RefreshIndicator(
-                    onRefresh: _loadItems,
+                    onRefresh: _loadUnits,
                     color: const Color(0xFFFFD700),
-                    child: _filteredItems.isEmpty
-                        ? const Center(child: Text('No items found', style: TextStyle(color: Colors.white24)))
+                    child: _filteredUnits.isEmpty
+                        ? const Center(child: Text('No units found', style: TextStyle(color: Colors.white24)))
                         : ListView.builder(
-                            padding: const EdgeInsets.all(16),
-                            itemCount: _filteredItems.length,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: _filteredUnits.length,
                             itemBuilder: (context, index) {
-                              final item = _filteredItems[index];
-                              return _buildInventoryCard(item);
+                              final unit = _filteredUnits[index];
+                              return _buildUnitCard(unit);
                             },
                           ),
                   ),
@@ -118,13 +118,16 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
-  Widget _buildInventoryCard(InventoryItem item) {
+  Widget _buildUnitCard(Unit unit) {
+    final bool isAvailable = unit.status == 'Available';
+    final Color statusColor = isAvailable ? Colors.greenAccent : Colors.orangeAccent;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFF141414),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Row(
@@ -132,10 +135,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              color: statusColor.withOpacity(0.05),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(LucideIcons.package, color: const Color(0xFFFFD700), size: 24),
+            child: Icon(LucideIcons.house, color: statusColor, size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -143,11 +146,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.name,
+                  unit.name,
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 Text(
-                  item.code ?? 'No Code',
+                  unit.type ?? 'Unit',
                   style: const TextStyle(color: Colors.white38, fontSize: 12),
                 ),
               ],
@@ -156,18 +159,31 @@ class _InventoryScreenState extends State<InventoryScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                '${item.stock}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
-                  color: Color(0xFFFFD700),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  unit.status.toUpperCase(),
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-              Text(
-                'EGP ${item.costPrice}',
-                style: const TextStyle(color: Colors.greenAccent, fontSize: 12),
-              ),
+              const SizedBox(height: 8),
+              if (unit.price != null && unit.price! > 0)
+                Text(
+                  'EGP ${unit.price!.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                    color: Colors.white,
+                  ),
+                ),
             ],
           ),
         ],

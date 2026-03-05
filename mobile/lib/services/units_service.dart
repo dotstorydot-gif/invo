@@ -1,16 +1,16 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/staff_member.dart';
+import '../models/unit.dart';
 
-class StaffService {
+class UnitsService {
   final SupabaseClient _client = Supabase.instance.client;
 
-  Future<List<StaffMember>> fetchStaff(String orgId) async {
+  Future<List<Unit>> fetchUnits(String orgId) async {
     final response = await _client
-        .from('staff')
+        .from('units')
         .select('*')
         .eq('organization_id', orgId)
         .order('name', ascending: true);
-    
-    return (response as List).map((item) => StaffMember.fromJson(item)).toList();
+
+    return (response as List).map((item) => Unit.fromJson(item)).toList();
   }
 }

@@ -1,31 +1,34 @@
 class InventoryItem {
   final String id;
   final String name;
-  final String? code;
-  final double stock;
+  final int stock;
   final double costPrice;
   final String? description;
   final DateTime createdAt;
+  final String? code;
+  final String organizationId;
 
   InventoryItem({
     required this.id,
     required this.name,
-    this.code,
     required this.stock,
     required this.costPrice,
     this.description,
     required this.createdAt,
+    this.code,
+    required this.organizationId,
   });
 
   factory InventoryItem.fromMap(Map<String, dynamic> map) {
     return InventoryItem(
-      id: map['id'],
+      id: map['id'].toString(),
       name: map['name'],
-      code: map['code'],
-      stock: (map['stock'] ?? 0).toDouble(),
+      stock: (map['stock'] ?? 0).toInt(),
       costPrice: (map['cost_price'] ?? 0).toDouble(),
       description: map['description'],
       createdAt: DateTime.parse(map['created_at']),
+      code: map['code'],
+      organizationId: map['organization_id'],
     );
   }
 }

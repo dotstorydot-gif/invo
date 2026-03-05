@@ -39,6 +39,7 @@ export default function InventoryPage() {
     const { data: projects } = useERPData<{ id: string; name: string }>('projects');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -58,6 +59,7 @@ export default function InventoryPage() {
                 formData.quantity < formData.stock_threshold ? 'Low Stock' : 'In Stock';
 
             await upsert({
+                ...(editingId ? { id: editingId } : {}),
                 name: formData.name,
                 code: formData.code,
                 description: formData.description,
@@ -70,6 +72,7 @@ export default function InventoryPage() {
                 project_id: formData.project_id || undefined
             });
             setIsModalOpen(false);
+            setEditingId(null);
             setFormData({
                 name: '',
                 code: '',
@@ -81,11 +84,26 @@ export default function InventoryPage() {
                 project_id: ''
             });
         } catch (error) {
-            console.error("Error adding inventory item:", error);
+            console.error("Error saving inventory item:", error);
             alert(t('add_inventory_item_failed'));
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleEditItem = (item: InventoryItem) => {
+        setEditingId(item.id);
+        setFormData({
+            name: item.name || '',
+            code: item.code || '',
+            description: item.description || '',
+            cost_price: item.cost_price || 0,
+            quantity: item.quantity || 0,
+            stock_threshold: item.stock_threshold || 10,
+            supplier: item.supplier || '',
+            project_id: item.project_id || ''
+        });
+        setIsModalOpen(true);
     };
 
     const handleAdjustStock = async (item: InventoryItem, amount: number) => {
@@ -119,7 +137,14 @@ export default function InventoryPage() {
                     </div>
 
                     <button
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={() => {
+                            setEditingId(null);
+                            setFormData({
+                                name: '', code: '', description: '', cost_price: 0,
+                                quantity: 0, stock_threshold: 10, supplier: '', project_id: ''
+                            });
+                            setIsModalOpen(true);
+                        }}
                         className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
                     >
                         <Plus size={20} />
@@ -161,7 +186,7 @@ export default function InventoryPage() {
                                     {loading ? (
                                         <tr><td colSpan={5} className="p-10 text-center italic text-gray-500">{t('syncing_inventory')}</td></tr>
                                     ) : (
-                                        items.map((item) => (
+                                        items.map((item: InventoryItem) => (
                                             <motion.tr
                                                 key={item.id}
                                                 initial={{ opacity: 0 }}
@@ -198,7 +223,10 @@ export default function InventoryPage() {
                                                 </td>
                                                 <td className="p-4">
                                                     <div className="flex gap-2">
-                                                        <button className="p-2 text-gray-400 hover:text-accent transition-all">
+                                                        <button
+                                                            onClick={() => handleEditItem(item)}
+                                                            className="p-2 text-gray-400 hover:text-accent transition-all"
+                                                        >
                                                             <Edit2 size={16} />
                                                         </button>
                                                         <button className="p-2 text-gray-400 hover:text-red-500 transition-all">
@@ -220,8 +248,11 @@ export default function InventoryPage() {
 
                 <ERPFormModal
                     isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    title={t('add_inventory_item')}
+                    onClose={() => {
+                        setIsModalOpen(false);
+                        setEditingId(null);
+                    }}
+                    title={editingId ? t('edit') : t('add_inventory_item')}
                     onSubmit={handleAddItem}
                     loading={isSubmitting}
                 >

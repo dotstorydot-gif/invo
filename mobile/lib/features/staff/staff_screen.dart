@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons_flutter.dart';
+import 'package:provider/provider.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../services/staff_service.dart';
 import '../../models/staff_member.dart';
 import '../../widgets/app_drawer.dart';
+import '../../core/session_provider.dart';
 
 class StaffScreen extends StatefulWidget {
   const StaffScreen({super.key});
@@ -14,23 +16,46 @@ class StaffScreen extends StatefulWidget {
 class _StaffScreenState extends State<StaffScreen> {
   final _staffService = StaffService();
   bool _isLoading = true;
-  List<StaffMember> _staff = [];
+  List<StaffMember> _allStaff = [];
+  List<StaffMember> _filteredStaff = [];
+  final _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadStaff();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      _filteredStaff = _allStaff.where((s) {
+        return s.name.toLowerCase().contains(query) || 
+               (s.role?.toLowerCase().contains(query) ?? false);
+      }).toList();
+    });
   }
 
   Future<void> _loadStaff() async {
+    final session = context.read<SessionProvider>().session;
+    if (session == null) return;
+
     try {
-      final staff = await _staffService.getStaff();
+      final staff = await _staffService.fetchStaff(session.orgId);
       setState(() {
-        _staff = staff;
+        _allStaff = staff;
+        _filteredStaff = staff;
         _isLoading = false;
       });
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -42,24 +67,54 @@ class _StaffScreenState extends State<StaffScreen> {
         title: const Text('TEAM MEMBERS'),
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.userPlus, size: 20),
+            icon: const Icon(LucideIcons.plus, size: 20),
             onPressed: () {},
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadStaff,
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: _staff.length,
-                itemBuilder: (context, index) {
-                  final member = _staff[index];
-                  return _buildStaffCard(member);
-                },
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF141414),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withOpacity(0.05)),
+              ),
+              child: TextField(
+                controller: _searchController,
+                style: const TextStyle(fontSize: 14),
+                decoration: const InputDecoration(
+                  icon: Icon(LucideIcons.search, size: 18, color: Colors.white24),
+                  hintText: 'Search team members...',
+                  hintStyle: TextStyle(color: Colors.white24),
+                  border: InputBorder.none,
+                ),
               ),
             ),
+          ),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator(color: Color(0xFFFFD700)))
+                : RefreshIndicator(
+                    onRefresh: _loadStaff,
+                    color: const Color(0xFFFFD700),
+                    child: _filteredStaff.isEmpty
+                        ? const Center(child: Text('No members found', style: TextStyle(color: Colors.white24)))
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: _filteredStaff.length,
+                            itemBuilder: (context, index) {
+                              final member = _filteredStaff[index];
+                              return _buildStaffCard(member);
+                            },
+                          ),
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -69,16 +124,25 @@ class _StaffScreenState extends State<StaffScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFF141414),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 24,
-            backgroundColor: Colors.white10,
-            backgroundImage: member.avatarUrl != null ? NetworkImage(member.avatarUrl!) : null,
-            child: member.avatarUrl == null ? const Icon(LucideIcons.user, color: Colors.white38) : null,
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.2)),
+            ),
+            child: CircleAvatar(
+              radius: 24,
+              backgroundColor: const Color(0xFF1A1A1A),
+              backgroundImage: member.avatarUrl != null ? NetworkImage(member.avatarUrl!) : null,
+              child: member.avatarUrl == null
+                  ? const Icon(LucideIcons.user, color: Colors.white24, size: 20)
+                  : null,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -90,8 +154,8 @@ class _StaffScreenState extends State<StaffScreen> {
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 Text(
-                  member.role ?? 'Team Member',
-                  style: TextStyle(color: Colors.white38, fontSize: 12),
+                  member.role ?? 'Member',
+                  style: const TextStyle(color: Colors.white38, fontSize: 12),
                 ),
               ],
             ),
@@ -100,29 +164,14 @@ class _StaffScreenState extends State<StaffScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                'EGP ${member.baseSalary.toStringAsFixed(0)}',
+                'EGP ${member.salary.toStringAsFixed(0)}',
                 style: const TextStyle(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w900,
                   fontSize: 14,
-                  color: Colors.white,
+                  color: Color(0xFFFFD700),
                 ),
               ),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFD700).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text(
-                  'ACTIVE',
-                  style: TextStyle(
-                    color: Color(0xFFFFD700),
-                    fontSize: 8,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              const Icon(LucideIcons.chevronRight, size: 16, color: Colors.white12),
             ],
           ),
         ],

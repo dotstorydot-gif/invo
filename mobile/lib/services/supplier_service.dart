@@ -4,13 +4,13 @@ import '../models/supplier.dart';
 class SupplierService {
   final SupabaseClient _client = Supabase.instance.client;
 
-  Future<List<Supplier>> getSuppliers() async {
-    // Note: Table name might be 'suppliers'
+  Future<List<Supplier>> fetchSuppliers(String orgId) async {
     final response = await _client
         .from('suppliers')
-        .select()
+        .select('*')
+        .eq('organization_id', orgId)
         .order('company_name', ascending: true);
-    
-    return (response as List).map((item) => Supplier.fromMap(item)).toList();
+
+    return (response as List).map((item) => Supplier.fromJson(item)).toList();
   }
 }

@@ -9,12 +9,12 @@ import {
     User,
     Building2,
     Calendar,
-    BadgePercent,
     Repeat,
     CheckCircle2,
     Clock,
     XCircle,
-    MoreVertical
+    MoreVertical,
+    Edit2
 } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
@@ -40,11 +40,12 @@ interface Quotation {
 export default function QuotationsPage() {
     const { t } = useLanguage();
     const { data: quotations, loading, upsert } = useERPData<Quotation>('quotations');
-    const { data: clients } = useERPData<any>('customers');
-    const { data: projects } = useERPData<any>('projects');
+    const { data: clients } = useERPData<{ id: string; full_name: string }>('customers');
+    const { data: projects } = useERPData<{ id: string; name: string }>('projects');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
 
     const [formData, setFormData] = useState({
@@ -69,6 +70,7 @@ export default function QuotationsPage() {
         try {
             setIsSubmitting(true);
             await upsert({
+                ...(editingId ? { id: editingId } : {}),
                 title: formData.title,
                 description: formData.description,
                 client_id: formData.client_id,
@@ -81,6 +83,7 @@ export default function QuotationsPage() {
                 status: formData.status as any
             });
             setIsModalOpen(false);
+            setEditingId(null);
             setFormData({
                 title: '',
                 description: '',
@@ -101,6 +104,23 @@ export default function QuotationsPage() {
         }
     };
 
+    const handleEditQuotation = (quote: Quotation) => {
+        setEditingId(quote.id);
+        setFormData({
+            title: quote.title || '',
+            description: quote.description || '',
+            client_id: quote.client_id || '',
+            project_id: quote.project_id || '',
+            amount: quote.amount || 0,
+            is_recurring: quote.is_recurring || false,
+            billing_cycle: quote.billing_cycle || 'Monthly',
+            payment_terms: quote.payment_terms || 'Net 30',
+            valid_until: quote.valid_until || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            status: quote.status || 'Draft'
+        });
+        setIsModalOpen(true);
+    };
+
     const updateStatus = async (id: string, newStatus: string) => {
         try {
             await upsert({ id, status: newStatus as any });
@@ -111,7 +131,7 @@ export default function QuotationsPage() {
 
     const filteredQuotations = quotations.filter(q =>
         q.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        clients.find(c => c.id === q.client_id)?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+        clients.find(c => (c as { id: string; full_name: string }).id === q.client_id)?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -140,7 +160,16 @@ export default function QuotationsPage() {
                             />
                         </div>
                         <button
-                            onClick={() => setIsModalOpen(true)}
+                            onClick={() => {
+                                setEditingId(null);
+                                setFormData({
+                                    title: '', description: '', client_id: '', project_id: '',
+                                    amount: 0, is_recurring: false, billing_cycle: 'Monthly',
+                                    payment_terms: 'Net 30', status: 'Draft',
+                                    valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                                });
+                                setIsModalOpen(true);
+                            }}
                             className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
                         >
                             <Plus size={20} />
@@ -237,6 +266,13 @@ export default function QuotationsPage() {
                                             <td className="p-6 text-center">
                                                 <div className="flex justify-center gap-2">
                                                     <button
+                                                        onClick={() => handleEditQuotation(quote)}
+                                                        className="p-2 text-gray-400 hover:text-accent transition-all"
+                                                        title="Edit Quotation"
+                                                    >
+                                                        <Edit2 size={18} />
+                                                    </button>
+                                                    <button
                                                         onClick={() => updateStatus(quote.id, 'Accepted')}
                                                         className="p-2 text-gray-500 hover:text-emerald-400 transition-all"
                                                         title={t('mark_accepted')}
@@ -258,8 +294,11 @@ export default function QuotationsPage() {
 
                 <ERPFormModal
                     isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    title={t('new_client_quotation')}
+                    onClose={() => {
+                        setIsModalOpen(false);
+                        setEditingId(null);
+                    }}
+                    title={editingId ? "Edit Quotation" : t('new_client_quotation')}
                     onSubmit={handleAddQuotation}
                     loading={isSubmitting}
                 >
@@ -283,7 +322,7 @@ export default function QuotationsPage() {
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                             >
                                 <option value="">{t('choose_client')}</option>
-                                {clients.map((c: any) => (
+                                {clients.map((c) => (
                                     <option key={c.id} value={c.id}>{c.full_name}</option>
                                 ))}
                             </select>
@@ -297,7 +336,7 @@ export default function QuotationsPage() {
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                             >
                                 <option value="">{t('optional_account')}</option>
-                                {projects.map((p: any) => (
+                                {projects.map((p) => (
                                     <option key={p.id} value={p.id}>{p.name}</option>
                                 ))}
                             </select>

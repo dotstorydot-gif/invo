@@ -5,18 +5,11 @@ import 'app_translation.dart';
 class LocaleProvider extends ChangeNotifier {
   final FlutterLocalization _localization = FlutterLocalization.instance;
 
-  LocaleProvider() {
-    _localization.init(
-      mapLocales: [
-        const MapLocale('en', AppTranslation.EN),
-        const MapLocale('ar', AppTranslation.AR),
-      ],
-      initLanguageCode: 'en',
-    );
-  }
+  LocaleProvider();
 
+  List<LocalizationsDelegate<dynamic>> get delegates => _localization.localizationsDelegates.toList();
+  List<Locale> get supportedLocales => _localization.supportedLocales.toList();
   String get currentLanguage => _localization.currentLocale?.languageCode ?? 'en';
-  bool get isRTL => currentLanguage == 'ar';
 
   void setLanguage(String languageCode) {
     _localization.translate(languageCode);

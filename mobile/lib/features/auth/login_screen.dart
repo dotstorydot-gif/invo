@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons_flutter.dart';
+import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
+import '../../core/session_provider.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -10,18 +12,34 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController();
+  final _orgController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _authService = AuthService();
   bool _isLoading = false;
+  bool _isEmployee = false;
 
   void _login() async {
+    if (_orgController.text.isEmpty || _usernameController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all fields.')),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
-      await _authService.signIn(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
+      final session = await _authService.signIn(
+        orgNameOrSubdomain: _orgController.text.trim(),
+        username: _usernameController.text.trim(),
+        password: _passwordController.text.trim(),
+        isEmployee: _isEmployee,
       );
+
+      if (mounted) {
+        await context.read<SessionProvider>().setSession(session);
+        // Navigation will be handled by AuthWrapper in main.dart
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -54,8 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(
-                  LucideIcons.shieldCheck,
+                Icon(LucideIcons.shieldCheck,
                   size: 80,
                   color: Color(0xFFFFD700),
                 ),
@@ -83,9 +100,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 64),
                 _buildTextField(
-                  controller: _emailController,
-                  hintText: 'Email Address',
-                  icon: LucideIcons.mail,
+                  controller: _orgController,
+                  hintText: 'Organization Name',
+                  icon: LucideIcons.building,
+                ),
+                const SizedBox(height: 16),
+                _buildTextField(
+                  controller: _usernameController,
+                  hintText: _isEmployee ? 'Employee Email' : 'Admin Username',
+                  icon: LucideIcons.user,
                 ),
                 const SizedBox(height: 16),
                 _buildTextField(
@@ -93,6 +116,21 @@ class _LoginScreenState extends State<LoginScreen> {
                   hintText: 'Password',
                   icon: LucideIcons.lock,
                   isPassword: true,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _isEmployee,
+                      onChanged: (val) => setState(() => _isEmployee = val ?? false),
+                      activeColor: const Color(0xFFFFD700),
+                      checkColor: Colors.black,
+                    ),
+                    const Text(
+                      'Login as Employee',
+                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 32),
                 ElevatedButton(

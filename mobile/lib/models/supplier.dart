@@ -7,6 +7,8 @@ class Supplier {
   final String? category;
   final double rating;
 
+  final String organizationId;
+
   Supplier({
     required this.id,
     required this.companyName,
@@ -15,17 +17,19 @@ class Supplier {
     this.email,
     this.category,
     required this.rating,
+    required this.organizationId,
   });
 
-  factory Supplier.fromMap(Map<String, dynamic> map) {
+  factory Supplier.fromJson(Map<String, dynamic> json) {
     return Supplier(
-      id: map['id'].toString(),
-      companyName: map['company_name'] ?? map['name'] ?? 'Unknown Supplier',
-      contactName: map['contact_person'] ?? map['contact_name'],
-      phone: map['phone'],
-      email: map['email'],
-      category: map['category'],
-      rating: (map['rating'] ?? 0).toDouble(),
+      id: json['id'].toString(),
+      companyName: json['company_name'] ?? json['name'] ?? 'Unknown Supplier',
+      contactName: json['contact_person'] ?? json['contact_name'],
+      phone: json['phone'],
+      email: json['email'],
+      category: json['category'],
+      rating: (json['rating'] ?? 0).toDouble(),
+      organizationId: json['organization_id'] as String,
     );
   }
 }

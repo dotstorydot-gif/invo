@@ -58,6 +58,7 @@ export default function ExpensesPage() {
     const { data: branches } = useERPData<Branch>('branches');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [customCategory, setCustomCategory] = useState('');
 
     const isMarketing = session?.moduleType === 'Service & Marketing';
@@ -95,6 +96,7 @@ export default function ExpensesPage() {
                 : formData.description;
 
             await upsert({
+                ...(editingId ? { id: editingId } : {}),
                 category: finalCategory,
                 amount: Number(formData.amount),
                 date: formData.date,
@@ -106,6 +108,7 @@ export default function ExpensesPage() {
                 branch_id: formData.branch_id || undefined // Added branch_id
             });
             setIsModalOpen(false);
+            setEditingId(null);
             setFormData({
                 amount: 0,
                 category: '',
@@ -120,11 +123,28 @@ export default function ExpensesPage() {
             });
             setCustomCategory('');
         } catch (error) {
-            console.error("Error adding expense:", error);
-            alert("Failed to add expense.");
+            console.error("Error saving expense:", error);
+            alert("Failed to save expense.");
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleEditExpense = (expense: ExpenseItem) => {
+        setEditingId(expense.id);
+        setFormData({
+            amount: expense.amount || 0,
+            category: expense.category || '',
+            type: expense.type || 'General',
+            description: expense.description || '',
+            date: expense.date || new Date().toISOString().split('T')[0],
+            project_id: expense.project_id || '',
+            unit_id: expense.unit_id || '',
+            branch_id: expense.branch_id || '',
+            attachment_url: expense.attachment_url || '',
+            provider: expense.description?.includes('Provider: ') ? expense.description.split(': ')[1].split(' - ')[0] : ''
+        });
+        setIsModalOpen(true);
     };
 
     const totalUtilities = expenses
@@ -154,7 +174,15 @@ export default function ExpensesPage() {
                     </div>
 
                     <button
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={() => {
+                            setEditingId(null);
+                            setFormData({
+                                amount: 0, category: '', type: 'General', description: '',
+                                date: new Date().toISOString().split('T')[0], project_id: '',
+                                unit_id: '', branch_id: '', attachment_url: '', provider: ''
+                            });
+                            setIsModalOpen(true);
+                        }}
                         className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
                     >
                         <Plus size={20} />
@@ -262,7 +290,10 @@ export default function ExpensesPage() {
                                             <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${expense.type === 'Asset' ? 'bg-blue-500/10 text-blue-500' : expense.type === 'Fixed' ? 'bg-amber-500/10 text-amber-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
                                                 {expense.type}
                                             </span>
-                                            <button className="p-2 rounded-lg hover:bg-white/5 text-gray-500 transition-all opacity-0 group-hover:opacity-100">
+                                            <button
+                                                onClick={() => handleEditExpense(expense)}
+                                                className="p-2 rounded-lg hover:bg-white/5 text-gray-500 transition-all opacity-0 group-hover:opacity-100"
+                                            >
                                                 <MoreHorizontal size={18} />
                                             </button>
                                         </div>
@@ -275,8 +306,11 @@ export default function ExpensesPage() {
 
                 <ERPFormModal
                     isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    title={t('add_expense')}
+                    onClose={() => {
+                        setIsModalOpen(false);
+                        setEditingId(null);
+                    }}
+                    title={editingId ? "Edit Expense" : t('add_expense')}
                     onSubmit={handleAddExpense}
                     loading={isSubmitting}
                 >

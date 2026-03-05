@@ -10,7 +10,8 @@ import {
     Clock,
     AlertCircle,
     Download,
-    Upload
+    Upload,
+    Edit2
 } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
@@ -18,7 +19,7 @@ import { useERPData } from "@/hooks/useERPData";
 import ERPFormModal from "@/components/ERPFormModal";
 import { uploadFile } from "@/lib/storage";
 
-const InvoiceRow = ({ id, client, date, amount, status, secondaryInfo }: { id: string, client: string, date: string, amount: string, status: 'Paid' | 'Pending' | 'Draft', secondaryInfo?: string }) => {
+const InvoiceRow = ({ id, fullId, client, date, amount, status, secondaryInfo, onEdit }: { id: string, fullId: string, client: string, date: string, amount: string, status: 'Paid' | 'Pending' | 'Draft', secondaryInfo?: string, onEdit: (id: string) => void }) => {
     const { t } = useLanguage();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -32,7 +33,7 @@ const InvoiceRow = ({ id, client, date, amount, status, secondaryInfo }: { id: s
         if (e.target.files?.[0]) {
             const file = e.target.files[0];
             try {
-                await uploadFile('documents', `invoices/${id}/${file.name}`, file);
+                await uploadFile('documents', `invoices/${fullId}/${file.name}`, file);
                 alert(t('upload_success'));
             } catch (err) {
                 console.error(err);
@@ -42,7 +43,7 @@ const InvoiceRow = ({ id, client, date, amount, status, secondaryInfo }: { id: s
     };
 
     return (
-        <div className="flex items-center gap-4 p-4 glass-hover border-b border-border-custom last:border-0 transition-all group">
+        <div className="flex items-center gap-4 p-4 glass-hover border-b border-border-custom last:border-0 transition-all group cursor-pointer" onClick={() => onEdit(fullId)}>
             <div className="p-2 rounded-lg bg-white/5 text-gray-400">
                 <FileText size={20} />
             </div>
@@ -61,7 +62,14 @@ const InvoiceRow = ({ id, client, date, amount, status, secondaryInfo }: { id: s
                 {statusIcons[status]}
                 <span className="text-[10px] font-bold uppercase tracking-wider">{t(status.toLowerCase())}</span>
             </div>
-            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all" onClick={(e) => e.stopPropagation()}>
+                <button
+                    onClick={() => onEdit(fullId)}
+                    className="p-2 hover:text-accent transition-colors"
+                    title={t('edit')}
+                >
+                    <Edit2 size={18} />
+                </button>
                 <button
                     onClick={() => fileInputRef.current?.click()}
                     className="p-2 hover:text-accent transition-colors"
@@ -131,6 +139,7 @@ export default function InvoicesPage() {
     const { data: branches } = useERPData<Branch>('branches');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     const [formData, setFormData] = useState({
         customer_id: '',
@@ -167,10 +176,32 @@ export default function InvoicesPage() {
         });
     };
 
+    const handleOpenEditModal = (invoice: Invoice) => {
+        setEditingId(invoice.id);
+        setFormData({
+            customer_id: invoice.customer_id || '',
+            unit_id: invoice.unit_id || '',
+            project_id: invoice.project_id || '',
+            branch_id: invoice.branch_id || '',
+            amount: invoice.amount || 0,
+            status: invoice.status || 'Draft',
+            due_date: invoice.due_date ? new Date(invoice.due_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            boq_reference: invoice.boq_reference || '',
+            work_description: invoice.work_description || '',
+            quantity: invoice.quantity || 1,
+            unit_price: invoice.unit_price || 0,
+            vat_percentage: invoice.vat_percentage || 0,
+            retention_percentage: invoice.retention_percentage || 0,
+            payment_terms: invoice.payment_terms || ''
+        });
+        setIsModalOpen(true);
+    };
+
     const handleCreateInvoice = async () => {
         try {
             setIsSubmitting(true);
             await upsert({
+                ...(editingId ? { id: editingId } : {}),
                 customer_id: formData.customer_id || undefined,
                 unit_id: formData.unit_id || undefined,
                 project_id: formData.project_id || undefined,
@@ -187,6 +218,7 @@ export default function InvoicesPage() {
                 payment_terms: formData.payment_terms
             });
             setIsModalOpen(false);
+            setEditingId(null);
             setFormData({
                 customer_id: '',
                 unit_id: '',
@@ -204,8 +236,8 @@ export default function InvoicesPage() {
                 payment_terms: ''
             });
         } catch (error) {
-            console.error("Error creating invoice:", error);
-            alert("Failed to create invoice.");
+            console.error("Error saving invoice:", error);
+            alert("Failed to save invoice.");
         } finally {
             setIsSubmitting(false);
         }
@@ -231,7 +263,26 @@ export default function InvoicesPage() {
                     </div>
 
                     <button
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={() => {
+                            setEditingId(null);
+                            setFormData({
+                                customer_id: '',
+                                unit_id: '',
+                                project_id: '',
+                                branch_id: '',
+                                amount: 0,
+                                status: 'Draft',
+                                due_date: new Date().toISOString().split('T')[0],
+                                boq_reference: '',
+                                work_description: '',
+                                quantity: 1,
+                                unit_price: 0,
+                                vat_percentage: 0,
+                                retention_percentage: 0,
+                                payment_terms: ''
+                            });
+                            setIsModalOpen(true);
+                        }}
                         className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
                     >
                         <Plus size={20} />
@@ -295,6 +346,7 @@ export default function InvoicesPage() {
                                 <InvoiceRow
                                     key={inv.id || i}
                                     id={inv.id?.slice(0, 8) || `#INV-${100 + i}`}
+                                    fullId={inv.id}
                                     client={customers.find(c => c.id === inv.customer_id)?.name || "Regular Client"}
                                     date={inv.due_date ? new Date(inv.due_date).toLocaleDateString() : "Today"}
                                     amount={`${(inv.amount || 0).toLocaleString()} EGP`}
@@ -305,6 +357,7 @@ export default function InvoicesPage() {
                                                 inv.project_id && projects.find((p) => p.id === inv.project_id) ? `Project: ${projects.find((p) => p.id === inv.project_id)?.name}` :
                                                     inv.unit_id && units.find((u) => u.id === inv.unit_id) ? `Unit: ${units.find((u) => u.id === inv.unit_id)?.name}` : undefined
                                     }
+                                    onEdit={() => handleOpenEditModal(inv)}
                                 />
                             ))
                         )}
@@ -314,7 +367,7 @@ export default function InvoicesPage() {
                 <ERPFormModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
-                    title={t('create_invoice')}
+                    title={editingId ? t('edit_invoice') : t('create_invoice')}
                     onSubmit={handleCreateInvoice}
                     loading={isSubmitting}
                 >

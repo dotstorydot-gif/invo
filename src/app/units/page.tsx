@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import {
     Plus,
-    Search,
     Home,
     MapPin,
     ArrowLeft,
@@ -13,7 +12,8 @@ import {
     Bed,
     CheckCircle2,
     XCircle,
-    ImageIcon
+    ImageIcon,
+    Edit2
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -49,6 +49,7 @@ export default function UnitsPage() {
     const { data: units, loading, upsert } = useERPData<Unit>('units');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     useEffect(() => {
         if (session?.moduleType === 'Service & Marketing') {
@@ -71,6 +72,7 @@ export default function UnitsPage() {
         try {
             setIsSubmitting(true);
             await upsert({
+                ...(editingId ? { id: editingId } : {}),
                 name: formData.name,
                 type: formData.type,
                 price: Number(formData.price),
@@ -83,6 +85,7 @@ export default function UnitsPage() {
                 photos: []
             });
             setIsModalOpen(false);
+            setEditingId(null);
             setFormData({
                 name: '',
                 type: 'Residential',
@@ -94,11 +97,26 @@ export default function UnitsPage() {
                 project: ''
             });
         } catch (error) {
-            console.error("Error adding unit:", error);
-            alert("Failed to add unit. Check console for details.");
+            console.error("Error saving unit:", error);
+            alert("Failed to save unit. Check console for details.");
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleEditUnit = (unit: Unit) => {
+        setEditingId(unit.id);
+        setFormData({
+            name: unit.name || '',
+            type: unit.type || 'Residential',
+            price: unit.price || 0,
+            price_per_meter: unit.pricePerMeter || 0,
+            rooms: unit.rooms || 0,
+            is_finished: unit.isFinished || false,
+            status: unit.status || 'Available',
+            project: unit.project || ''
+        });
+        setIsModalOpen(true);
     };
 
     return (
@@ -116,7 +134,14 @@ export default function UnitsPage() {
                     </div>
 
                     <button
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={() => {
+                            setEditingId(null);
+                            setFormData({
+                                name: '', type: 'Residential', price: 0, price_per_meter: 0,
+                                rooms: 0, is_finished: false, status: 'Available', project: ''
+                            });
+                            setIsModalOpen(true);
+                        }}
                         className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
                     >
                         <Plus size={20} />
@@ -252,6 +277,13 @@ export default function UnitsPage() {
                                         <span className="text-xl font-bold text-accent">{unit.price.toLocaleString()} EGP</span>
                                     </div>
                                     <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handleEditUnit(unit)}
+                                            className="glass-hover p-2 rounded-lg border border-border-custom text-gray-400 hover:text-accent transition-all"
+                                            title="Edit Unit"
+                                        >
+                                            <Edit2 size={18} />
+                                        </button>
                                         <button className="glass-hover p-2 rounded-lg border border-border-custom text-gray-400 hover:text-accent transition-all">
                                             <ImageIcon size={18} />
                                         </button>
@@ -267,8 +299,11 @@ export default function UnitsPage() {
 
                 <ERPFormModal
                     isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    title={t('add_unit')}
+                    onClose={() => {
+                        setIsModalOpen(false);
+                        setEditingId(null);
+                    }}
+                    title={editingId ? "Edit Unit" : t('add_unit')}
                     onSubmit={handleAddUnit}
                     loading={isSubmitting}
                 >

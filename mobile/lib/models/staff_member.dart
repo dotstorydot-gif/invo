@@ -2,33 +2,27 @@ class StaffMember {
   final String id;
   final String name;
   final String? role;
-  final double baseSalary;
+  final double salary;
   final String? avatarUrl;
-  final String? email;
-  final double? penalties;
-  final int? vacationDays;
+  final String organizationId;
 
   StaffMember({
     required this.id,
     required this.name,
     this.role,
-    required this.baseSalary,
+    required this.salary,
     this.avatarUrl,
-    this.email,
-    this.penalties,
-    this.vacationDays,
+    required this.organizationId,
   });
 
-  factory StaffMember.fromMap(Map<String, dynamic> map) {
+  factory StaffMember.fromJson(Map<String, dynamic> json) {
     return StaffMember(
-      id: map['id'].toString(),
-      name: map['name'],
-      role: map['role'],
-      baseSalary: (map['base_salary'] ?? 0).toDouble(),
-      avatarUrl: map['avatar_url'],
-      email: map['email'],
-      penalties: (map['penalties'] ?? 0).toDouble(),
-      vacationDays: map['vacation_days'] as int?,
+      id: json['id'].toString(),
+      name: (json['full_name'] ?? json['name'] ?? 'Unknown').toString(),
+      role: json['role']?.toString(),
+      salary: (json['base_salary'] ?? json['salary'] ?? 0.0).toDouble(),
+      avatarUrl: json['avatar_url']?.toString(),
+      organizationId: (json['organization_id'] ?? '').toString(),
     );
   }
 }

@@ -4,10 +4,11 @@ import '../models/inventory_item.dart';
 class InventoryService {
   final SupabaseClient _client = Supabase.instance.client;
 
-  Future<List<InventoryItem>> getItems() async {
+  Future<List<InventoryItem>> fetchInventory(String orgId) async {
     final response = await _client
         .from('inventory')
-        .select()
+        .select('*')
+        .eq('organization_id', orgId)
         .order('created_at', ascending: false);
     
     return (response as List).map((item) => InventoryItem.fromMap(item)).toList();

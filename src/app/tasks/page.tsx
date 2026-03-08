@@ -336,6 +336,7 @@ export default function TasksBoardPage() {
                             >
                                 <option value="Todo">To Do</option>
                                 <option value="In Progress">In Progress</option>
+                                <option value="Pending">Pending</option>
                                 <option value="Done">Done</option>
                             </select>
                         </div>

@@ -337,7 +337,7 @@ export default function StaffPage() {
                                                     </div>
                                                     <div className="text-[10px] text-gray-500 uppercase tracking-tighter flex items-center gap-2">
                                                         <span>{emp.role}</span>
-                                                        <span className={`px-1.5 py-0.5 rounded ${emp.employment_type === 'Daily' ? 'bg-amber-500/10 text-amber-500' : 'bg-blue-500/10 text-blue-500'}`}>{emp.employment_type === 'Daily' ? t('daily') : t('full_time')}</span>
+                                                        <span className={`px-1.5 py-0.5 rounded ${emp.employment_type === 'Daily' ? 'bg-amber-500/10 text-amber-500' : 'bg-blue-500/10 text-blue-500'}`}>{emp.employment_type === 'Daily' ? t('daily') : emp.employment_type === 'Part Time' ? t('part_time') : emp.employment_type === 'Temporary' ? t('temporary') : t('full_time')}</span>
                                                     </div>
                                                 </div>
                                             </td>
@@ -545,8 +545,7 @@ export default function StaffPage() {
                         <div className="grid grid-cols-1 gap-6">
                             <div className="p-4 rounded-xl bg-white/5 border border-border-custom flex justify-between items-center">
                                 <div>
-                                    <div className="text-xs text-gray-500 uppercase font-bold mb-1">{t('employment_type_label')}</div>
-                                    <div className="font-bold text-white">{selectedEmp.employment_type || t('full_time')}</div>
+                                    <div className="font-bold text-white">{selectedEmp.employment_type === 'Daily' ? t('daily') : selectedEmp.employment_type === 'Part Time' ? t('part_time') : selectedEmp.employment_type === 'Temporary' ? t('temporary') : t('full_time')}</div>
                                 </div>
                                 <div>
                                     <div className="text-xs text-gray-500 uppercase font-bold mb-1">{t('rate_label')}</div>

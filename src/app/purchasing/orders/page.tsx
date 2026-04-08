@@ -298,7 +298,7 @@ export default function PurchaseOrdersPage() {
                 <ERPFormModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
-                    title={editingId ? t('update_profile') : t('create_order')}
+                    title={editingId ? t('edit_order') : t('create_order')}
                     onSubmit={handleSave}
                     loading={isSubmitting}
                 >

@@ -112,11 +112,11 @@ export default function StaffPage() {
                 setFormData({
                     full_name: '',
                     role: t('consultant'),
-                    employment_type: t('full_time'),
+                    employment_type: 'Full Time',
                     base_salary: 0,
                     daily_rate: 0,
                     email: '',
-                    status: t('active'),
+                    status: 'Active',
                     project_id: '',
                     hire_date: new Date().toISOString().split('T')[0],
                     avatar_url: ''
@@ -276,8 +276,8 @@ export default function StaffPage() {
                         onClick={() => {
                             setEditingId(null);
                             setFormData({
-                                full_name: '', role: t('consultant'), employment_type: t('full_time'),
-                                base_salary: 0, daily_rate: 0, email: '', status: t('active'),
+                                full_name: '', role: t('consultant'), employment_type: 'Full Time',
+                                base_salary: 0, daily_rate: 0, email: '', status: 'Active',
                                 project_id: '', hire_date: new Date().toISOString().split('T')[0],
                                 avatar_url: ''
                             });
@@ -337,7 +337,12 @@ export default function StaffPage() {
                                                     </div>
                                                     <div className="text-[10px] text-gray-500 uppercase tracking-tighter flex items-center gap-2">
                                                         <span>{emp.role}</span>
-                                                        <span className={`px-1.5 py-0.5 rounded ${emp.employment_type === 'Daily' ? 'bg-amber-500/10 text-amber-500' : 'bg-blue-500/10 text-blue-500'}`}>{emp.employment_type === 'Daily' ? t('daily') : emp.employment_type === 'Part Time' ? t('part_time') : emp.employment_type === 'Temporary' ? t('temporary') : t('full_time')}</span>
+                                                        <span className={`px-1.5 py-0.5 rounded ${emp.employment_type === 'Daily' ? 'bg-amber-500/10 text-amber-500' : 'bg-blue-500/10 text-blue-500'}`}>
+                                                            {emp.employment_type === 'Daily' ? t('daily') : 
+                                                             emp.employment_type === 'Part Time' ? t('part_time') : 
+                                                             emp.employment_type === 'Temporary' ? t('temporary') : 
+                                                             t('full_time')}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </td>

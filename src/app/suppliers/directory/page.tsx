@@ -50,9 +50,9 @@ export default function SupplierDirectoryPage() {
       setIsModalOpen(false);
       setEditingId(null);
       setFormData({ name: '', contact_name: '', email: '', phone: '', address: '' });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving supplier:", error);
-      alert(t('save_failed'));
+      alert(`${t('save_failed')}: ${error?.message || 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }

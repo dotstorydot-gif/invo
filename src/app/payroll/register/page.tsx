@@ -37,6 +37,7 @@ interface SalaryRecord {
 
 interface Employee {
     id: string;
+    organization_id: string;
     full_name: string;
     role: string;
 }
@@ -104,6 +105,56 @@ export default function SalaryRegisterPage() {
             setIsSubmitting(false);
         }
     };
+    const handleGenerateRegister = async () => {
+        try {
+            setIsSubmitting(true);
+            const now = new Date();
+            const currentMonth = now.toLocaleString('default', { month: 'long' });
+            const currentYear = now.getFullYear();
+
+            // 1. Filter staff who have active contracts
+            const activeStaff = staff.filter(s => contracts.some((c: any) => c.staff_id === s.id));
+
+            if (activeStaff.length === 0) {
+                alert(t('no_active_contract_error'));
+                return;
+            }
+
+            let createdCount = 0;
+            for (const emp of activeStaff) {
+                // Check if already exists
+                const exists = salaries.some(s => s.employee_id === emp.id && s.month === currentMonth && s.year === currentYear);
+                
+                if (!exists) {
+                    const contract = contracts.find((c: any) => c.staff_id === emp.id);
+                    await upsert({
+                        organization_id: emp.organization_id || salaries[0]?.organization_id, // Fallback to current org
+                        employee_id: emp.id,
+                        month: currentMonth,
+                        year: currentYear,
+                        base_salary: (contract as any).base_salary || 0,
+                        net_pay: (contract as any).base_salary || 0,
+                        paid_amount: 0,
+                        status: 'Pending'
+                    });
+                    createdCount++;
+                }
+            }
+
+            if (createdCount > 0) {
+                alert(`${createdCount} records generated successfully`);
+                refresh();
+            } else {
+                alert(t('all_records_already_exist'));
+            }
+        } catch (error) {
+            console.error("Generation error:", error);
+            alert(t('generation_failed'));
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     const handleGenerateSlip = async (salary: SalaryRecord) => {
         try {
             setIsSubmitting(true);
@@ -184,15 +235,25 @@ export default function SalaryRegisterPage() {
                         </div>
                     </div>
 
-                    <div className="glass flex items-center px-4 py-2 gap-3 w-80 border-border-custom bg-background">
-                        <Search size={18} className="text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder={t('search_salary_register_placeholder')}
-                            className="bg-transparent border-none outline-none text-sm w-full"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                    <div className="flex items-center gap-3">
+                        <div className="glass flex items-center px-4 py-2 gap-3 w-80 border-border-custom bg-background">
+                            <Search size={18} className="text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder={t('search_salary_register_placeholder')}
+                                className="bg-transparent border-none outline-none text-sm w-full"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <button
+                            onClick={handleGenerateRegister}
+                            disabled={isSubmitting}
+                            className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all whitespace-nowrap disabled:opacity-50"
+                        >
+                            <Calculator size={20} />
+                            <span>{t('generate_register')}</span>
+                        </button>
                     </div>
                 </header>
 
@@ -257,7 +318,7 @@ export default function SalaryRegisterPage() {
                                                 }`}>
                                                 {salary.status === 'Transferred' && <CheckCircle2 size={10} />}
                                                 {salary.status === 'Partial' && <BadgePercent size={10} />}
-                                                {salary.status === 'Transferred' ? t('transferred') : salary.status === 'Partial' ? t('partial') : t('pending')}
+                                                {salary.status === 'Transferred' ? t('transferred') : salary.status === 'Partial' ? t('payroll_partial') : t('payroll_pending')}
                                             </span>
                                         </td>
                                         <td className="p-6 text-center">

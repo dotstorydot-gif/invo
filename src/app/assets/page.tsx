@@ -27,8 +27,11 @@ interface Asset {
 
 export default function AssetsPage() {
     const { data: assets, loading, upsert } = useERPData<Asset>('assets');
+    const { data: staff } = useERPData<any>('staff');
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -39,18 +42,19 @@ export default function AssetsPage() {
         assigned_to_employee: null as string | null
     });
 
-    const handleAddAsset = async () => {
-        try {
-            setIsSubmitting(true);
-            await upsert({
-                name: formData.name,
-                serial_number: formData.serial_number,
-                description: formData.description,
-                value: Number(formData.value),
-                status: formData.status,
-                assigned_to_employee: formData.assigned_to_employee
+    const handleOpenModal = (asset?: Asset) => {
+        if (asset) {
+            setEditingId(asset.id);
+            setFormData({
+                name: asset.name,
+                serial_number: asset.serial_number || '',
+                description: asset.description || '',
+                value: asset.value || 0,
+                status: asset.status || 'In Use',
+                assigned_to_employee: asset.assigned_to_employee
             });
-            setIsModalOpen(false);
+        } else {
+            setEditingId(null);
             setFormData({
                 name: '',
                 serial_number: '',
@@ -59,9 +63,26 @@ export default function AssetsPage() {
                 status: 'In Use',
                 assigned_to_employee: null
             });
+        }
+        setIsModalOpen(true);
+    };
+
+    const handleSaveAsset = async () => {
+        try {
+            setIsSubmitting(true);
+            await upsert({
+                ...(editingId ? { id: editingId } : {}),
+                name: formData.name,
+                serial_number: formData.serial_number,
+                description: formData.description,
+                value: Number(formData.value),
+                status: formData.status,
+                assigned_to_employee: formData.assigned_to_employee
+            });
+            setIsModalOpen(false);
         } catch (error) {
-            console.error("Error adding asset:", error);
-            alert("Failed to add asset. Check console for details.");
+            console.error("Error saving asset:", error);
+            alert("Failed to save asset. Check console for details.");
         } finally {
             setIsSubmitting(false);
         }
@@ -82,7 +103,7 @@ export default function AssetsPage() {
                     </div>
 
                     <button
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={() => handleOpenModal()}
                         className="gradient-accent flex items-center gap-2 px-6 py-2 rounded-xl text-white font-bold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
                     >
                         <Plus size={20} />
@@ -151,11 +172,18 @@ export default function AssetsPage() {
                                         <div>
                                             <div className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Assigned To</div>
                                             <div className="text-xs font-bold text-gray-300">
-                                                {asset.assigned_to_employee ? "Staff ID: " + asset.assigned_to_employee.substring(0, 8) : 'Unassigned'}
+                                                {(() => {
+                                                    if (!asset.assigned_to_employee) return 'Unassigned';
+                                                    const emp = staff.find((s: any) => s.id === asset.assigned_to_employee);
+                                                    return emp ? emp.full_name : "Staff ID: " + asset.assigned_to_employee.substring(0, 8);
+                                                })()}
                                             </div>
                                         </div>
                                     </div>
-                                    <button className="glass-hover p-2 rounded-lg border border-border-custom text-gray-400 hover:text-accent transition-all">
+                                    <button 
+                                        onClick={() => handleOpenModal(asset)}
+                                        className="glass-hover p-2 rounded-lg border border-border-custom text-gray-400 hover:text-accent transition-all"
+                                    >
                                         <Wrench size={16} />
                                     </button>
                                 </div>
@@ -167,8 +195,8 @@ export default function AssetsPage() {
                 <ERPFormModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
-                    title="Add Marketing Asset"
-                    onSubmit={handleAddAsset}
+                    title={editingId ? "Update Marketing Asset" : "Add Marketing Asset"}
+                    onSubmit={handleSaveAsset}
                     loading={isSubmitting}
                 >
                     <div className="grid grid-cols-2 gap-6">
@@ -202,16 +230,29 @@ export default function AssetsPage() {
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                             />
                         </div>
-                        <div className="flex flex-col gap-2 col-span-2">
+                        <div className="flex flex-col gap-2">
                             <label className="text-xs font-bold text-gray-500 uppercase">Status</label>
                             <select
                                 value={formData.status}
-                                onChange={(e) => setFormData({ ...formData, status: e.target.value as 'In Use' | 'Maintenance' | 'Retired' })}
+                                onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
                                 className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
                             >
                                 <option value="In Use">In Use (Active)</option>
                                 <option value="Maintenance">In Maintenance</option>
                                 <option value="Retired">Retired / Broken</option>
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Assigned To</label>
+                            <select
+                                value={formData.assigned_to_employee || ''}
+                                onChange={(e) => setFormData({ ...formData, assigned_to_employee: e.target.value || null })}
+                                className="glass bg-white/5 border-border-custom p-3 rounded-xl outline-none focus:border-accent transition-all text-sm"
+                            >
+                                <option value="">-- Unassigned --</option>
+                                {staff.map((emp: any) => (
+                                    <option key={emp.id} value={emp.id}>{emp.full_name} ({emp.role})</option>
+                                ))}
                             </select>
                         </div>
                         <div className="flex flex-col gap-2 col-span-2">

@@ -42,9 +42,7 @@ export default function SupplierDirectoryPage() {
       await upsert({
         ...(editingId ? { id: editingId } : {}),
         name: formData.name,
-        company_name: formData.name, // Redundancy for schema compatibility
         contact_name: formData.contact_name,
-        contact_person: formData.contact_name, // Redundancy for schema compatibility
         email: formData.email,
         phone: formData.phone,
         address: formData.address
